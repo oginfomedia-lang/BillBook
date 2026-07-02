@@ -14,6 +14,7 @@ export interface SupplierPayload {
   city?: string | null;
   postcode?: string | null;
   address?: string | null;
+  branch_id?: number | null;
 }
 
 function cleanSupplierPayload<T extends SupplierPayload | Partial<SupplierPayload>>(payload: T): T {
@@ -28,7 +29,7 @@ function cleanSupplierPayload<T extends SupplierPayload | Partial<SupplierPayloa
   ) as T;
 }
 
-export async function listSuppliers(params: { page?: number; per_page?: number; search?: string } = {}) {
+export async function listSuppliers(params: { page?: number; per_page?: number; search?: string; branch_id?: number } = {}) {
   const { data } = await apiClient.get<PaginatedResponse<Supplier>>("/suppliers", { params });
   return data;
 }

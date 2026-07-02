@@ -78,6 +78,10 @@ def list_invoices():
             )
         )
 
+    branch_id = request.args.get("branch_id", type=int)
+    if branch_id:
+        query = query.filter(Invoice.branch_id == branch_id)
+
     pagination = query.order_by(Invoice.created_at.desc()).paginate(
         page=page, per_page=per_page, error_out=False
     )
@@ -101,17 +105,17 @@ def get_invoice(invoice_id):
 @invoices_bp.route("", methods=["POST"])
 @require_auth
 def create_invoice():
-    """
-    Staff/Billing Clerks and Tenant Admins can both create invoices.
-    Totals are NEVER trusted from the client — recalculate_totals() is the
-    single source of truth, run here right before commit.
-    """
     try:
         data = InvoiceSchema().load(request.get_json(force=True) or {})
     except ValidationError as err:
         return jsonify({"error": "Validation failed", "details": err.messages}), 422
 
     items_data = data.pop("items")
+
+    # Extract coupon fields
+    coupon_code = data.pop("coupon_code", None)
+    coupon_discount = data.pop("coupon_discount", 0)
+    branch_id = data.pop("branch_id", None)                     # 👈 Added
 
     invoice = None
     for attempt in range(5):
@@ -126,6 +130,9 @@ def create_invoice():
             discount_value=data.get("discount_value", 0),
             notes=data.get("notes"),
             status=InvoiceStatus(data.get("status", "draft")),
+            coupon_code=coupon_code,
+            coupon_discount=coupon_discount,
+            branch_id=branch_id,                              # 👈 Added
         )
 
         for item_data in items_data:
@@ -168,9 +175,21 @@ def update_invoice(invoice_id):
 
     items_data = data.pop("items", None)
 
+    # Update basic fields
     for key in ("customer_id", "issue_date", "due_date", "discount_type", "discount_value", "notes"):
         if key in data:
             setattr(invoice, key, data[key])
+
+    # Update coupon fields
+    if "coupon_code" in data:
+        invoice.coupon_code = data["coupon_code"]
+    if "coupon_discount" in data:
+        invoice.coupon_discount = data["coupon_discount"]
+
+    # Update branch_id if provided
+    if "branch_id" in data:
+        invoice.branch_id = data["branch_id"]
+
     if "status" in data:
         invoice.status = InvoiceStatus(data["status"])
 

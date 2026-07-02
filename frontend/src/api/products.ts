@@ -9,9 +9,10 @@ export interface ProductPayload {
   tax_rate?: number;
   stock_quantity?: number;
   unit?: string;
+  branch_id?: number | null;
 }
 
-export async function listProducts(params: { page?: number; per_page?: number; search?: string } = {}) {
+export async function listProducts(params: { page?: number; per_page?: number; search?: string; branch_id?: number } = {}) {
   const { data } = await apiClient.get<PaginatedResponse<Product>>("/products", { params });
   return data;
 }

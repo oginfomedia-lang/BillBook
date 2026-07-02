@@ -41,6 +41,7 @@ class CustomerSchema(Schema):
     phone = fields.String(load_default=None, allow_none=True)
     billing_address = fields.String(load_default=None, allow_none=True)
     gstin = fields.String(load_default=None, allow_none=True)
+    branch_id = fields.Integer(load_default=None, allow_none=True)
 
 
 class SupplierSchema(Schema):
@@ -56,6 +57,7 @@ class SupplierSchema(Schema):
     city = fields.String(load_default=None, allow_none=True)
     postcode = fields.String(load_default=None, allow_none=True)
     address = fields.String(load_default=None, allow_none=True)
+    branch_id = fields.Integer(load_default=None, allow_none=True)
 
 
 class ProductSchema(Schema):
@@ -66,6 +68,7 @@ class ProductSchema(Schema):
     tax_rate = fields.Decimal(load_default=0, validate=validate.Range(min=0, max=100))
     stock_quantity = fields.Integer(load_default=0, validate=validate.Range(min=0))
     unit = fields.String(load_default="pcs")
+    branch_id = fields.Integer(load_default=None, allow_none=True)
 
 
 class InvoiceItemSchema(Schema):
@@ -88,3 +91,6 @@ class InvoiceSchema(Schema):
         validate=validate.OneOf(["draft", "pending", "paid", "overdue", "cancelled"]),
     )
     items = fields.List(fields.Nested(InvoiceItemSchema), required=True, validate=validate.Length(min=1))
+    coupon_code = fields.String(load_default=None, allow_none=True)          # new
+    coupon_discount = fields.Decimal(load_default=0, validate=validate.Range(min=0))  # new
+    branch_id = fields.Integer(load_default=None, allow_none=True)          # new

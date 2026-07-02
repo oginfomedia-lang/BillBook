@@ -3,11 +3,14 @@ import { useCustomers } from "../hooks/useCustomers";
 import { useCreateInvoice } from "../hooks/useInvoices";
 import { InvoiceItemsEditor } from "../components/invoices/InvoiceItemsEditor";
 import { InvoiceTotals } from "../components/invoices/InvoiceTotals";
+import { CouponInput } from "./Coupons/CouponInput";
 import type { InvoiceItem, InvoiceStatus } from "../types";
 import { useTranslation } from "../context/LanguageContext";
+import { useBranch } from "../context/BranchContext";
 
 export function CreateInvoicePage() {
   const { t } = useTranslation();
+  const { currentBranchId } = useBranch();
   const { data: customersData } = useCustomers({ page: 1 });
   const createInvoice = useCreateInvoice();
 
@@ -21,6 +24,23 @@ export function CreateInvoicePage() {
     { description: "", quantity: 1, unit_price: 0, tax_rate: 0 },
   ]);
 
+  // Coupon state
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
+  const [couponDiscount, setCouponDiscount] = useState(0);
+
+  // Subtotal calculation for coupon validation
+  const subtotal = items.reduce((sum, item) => sum + (item.quantity || 0) * (item.unit_price || 0), 0);
+
+  const handleCouponApplied = (coupon: any, discount: number) => {
+    setAppliedCoupon(coupon);
+    setCouponDiscount(discount);
+  };
+
+  const handleCouponRemoved = () => {
+    setAppliedCoupon(null);
+    setCouponDiscount(0);
+  };
+
   const handleSubmit = (status: InvoiceStatus) => {
     if (!customerId) return;
     const validItems = items.filter((item) => item.description.trim().length > 0);
@@ -32,17 +52,20 @@ export function CreateInvoicePage() {
       due_date: dueDate || null,
       discount_type: discountType,
       discount_value: discountValue,
+      coupon_code: appliedCoupon?.code || null,
+      coupon_discount: couponDiscount,
       notes: notes || null,
       status,
       items: validItems,
+      branch_id: currentBranchId || undefined,  // 👈 added
     });
   };
 
-  const canSubmit =
-    customerId !== "" && items.some((item) => item.description.trim().length > 0);
+  const canSubmit = customerId !== "" && items.some((item) => item.description.trim().length > 0);
 
   return (
     <div className="space-y-6">
+      {/* ... existing UI, no additional branch field needed ... */}
       <div>
         <h1 className="text-2xl font-semibold text-ink-900">{t("New Invoice")}</h1>
         <p className="text-sm text-slate-500">{t("Add line items below — totals update as you type.")}</p>
@@ -60,9 +83,7 @@ export function CreateInvoicePage() {
               >
                 <option value="">{t("Select a customer")}</option>
                 {customersData?.items.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
+                  <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
               </select>
             </div>
@@ -88,6 +109,18 @@ export function CreateInvoicePage() {
             </div>
           </div>
 
+          {/* Coupon Input */}
+          <div className="rounded-xl border border-slate-200 bg-white p-5">
+            <label className="mb-1.5 block text-xs font-medium text-slate-500">{t("Coupon")}</label>
+            <CouponInput
+              customerId={customerId || null}
+              subtotal={subtotal}
+              onCouponApplied={handleCouponApplied}
+              onCouponRemoved={handleCouponRemoved}
+              initialCode={appliedCoupon?.code || ""}
+            />
+          </div>
+
           <InvoiceItemsEditor items={items} onChange={setItems} />
 
           <div className="rounded-xl border border-slate-200 bg-white p-5">
@@ -109,6 +142,7 @@ export function CreateInvoicePage() {
             discountValue={discountValue}
             onDiscountTypeChange={setDiscountType}
             onDiscountValueChange={setDiscountValue}
+            couponDiscount={couponDiscount}
           />
 
           <div className="flex flex-col gap-2">

@@ -3,7 +3,7 @@ import { type AxiosError } from "axios";
 import toast from "react-hot-toast";
 import * as productsApi from "../api/products";
 
-export function useProducts(params: { page?: number; per_page?: number; search?: string } = {}) {
+export function useProducts(params: { page?: number; per_page?: number; search?: string; branch_id?: number } = {}) {
   return useQuery({
     queryKey: ["products", params],
     queryFn: () => productsApi.listProducts(params),

@@ -15,3 +15,4 @@ class AdvancePaymentSchema(Schema):
         load_default="pending",
         validate=validate.OneOf(["pending", "applied", "cancelled"])
     )
+    branch_id = fields.Integer(load_default=None, allow_none=True)

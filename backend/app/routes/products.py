@@ -24,6 +24,10 @@ def list_products():
     if search:
         query = query.filter(Product.name.ilike(f"%{search}%"))
 
+    branch_id = request.args.get("branch_id", type=int)
+    if branch_id:
+        query = query.filter(Product.branch_id == branch_id)
+
     pagination = query.order_by(Product.name.asc()).paginate(page=page, per_page=per_page, error_out=False)
     return jsonify(
         {
@@ -92,6 +96,9 @@ def import_products():
     if not file or file.filename == "":
         return jsonify({"error": "CSV file is required."}), 400
 
+    # Get branch_id from query parameters
+    branch_id = request.args.get("branch_id", type=int)
+
     try:
         content = file.stream.read().decode("utf-8-sig")
     except Exception:
@@ -109,7 +116,8 @@ def import_products():
             errors.append({"row": row_number, "errors": err.messages})
             continue
 
-        imported.append(Product(tenant_id=TenantContext.get(), **data))
+        # Explicitly set branch_id
+        imported.append(Product(tenant_id=TenantContext.get(), branch_id=branch_id, **data))
 
     if errors:
         return jsonify({"error": "Import failed.", "details": errors}), 422

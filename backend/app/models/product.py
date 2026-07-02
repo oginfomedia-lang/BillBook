@@ -19,6 +19,8 @@ class Product(TenantScopedMixin, db.Model):
 
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    branch_id = db.Column(db.Integer, db.ForeignKey("branches.id", ondelete="SET NULL"), nullable=True)
+    branch = db.relationship("Branch", back_populates="products")
 
     def to_dict(self):
         return {

@@ -24,6 +24,8 @@ import { ProductsPage } from "./pages/ProductsPage";
 import { UsersPage } from "./pages/UsersPage";
 import { RolesPage } from "./pages/RolesPage";
 import { AdvancePaymentsList } from "./pages/Advance/AdvancePaymentsList";
+import { CouponsListPage } from "./pages/Coupons/CouponsList";
+import { CouponFormPage } from "./pages/Coupons/CouponForm";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -45,14 +47,11 @@ export default function App() {
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
 
-              <Route
-                element={
-                  <ProtectedRoute>
-                    <DashboardLayout />
-                  </ProtectedRoute>
-                }
-              >
+              {/* Protected routes with sidebar */}
+              <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
                 <Route path="/dashboard" element={<DashboardPage />} />
+
+                {/* Sales module */}
                 <Route path="/sales" element={<SalesLayout />}>
                   <Route index element={<SalesListPage />} />
                   <Route path="add" element={<AddSalePage />} />
@@ -61,28 +60,33 @@ export default function App() {
                   <Route path=":id" element={<InvoiceDetailPage />} />
                 </Route>
                 <Route path="/pos" element={<Navigate to="/sales/pos" replace />} />
+
+                {/* Invoices (standalone) */}
                 <Route path="/invoices" element={<InvoicesPage />} />
+
+                {/* Contacts module */}
+                <Route path="/contacts" element={<ContactsLayout />}>
+                  <Route index element={<ContactsIndexRedirect />} />
+                  <Route path="customers" element={<CustomersPage />} />
+                  <Route path="suppliers" element={<SuppliersPage />} />
+                  <Route path="import/customers" element={<ImportCustomersPage />} />
+                  <Route path="import/suppliers" element={<ImportSuppliersPage />} />
+                </Route>
+
+                {/* Coupons – top-level, not under /contacts */}
+                <Route path="/coupons" element={<CouponsListPage />} />
+                <Route path="/coupons/new" element={<CouponFormPage />} />
+                <Route path="/coupons/:id/edit" element={<CouponFormPage />} />
+
+                {/* Other top-level modules */}
                 <Route path="/customers" element={<CustomersPage />} />
-                <Route path="/advance" element={<AdvancePaymentsList />} />
                 <Route path="/products" element={<ProductsPage />} />
                 <Route path="/users" element={<UsersPage />} />
                 <Route path="/roles" element={<RolesPage />} />
+                <Route path="/advance" element={<AdvancePaymentsList />} />
               </Route>
-              <Route path="/pos" element={<Navigate to="/sales/pos" replace />} />
-              <Route path="/invoices" element={<InvoicesPage />} />
-              <Route path="/contacts" element={<ContactsLayout />}>
-                <Route index element={<ContactsIndexRedirect />} />
-                <Route path="customers" element={<CustomersPage />} />
-                <Route path="suppliers" element={<SuppliersPage />} />
-                <Route path="import/customers" element={<ImportCustomersPage />} />
-                <Route path="import/suppliers" element={<ImportSuppliersPage />} />
-              </Route>
-              <Route path="/customers" element={<CustomersPage />} />
-              <Route path="/products" element={<ProductsPage />} />
-              <Route path="/users" element={<UsersPage />} />
-              <Route path="/roles" element={<RolesPage />} />
-            
 
+              {/* Fallback redirects */}
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>

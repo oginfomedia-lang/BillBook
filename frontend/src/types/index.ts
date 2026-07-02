@@ -48,6 +48,8 @@ export interface Customer {
   billing_address: string | null;
   gstin: string | null;
   balance: number;
+  branch_id?: number | null;
+  branch?: Branch | null;
 }
 
 export interface Supplier {
@@ -64,6 +66,8 @@ export interface Supplier {
   city: string | null;
   postcode: string | null;
   address: string | null;
+  branch_id?: number | null;
+  branch?: Branch | null;
 }
 
 export interface Product {
@@ -76,6 +80,8 @@ export interface Product {
   stock_quantity: number;
   unit: string;
   is_active: boolean;
+  branch_id?: number | null;
+  branch?: Branch | null;
 }
 
 export type InvoiceStatus = "draft" | "pending" | "paid" | "overdue" | "cancelled";
@@ -111,6 +117,10 @@ export interface Invoice {
   balance_due: number;
   items?: InvoiceItem[];
   created_at: string;
+  coupon_code?: string | null;
+  coupon_discount?: number;
+  branch_id?: number | null;
+  branch?: Branch | null;
 }
 
 export interface PaginatedResponse<T> {
@@ -199,5 +209,41 @@ export interface AdvancePayment {
   reference: string | null;
   notes: string | null;
   status: AdvancePaymentStatus;
+  created_at: string;
+  branch_id?: number | null;
+  branch?: Branch | null;
+}
+
+export type CouponType = "percentage" | "fixed";
+export type CouponStatus = "active" | "inactive" | "expired";
+
+export interface Coupon {
+  id: number;
+  code: string;
+  name: string;
+  description: string | null;
+  occasion: string | null;
+  type: CouponType;
+  value: number;
+  expiry_date: string | null;
+  is_active: boolean;
+  max_uses: number;
+  used_count: number;
+  customer_id: number | null;
+  customer?: Customer | null;
+  status: CouponStatus;
+  created_at: string;
+  branch_id?: number | null;
+  branch?: Branch | null;
+}
+
+export interface Branch {
+  id: number;
+  name: string;
+  code: string;
+  address: string | null;
+  phone: string | null;
+  email: string | null;
+  is_active: boolean;
   created_at: string;
 }

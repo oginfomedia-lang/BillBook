@@ -44,6 +44,9 @@ class AdvancePayment(TenantScopedMixin, db.Model):
     # Relationships
     customer = db.relationship("Customer", backref="advance_payments")
 
+    branch_id = db.Column(db.Integer, db.ForeignKey("branches.id", ondelete="SET NULL"), nullable=True)
+    branch = db.relationship("Branch", back_populates="advance_payments")
+
     def to_dict(self):
         return {
             "id": self.id,

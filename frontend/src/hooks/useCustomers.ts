@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import * as customersApi from "../api/customers";
 
-export function useCustomers(params: { page?: number; per_page?: number; search?: string } = {}) {
+export function useCustomers(params: { page?: number; per_page?: number; search?: string; branch_id?: number } = {}) {
   return useQuery({
     queryKey: ["customers", params],
     queryFn: () => customersApi.listCustomers(params),

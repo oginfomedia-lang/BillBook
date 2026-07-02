@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import * as suppliersApi from "../api/suppliers";
 
-export function useSuppliers(params: { page?: number; per_page?: number; search?: string } = {}) {
+export function useSuppliers(params: { page?: number; per_page?: number; search?: string; branch_id?: number } = {}) {
   return useQuery({
     queryKey: ["suppliers", params],
     queryFn: () => suppliersApi.listSuppliers(params),

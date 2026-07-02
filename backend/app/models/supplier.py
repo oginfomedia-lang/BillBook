@@ -21,6 +21,8 @@ class Supplier(TenantScopedMixin, db.Model):
     postcode = db.Column(db.String(30))
     address = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    branch_id = db.Column(db.Integer, db.ForeignKey("branches.id", ondelete="SET NULL"), nullable=True)
+    branch = db.relationship("Branch", back_populates="suppliers")
 
     def to_dict(self):
         return {

@@ -7,9 +7,10 @@ export interface CustomerPayload {
   phone?: string | null;
   billing_address?: string | null;
   gstin?: string | null;
+  branch_id?: number | null;
 }
 
-export async function listCustomers(params: { page?: number; per_page?: number; search?: string } = {}) {
+export async function listCustomers(params: { page?: number; per_page?: number; search?: string; branch_id?: number } = {}) {
   const { data } = await apiClient.get<PaginatedResponse<Customer>>("/customers", { params });
   return data;
 }

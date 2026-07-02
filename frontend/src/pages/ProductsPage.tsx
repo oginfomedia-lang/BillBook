@@ -6,7 +6,9 @@ import { TableSkeleton } from "../components/ui/Skeletons";
 import { Modal } from "../components/ui/Modal";
 import { formatMoney } from "../utils/format";
 import type { Product } from "../types";
+import toast from "react-hot-toast";
 import { useTranslation } from "../context/LanguageContext";
+import { useBranch } from "../context/BranchContext";
 
 export function ProductsPage() {
   const { t } = useTranslation();
@@ -14,6 +16,9 @@ export function ProductsPage() {
   const [page, setPage] = useState(1);
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+
+  const { currentBranchId } = useBranch();
+  const { hasPermission } = useAuth();
 
   const [form, setForm] = useState({
     name: "",
@@ -34,8 +39,7 @@ export function ProductsPage() {
     unit: "pcs",
   });
 
-  const { hasPermission } = useAuth();
-  const { data, isLoading } = useProducts({ page, search });
+  const { data, isLoading } = useProducts({ page, search, branch_id: currentBranchId || undefined });
   const createProduct = useCreateProduct();
   const deleteProduct = useDeleteProduct();
   const updateProduct = useUpdateProduct();
@@ -45,7 +49,11 @@ export function ProductsPage() {
 
   const handleCreateSubmit = (e: FormEvent) => {
     e.preventDefault();
-    createProduct.mutate(form, {
+    const payload = {
+      ...form,
+      branch_id: currentBranchId || undefined,
+    };
+    createProduct.mutate(payload, {
       onSuccess: () => {
         setForm({
           name: "",
@@ -77,8 +85,12 @@ export function ProductsPage() {
   const handleEditSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!editingProduct) return;
+    const payload = {
+      ...editForm,
+      branch_id: currentBranchId || undefined,
+    };
     updateProduct.mutate(
-      { id: editingProduct.id, payload: editForm },
+      { id: editingProduct.id, payload },
       {
         onSuccess: () => setEditingProduct(null),
       }
@@ -94,6 +106,11 @@ export function ProductsPage() {
   const handleImportSubmit = (event: FormEvent) => {
     event.preventDefault();
     if (!file) return;
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    if(ext !== 'csv'){
+      toast.error('Please select a csv file.');
+      return;
+    }
     importProducts.mutate(file, {
       onSuccess: () => setFile(null),
     });
@@ -247,7 +264,18 @@ export function ProductsPage() {
               type="file"
               accept=".csv"
               className="sr-only"
-              onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) {
+                  const ext = file.name.split('.').pop()?.toLowerCase();
+                  if (ext !== 'csv') {
+                    toast.error('Only CSV files are allowed.');
+                    setFile(null);
+                    return;
+                  }
+                  setFile(file);
+                }
+              }}
             />
             <div className="space-y-2">
               <p className="font-medium text-slate-700">{t("Drag and drop a CSV file here, or click to select a file.")}</p>

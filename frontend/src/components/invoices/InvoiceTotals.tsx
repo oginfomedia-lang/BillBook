@@ -8,6 +8,7 @@ interface InvoiceTotalsProps {
   discountValue: number;
   onDiscountTypeChange: (type: "flat" | "percent") => void;
   onDiscountValueChange: (value: number) => void;
+  couponDiscount?: number;
 }
 
 /**
@@ -21,6 +22,7 @@ export function InvoiceTotals({
   discountValue,
   onDiscountTypeChange,
   onDiscountValueChange,
+  couponDiscount = 0,
 }: InvoiceTotalsProps) {
   const { t } = useTranslation();
 
@@ -29,9 +31,10 @@ export function InvoiceTotals({
     (sum, item) => sum + item.quantity * item.unit_price * (item.tax_rate / 100),
     0
   );
-  const rawDiscount = discountType === "percent" ? subtotal * (discountValue / 100) : discountValue;
-  const discountTotal = Math.min(rawDiscount, subtotal);
-  const grandTotal = subtotal + taxTotal - discountTotal;
+  const manualDiscount = discountType === "percent" ? subtotal * (discountValue / 100) : discountValue;
+  const couponDisc = couponDiscount || 0;
+  const totalDiscount = Math.min(manualDiscount + couponDisc, subtotal);
+  const grandTotal = subtotal + taxTotal - totalDiscount;
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-5">
