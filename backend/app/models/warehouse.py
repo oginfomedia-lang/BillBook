@@ -1,0 +1,22 @@
+from datetime import datetime
+
+from app.extensions import db
+from app.tenant_scope import TenantScopedMixin
+
+
+class Warehouse(TenantScopedMixin, db.Model):
+    __tablename__ = "warehouses"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(150), nullable=False)
+    location = db.Column(db.String(255), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    quotations = db.relationship("Quotation", back_populates="warehouse", lazy="dynamic")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "location": self.location,
+        }

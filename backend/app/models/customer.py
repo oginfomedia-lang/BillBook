@@ -20,6 +20,7 @@ class Customer(TenantScopedMixin, db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     invoices = db.relationship("Invoice", back_populates="customer", lazy="dynamic")
+    quotations = db.relationship("Quotation", back_populates="customer", lazy="dynamic")
 
     branch_id = db.Column(db.Integer, db.ForeignKey("branches.id", ondelete="SET NULL"), nullable=True)
     branch = db.relationship("Branch", back_populates="customers")

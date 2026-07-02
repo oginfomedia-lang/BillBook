@@ -94,3 +94,7 @@ class InvoiceSchema(Schema):
     coupon_code = fields.String(load_default=None, allow_none=True)          # new
     coupon_discount = fields.Decimal(load_default=0, validate=validate.Range(min=0))  # new
     branch_id = fields.Integer(load_default=None, allow_none=True)          # new
+
+
+# Quotation schemas are kept separate for clarity and reuse.
+from app.schemas.quotation_schemas import QuotationSchema  # noqa: F401
