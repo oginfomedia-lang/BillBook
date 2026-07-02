@@ -37,13 +37,11 @@ __all__ = [
     "AdvancePayment",
     "PaymentType",
     "AdvancePaymentStatus",
-<<<<<<< HEAD
     "Coupon",
     "CouponType",
     "CouponStatus",
     "Branch"
 ]
-=======
     "Purchase",
     "PurchaseItem",
     "PurchasePayment",
@@ -54,4 +52,3 @@ __all__ = [
     "PurchaseReturnItem",
     "PurchaseReturnStatus",
 ]
->>>>>>> b84202d2f228adc8d8865588033c1b1415fa0f22
