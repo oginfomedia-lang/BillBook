@@ -21,6 +21,8 @@ import {
   Camera,
   Check,
   Trash2,
+  Building,
+  ShoppingBag,  // 🔽 ADD THIS IMPORT
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useTranslation } from "../context/LanguageContext";
@@ -30,17 +32,6 @@ import { Modal } from "../components/ui/Modal";
 
 const NAV_ITEMS = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, permission: "dashboard.view" },
-  {
-    label: "Contacts",
-    icon: Users,
-    permission: ["customers.view", "suppliers.view"],
-    sub: [
-      { to: "/contacts/customers", label: "Customers", end: true },
-      { to: "/contacts/suppliers", label: "Suppliers" },
-      { to: "/contacts/import/customers", label: "Import Customers" },
-      { to: "/contacts/import/suppliers", label: "Import Suppliers" },
-    ],
-  },
   {
     label: "Sales",
     icon: Receipt,
@@ -52,10 +43,33 @@ const NAV_ITEMS = [
       { to: "/sales/returns", label: "Return Sales" },
     ],
   },
-  { to: "/products",  label: "Products",  icon: Package,          permission: "products.view" },
-  { to: "/users",     label: "Users",     icon: Users,            permission: "users.view" },
-  { to: "/roles",     label: "Roles",     icon: ShieldCheck,      permission: "roles.view" },
-  { to: "/advance",   label: "Advance",   icon: CreditCard,       permission: "advance_payments.view" }
+  {
+    to: "/contacts",
+    label: "Contacts",
+    icon: Users,
+    permission: "customers.view"
+  },
+  { to: "/products", label: "Products", icon: Package, permission: "products.view" },
+  { to: "/warehouses", label: "Warehouses", icon: Building, permission: "warehouses.view" },
+
+  // 🔽 ADD THIS - Purchase Module 🔽
+  {
+    label: "Purchase",
+    icon: ShoppingBag,
+    permission: "purchases.view",
+    sub: [
+      { to: "/purchase/new", label: "New Purchase" },
+      { to: "/purchase/list", label: "Purchase List" },
+      { to: "/purchase/returns", label: "Purchase Returns List" },
+    ],
+  },
+
+  { to: "/users", label: "Users", icon: Users, permission: "users.view" },
+  { to: "/roles", label: "Roles", icon: ShieldCheck, permission: "roles.view" },
+  { to: "/advance", label: "Advance", icon: CreditCard, permission: "advance_payments.view" },
+  { to: "/quotations", label: "Quotations", icon: FileText, permission: "quotations.view" },
+  { to: "/purchases", label: "purchases", icon: ShoppingBag, permission: "purchases.view" }
+
 ];
 
 export function DashboardLayout() {
@@ -65,12 +79,12 @@ export function DashboardLayout() {
   const navigate = useNavigate();
 
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({
-    Sales: true, // Default open for Sales submenu
+    Sales: true,
+    Purchase: true,  // 🔽 ADD THIS - Keep Purchase menu open by default
   });
 
   // Dropdown states
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
-
   const [notificationsDropdownOpen, setNotificationsDropdownOpen] = useState(false);
   const [notifications, setNotifications] = useState([
     { id: 1, title: "Welcome to BillBook workspace!", time: "Just now" },
@@ -201,9 +215,7 @@ export function DashboardLayout() {
     }
   };
 
-  const visibleNavItems = NAV_ITEMS.filter((item) =>
-    Array.isArray(item.permission) ? item.permission.some((p) => hasPermission(p)) : hasPermission(item.permission)
-  );
+  const visibleNavItems = NAV_ITEMS.filter((item) => hasPermission(item.permission));
 
   // User initials for avatar fallback
   const initials = user?.name
@@ -222,9 +234,8 @@ export function DashboardLayout() {
 
       {/* ── Sidebar ─────────────────────────────────────────────────── */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-ink-900 transition-transform duration-200 lg:static lg:translate-x-0 print:hidden ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-ink-900 transition-transform duration-200 lg:static lg:translate-x-0 print:hidden ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         {/* Logo */}
         <div className="flex h-16 items-center justify-between px-5 border-b border-white/10">
@@ -265,9 +276,8 @@ export function DashboardLayout() {
                       <span className="flex-1 text-left">{t(item.label)}</span>
                       <ChevronDown
                         size={14}
-                        className={`text-slate-400 transition-transform duration-200 ${
-                          isOpen ? "rotate-180" : ""
-                        }`}
+                        className={`text-slate-400 transition-transform duration-200 ${isOpen ? "rotate-180" : ""
+                          }`}
                       />
                     </button>
                     {isOpen && (
@@ -279,10 +289,9 @@ export function DashboardLayout() {
                             end={subItem.end}
                             onClick={() => setSidebarOpen(false)}
                             className={({ isActive }) =>
-                              `block rounded-lg py-2 px-3 text-xs font-medium transition-all ${
-                                isActive
-                                  ? "bg-brand/20 text-brand-light font-semibold"
-                                  : "text-slate-400 hover:text-white hover:bg-white/5"
+                              `block rounded-lg py-2 px-3 text-xs font-medium transition-all ${isActive
+                                ? "bg-brand/20 text-brand-light font-semibold"
+                                : "text-slate-400 hover:text-white hover:bg-white/5"
                               }`
                             }
                           >
@@ -301,10 +310,9 @@ export function DashboardLayout() {
                   to={item.to!}
                   onClick={() => setSidebarOpen(false)}
                   className={({ isActive }) =>
-                    `group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${
-                      isActive
-                        ? "bg-brand/20 text-brand-light border-l-2 border-brand"
-                        : "text-slate-400 hover:bg-white/5 hover:text-white"
+                    `group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${isActive
+                      ? "bg-brand/20 text-brand-light border-l-2 border-brand"
+                      : "text-slate-400 hover:bg-white/5 hover:text-white"
                     }`
                   }
                 >
@@ -391,9 +399,8 @@ export function DashboardLayout() {
                         setLangDropdownOpen(false);
                         toast.success(lang === "English" ? "Language changed to English" : lang === "Hindi" ? "भाषा बदलकर हिंदी हो गई है" : "भाषा बदलून मराठी झाली आहे");
                       }}
-                      className={`flex w-full items-center justify-between px-4 py-2 text-left text-xs font-medium hover:bg-slate-50 ${
-                        language === lang ? "text-brand" : "text-slate-700"
-                      }`}
+                      className={`flex w-full items-center justify-between px-4 py-2 text-left text-xs font-medium hover:bg-slate-50 ${language === lang ? "text-brand" : "text-slate-700"
+                        }`}
                     >
                       <span>{lang === "English" ? "English" : lang === "Hindi" ? "हिंदी" : "मराठी"}</span>
                       {language === lang && <Check size={12} className="text-brand" />}
@@ -540,7 +547,7 @@ export function DashboardLayout() {
       </div>
 
       {/* ── Modals ──────────────────────────────────────────────────── */}
-      
+
       {/* Update Profile Modal */}
       <Modal isOpen={profileModalOpen} onClose={() => setProfileModalOpen(false)} title={t("Update Profile")}>
         <form onSubmit={handleProfileSubmit} className="space-y-4">

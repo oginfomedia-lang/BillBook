@@ -1,3 +1,5 @@
+// frontend/src/App.tsx
+
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "react-hot-toast";
@@ -15,6 +17,9 @@ import { AddSalePage } from "./pages/sales/AddSalePage";
 import { SalesReturnsPage } from "./pages/sales/SalesReturnsPage";
 import { InvoiceDetailPage } from "./pages/InvoiceDetailPage";
 import { InvoicesPage } from "./pages/InvoicesPage";
+import { CreateQuotationPage } from "./pages/CreateQuotationPage";
+import { QuotationsPage } from "./pages/QuotationsPage";
+import { QuotationDetailPage } from "./pages/QuotationDetailPage";
 import { CustomersPage } from "./pages/CustomersPage";
 import { ContactsLayout, ContactsIndexRedirect } from "./pages/contacts/ContactsLayout";
 import { SuppliersPage } from "./pages/contacts/SuppliersPage";
@@ -24,6 +29,16 @@ import { ProductsPage } from "./pages/ProductsPage";
 import { UsersPage } from "./pages/UsersPage";
 import { RolesPage } from "./pages/RolesPage";
 import { AdvancePaymentsList } from "./pages/Advance/AdvancePaymentsList";
+import { WarehousesPage } from "./pages/WarehousesPage";
+
+// 🔽 ADD PURCHASE IMPORTS 🔽
+import { PurchaseLayout } from "./pages/purchase/PurchaseLayout";
+import { PurchaseListPage } from "./pages/purchase/PurchaseListPage";
+import { NewPurchasePage } from "./pages/purchase/NewPurchasePage";
+import { PurchaseReturnsListPage } from "./pages/purchase/PurchaseReturnsListPage";
+import { NewPurchaseReturnPage } from "./pages/purchase/NewPurchaseReturnPage";
+
+
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -42,9 +57,11 @@ export default function App() {
           <AuthProvider>
             <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
             <Routes>
+              {/* Public routes - no sidebar */}
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
 
+              {/* Protected routes WITH sidebar */}
               <Route
                 element={
                   <ProtectedRoute>
@@ -53,6 +70,8 @@ export default function App() {
                 }
               >
                 <Route path="/dashboard" element={<DashboardPage />} />
+
+                {/* Sales */}
                 <Route path="/sales" element={<SalesLayout />}>
                   <Route index element={<SalesListPage />} />
                   <Route path="add" element={<AddSalePage />} />
@@ -60,29 +79,55 @@ export default function App() {
                   <Route path="returns" element={<SalesReturnsPage />} />
                   <Route path=":id" element={<InvoiceDetailPage />} />
                 </Route>
+
+                {/* POS shortcut */}
                 <Route path="/pos" element={<Navigate to="/sales/pos" replace />} />
+
+                {/* Invoices */}
                 <Route path="/invoices" element={<InvoicesPage />} />
-                <Route path="/customers" element={<CustomersPage />} />
+
+                {/* Quotations */}
+                <Route path="/quotations" element={<QuotationsPage />} />
+                <Route path="/quotations/new" element={<CreateQuotationPage />} />
+                <Route path="/quotations/:id" element={<QuotationDetailPage />} />
+
+                {/* Contacts */}
+                <Route path="/contacts" element={<ContactsLayout />}>
+                  <Route index element={<ContactsIndexRedirect />} />
+                  <Route path="customers" element={<CustomersPage />} />
+                  <Route path="suppliers" element={<SuppliersPage />} />
+                  <Route path="import/customers" element={<ImportCustomersPage />} />
+                  <Route path="import/suppliers" element={<ImportSuppliersPage />} />
+                </Route>
+
+                {/* Advance Payments */}
                 <Route path="/advance" element={<AdvancePaymentsList />} />
+
+                {/* Products */}
                 <Route path="/products" element={<ProductsPage />} />
+
+                {/* Warehouses */}
+                <Route path="/warehouses" element={<WarehousesPage />} />
+
+                {/* 🔽 ADD PURCHASE ROUTES 🔽 */}
+                <Route path="/purchase" element={<PurchaseLayout />}>
+                  <Route index element={<Navigate to="list" replace />} />
+                  <Route path="list" element={<PurchaseListPage />} />
+                  <Route path="new" element={<NewPurchasePage />} />
+                  <Route path="returns" element={<PurchaseReturnsListPage />} />
+                  <Route path="returns/new" element={<NewPurchaseReturnPage />} />
+
+                  <Route path=":id/edit" element={<NewPurchasePage editMode={true} />} />
+                </Route>
+
+                {/* Users */}
                 <Route path="/users" element={<UsersPage />} />
+
+                {/* Roles */}
                 <Route path="/roles" element={<RolesPage />} />
               </Route>
-              <Route path="/pos" element={<Navigate to="/sales/pos" replace />} />
-              <Route path="/invoices" element={<InvoicesPage />} />
-              <Route path="/contacts" element={<ContactsLayout />}>
-                <Route index element={<ContactsIndexRedirect />} />
-                <Route path="customers" element={<CustomersPage />} />
-                <Route path="suppliers" element={<SuppliersPage />} />
-                <Route path="import/customers" element={<ImportCustomersPage />} />
-                <Route path="import/suppliers" element={<ImportSuppliersPage />} />
-              </Route>
-              <Route path="/customers" element={<CustomersPage />} />
-              <Route path="/products" element={<ProductsPage />} />
-              <Route path="/users" element={<UsersPage />} />
-              <Route path="/roles" element={<RolesPage />} />
-            
 
+              {/* Fallback routes */}
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>

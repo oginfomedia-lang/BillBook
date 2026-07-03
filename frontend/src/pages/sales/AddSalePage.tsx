@@ -1,28 +1,66 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import toast from "react-hot-toast";
 import { useCustomers } from "../../hooks/useCustomers";
+import { useProducts } from "../../hooks/useProducts";
 import { useCreateInvoice } from "../../hooks/useInvoices";
 import { InvoiceItemsEditor } from "../../components/invoices/InvoiceItemsEditor";
 import { InvoiceTotals } from "../../components/invoices/InvoiceTotals";
-import type { InvoiceItem, InvoiceStatus } from "../../types";
+import type { InvoiceItem, InvoiceStatus, Product } from "../../types";
 
 export function AddSalePage() {
-  const { data: customersData } = useCustomers({ page: 1 });
-  const createInvoice = useCreateInvoice();
-
   const [customerId, setCustomerId] = useState<number | "">("");
   const [issueDate, setIssueDate] = useState(new Date().toISOString().slice(0, 10));
   const [dueDate, setDueDate] = useState("");
   const [discountType, setDiscountType] = useState<"flat" | "percent">("flat");
   const [discountValue, setDiscountValue] = useState(0);
   const [notes, setNotes] = useState("");
+  const [productSearch, setProductSearch] = useState("");
+  const { data: customersData } = useCustomers({ page: 1 });
+  const { data: productsData } = useProducts({ page: 1, per_page: 100, search: productSearch });
+  const createInvoice = useCreateInvoice();
+
   const [items, setItems] = useState<InvoiceItem[]>([
     { description: "", quantity: 1, unit_price: 0, tax_rate: 0 },
   ]);
+
+  const stockValidationErrors = useMemo(() => {
+    const productById = new Map<number, Product>();
+    productsData?.items.forEach((product) => productById.set(product.id, product));
+
+    const requestedQuantities = items.reduce((acc, item) => {
+      if (!item.product_id) return acc;
+      const existing = acc.get(item.product_id) ?? 0;
+      acc.set(item.product_id, existing + item.quantity);
+      return acc;
+    }, new Map<number, number>());
+
+    return items.map((item) => {
+      if (!item.product_id) return "";
+      const product = productById.get(item.product_id);
+      if (!product) return "";
+      if (product.stock_quantity <= 0) {
+        return `Out of Stock. Please reduce the quantity.`;
+      }
+
+      const totalRequested = requestedQuantities.get(item.product_id) ?? 0;
+      if (totalRequested > product.stock_quantity) {
+        return `Only ${product.stock_quantity} pcs available in stock. Please reduce the quantity.`;
+      }
+
+      return "";
+    });
+  }, [items, productsData]);
+
+  const hasStockValidationErrors = stockValidationErrors.some(Boolean);
 
   const handleSubmit = (status: InvoiceStatus) => {
     if (!customerId) return;
     const validItems = items.filter((item) => item.description.trim().length > 0);
     if (validItems.length === 0) return;
+    if (hasStockValidationErrors) {
+      toast.error("Please reduce the quantity to the available stock before creating the sale.");
+      return;
+    }
 
     createInvoice.mutate({
       customer_id: customerId,
@@ -36,7 +74,7 @@ export function AddSalePage() {
     });
   };
 
-  const canSubmit = customerId !== "" && items.some((item) => item.description.trim().length > 0);
+  const canSubmit = customerId !== "" && items.some((item) => item.description.trim().length > 0) && !hasStockValidationErrors;
 
   return (
     <div className="grid gap-6 lg:grid-cols-3">
@@ -84,7 +122,13 @@ export function AddSalePage() {
           </div>
         </div>
 
-        <InvoiceItemsEditor items={items} onChange={setItems} />
+        <InvoiceItemsEditor
+          items={items}
+          onChange={setItems}
+          products={productsData?.items ?? []}
+          onProductSearch={setProductSearch}
+          itemErrors={stockValidationErrors}
+        />
 
         <div className="rounded-xl border border-slate-200 bg-white p-5">
           <label className="mb-1.5 block text-xs font-medium text-slate-500">Notes</label>
