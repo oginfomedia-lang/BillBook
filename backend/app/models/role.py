@@ -15,10 +15,13 @@ PERMISSION_CATALOG = {
     "suppliers": ["view", "create", "edit", "delete", "import"],
     "products": ["view", "create", "edit", "delete", "import"],
     "invoices": ["view", "create", "edit", "delete", "record_payment"],
+     "quotations": ["view", "create", "edit", "delete", "convert"],
     "dashboard": ["view"],
     "advance_payments": ["view", "create", "edit", "delete"],
+     "purchases": ["view", "create", "edit", "delete"], 
     "reports": ["view"],
     "settings": ["view", "edit"],
+     "warehouses": ["view", "create", "edit", "delete"],  
 }
 
 
@@ -92,6 +95,7 @@ def seed_default_roles(tenant_id: int) -> "Role":
             "customers.view", "customers.create", "customers.edit",
             "products.view",
             "invoices.view", "invoices.create", "invoices.edit", "invoices.record_payment",
+            "purchases.view", "purchases.create", "purchases.edit", 
         ],
         is_system=False,
     )

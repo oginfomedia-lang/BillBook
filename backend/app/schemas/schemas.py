@@ -88,3 +88,7 @@ class InvoiceSchema(Schema):
         validate=validate.OneOf(["draft", "pending", "paid", "overdue", "cancelled"]),
     )
     items = fields.List(fields.Nested(InvoiceItemSchema), required=True, validate=validate.Length(min=1))
+
+
+# Quotation schemas are kept separate for clarity and reuse.
+from app.schemas.quotation_schemas import QuotationSchema  # noqa: F401

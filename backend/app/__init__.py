@@ -44,6 +44,10 @@ def create_app(config_name: str | None = None) -> Flask:
     from app.routes.roles import roles_bp
     from app.routes.users import users_bp
     from app.routes.advance_payments import advance_payments_bp
+    from app.routes.quotations import quotations_bp
+    from app.routes.warehouses import warehouses_bp
+    from app.routes.purchases import purchases_bp
+    from app.routes.purchase_returns import purchase_returns_bp
 
     flask_app.register_blueprint(auth_bp)
     flask_app.register_blueprint(customers_bp)
@@ -54,6 +58,10 @@ def create_app(config_name: str | None = None) -> Flask:
     flask_app.register_blueprint(roles_bp)
     flask_app.register_blueprint(users_bp)
     flask_app.register_blueprint(advance_payments_bp)
+    flask_app.register_blueprint(quotations_bp)
+    flask_app.register_blueprint(warehouses_bp)
+    flask_app.register_blueprint(purchases_bp)
+    flask_app.register_blueprint(purchase_returns_bp)
 
     @flask_app.route("/api/v1/health", methods=["GET"])
     def health():

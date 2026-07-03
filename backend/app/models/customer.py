@@ -20,6 +20,7 @@ class Customer(TenantScopedMixin, db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     invoices = db.relationship("Invoice", back_populates="customer", lazy="dynamic")
+    quotations = db.relationship("Quotation", back_populates="customer", lazy="dynamic")
 
     def to_dict(self):
         return {
