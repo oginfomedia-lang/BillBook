@@ -9,6 +9,7 @@ export interface AdvancePaymentPayload {
   reference?: string | null;
   notes?: string | null;
   status?: AdvancePaymentStatus;
+  branch_id?: number | null;
 }
 
 export async function listAdvancePayments(params: {
@@ -16,6 +17,7 @@ export async function listAdvancePayments(params: {
   per_page?: number;
   search?: string;
   customer_id?: number;
+  branch_id?: number;
 } = {}) {
   const { data } = await apiClient.get<PaginatedResponse<AdvancePayment>>("/advance-payments", { params });
   return data;

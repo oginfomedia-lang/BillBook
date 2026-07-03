@@ -10,10 +10,13 @@ export interface InvoicePayload {
   notes?: string | null;
   status: InvoiceStatus;
   items: Omit<InvoiceItem, "id" | "line_subtotal" | "line_tax" | "line_total">[];
+  coupon_code?: string | null;
+  coupon_discount?: number;
+  branch_id?: number | null;
 }
 
 export async function listInvoices(
-  params: { page?: number; search?: string; status?: InvoiceStatus } = {}
+  params: { page?: number; search?: string; status?: InvoiceStatus; branch_id?: number } = {}
 ) {
   const { data } = await apiClient.get<PaginatedResponse<Invoice>>("/invoices", { params });
   return data;

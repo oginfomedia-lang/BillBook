@@ -8,6 +8,8 @@ from app.models.invoice import Invoice, InvoiceItem, InvoiceStatus
 from app.models.quotation import Quotation, QuotationItem, QuotationStatus
 from app.models.warehouse import Warehouse
 from .advance_payment import AdvancePayment, PaymentType, AdvancePaymentStatus
+from .coupon import Coupon, CouponType, CouponStatus
+from .branch import Branch
 from .purchase import (
     Purchase, PurchaseItem, PurchasePayment, PurchaseStatus, PurchasePaymentStatus,
     PurchasePaymentType, PurchaseReturn, PurchaseReturnItem, PurchaseReturnStatus,
@@ -35,6 +37,10 @@ __all__ = [
     "AdvancePayment",
     "PaymentType",
     "AdvancePaymentStatus",
+    "Coupon",
+    "CouponType",
+    "CouponStatus",
+    "Branch",
     "Purchase",
     "PurchaseItem",
     "PurchasePayment",

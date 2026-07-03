@@ -6,6 +6,7 @@ import { Modal } from "../components/ui/Modal";
 import { formatMoney } from "../utils/format";
 import type { Customer } from "../types";
 import { useTranslation } from "../context/LanguageContext";
+import { useBranch } from "../context/BranchContext";
 
 export function CustomersPage() {
   const { t } = useTranslation();
@@ -14,6 +15,9 @@ export function CustomersPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
 
+  const { currentBranchId } = useBranch();
+
+  // Form states
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -21,7 +25,6 @@ export function CustomersPage() {
     billing_address: "",
     gstin: "",
   });
-
   const [editForm, setEditForm] = useState({
     name: "",
     email: "",
@@ -30,14 +33,19 @@ export function CustomersPage() {
     gstin: "",
   });
 
-  const { data, isLoading } = useCustomers({ page, search });
+  const { data, isLoading } = useCustomers({ page, search, branch_id: currentBranchId || undefined });
   const createCustomer = useCreateCustomer();
   const deleteCustomer = useDeleteCustomer();
   const updateCustomer = useUpdateCustomer();
 
   const handleCreateSubmit = (e: FormEvent) => {
     e.preventDefault();
-    createCustomer.mutate(form, {
+    // Include branch_id in payload
+    const payload = {
+      ...form,
+      branch_id: currentBranchId || undefined,
+    };
+    createCustomer.mutate(payload, {
       onSuccess: () => {
         setForm({
           name: "",
@@ -65,8 +73,12 @@ export function CustomersPage() {
   const handleEditSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!editingCustomer) return;
+    const payload = {
+      ...editForm,
+      branch_id: currentBranchId || undefined,
+    };
     updateCustomer.mutate(
-      { id: editingCustomer.id, payload: editForm },
+      { id: editingCustomer.id, payload },
       {
         onSuccess: () => {
           setEditingCustomer(null);

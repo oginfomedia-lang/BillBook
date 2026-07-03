@@ -7,6 +7,7 @@ import { AdvancePaymentForm } from "./AdvancePaymentForm";
 import { formatMoney, formatDate } from "../../utils/format";
 import type { AdvancePayment } from "../../types";
 import { useTranslation } from "../../context/LanguageContext";
+import { useBranch } from "../../context/BranchContext";
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 
@@ -34,6 +35,7 @@ function downloadCSV(rows: AdvancePayment[], filename: string) {
 
 export function AdvancePaymentsList() {
   const { t } = useTranslation();
+  const { currentBranchId } = useBranch();
 
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
@@ -41,7 +43,12 @@ export function AdvancePaymentsList() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<AdvancePayment | null>(null);
 
-  const { data, isLoading } = useAdvancePayments({ page, per_page: perPage, search });
+  const { data, isLoading } = useAdvancePayments({ 
+    page, 
+    per_page: perPage, 
+    search,
+    branch_id: currentBranchId || undefined,
+  });
   const { data: customersData } = useCustomers({ page: 1, per_page: 1000 });
   const createAdvance = useCreateAdvancePayment();
   const updateAdvance = useUpdateAdvancePayment();
@@ -50,22 +57,25 @@ export function AdvancePaymentsList() {
   const customers = customersData?.items || [];
 
   const handleCreateSubmit = (payload: any) => {
-    createAdvance.mutate(payload, {
-      onSuccess: () => {
-        setShowForm(false);
-      },
+    // Ensure branch_id is included
+    const finalPayload = {
+      ...payload,
+      branch_id: currentBranchId || undefined,
+    };
+    createAdvance.mutate(finalPayload, {
+      onSuccess: () => setShowForm(false),
     });
   };
 
   const handleUpdateSubmit = (payload: any) => {
     if (!editing) return;
+    const finalPayload = {
+      ...payload,
+      branch_id: currentBranchId || undefined,
+    };
     updateAdvance.mutate(
-      { id: editing.id, payload },
-      {
-        onSuccess: () => {
-          setEditing(null);
-        },
-      }
+      { id: editing.id, payload: finalPayload },
+      { onSuccess: () => setEditing(null) }
     );
   };
 
@@ -75,7 +85,6 @@ export function AdvancePaymentsList() {
     }
   };
 
-  // Use perPage from state, not from data
   const from = data ? (data.page - 1) * perPage + 1 : 0;
   const to = data ? Math.min(data.page * perPage, data.total) : 0;
 

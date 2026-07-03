@@ -10,17 +10,23 @@ import { createInvoice } from "../api/invoices";
 import { formatMoney } from "../utils/format";
 import type { InvoiceItem, Product } from "../types";
 import { useTranslation } from "../context/LanguageContext";
+import { CouponInput } from "../components/coupons/CouponInput";
+import { useBranch } from "../context/BranchContext";
 
 const defaultCartItem = { description: "", quantity: 1, unit_price: 0, tax_rate: 0 };
 
 export function POSPage() {
   const { t } = useTranslation();
+  const { currentBranchId } = useBranch();
   const [productSearch, setProductSearch] = useState("");
   const [customerSearch, setCustomerSearch] = useState("");
   const [selectedCustomerId, setSelectedCustomerId] = useState<number | "">("");
   const [cartItems, setCartItems] = useState<InvoiceItem[]>([]);
   const [showCustomerModal, setShowCustomerModal] = useState(false);
   const [newCustomer, setNewCustomer] = useState({ name: "", email: "", phone: "" });
+
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
+  const [couponDiscount, setCouponDiscount] = useState(0);
 
   const { data: productsData, isLoading: productsLoading } = useProducts({ page: 1, per_page: 100, search: productSearch });
   const { data: customersData, isLoading: customersLoading } = useCustomers({ page: 1, search: customerSearch });
@@ -35,6 +41,8 @@ export function POSPage() {
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       toast.success(`${t("Sale")} ${invoice.invoice_number} ${t("saved")}`);
       setCartItems([]);
+      setAppliedCoupon(null);
+      setCouponDiscount(0);
       navigate(`/invoices/${invoice.id}`);
     },
     onError: () => {
@@ -135,8 +143,21 @@ export function POSPage() {
       items: cartItems,
       discount_type: "flat",
       discount_value: 0,
+      coupon_code: appliedCoupon?.code || null,
+      coupon_discount: couponDiscount,
       notes: null,
+      branch_id: currentBranchId || undefined,  // 👈 added
     });
+  };
+
+  const handleCouponApplied = (coupon: any, discount: number) => {
+    setAppliedCoupon(coupon);
+    setCouponDiscount(discount);
+  };
+
+  const handleCouponRemoved = () => {
+    setAppliedCoupon(null);
+    setCouponDiscount(0);
   };
 
   return (
@@ -154,9 +175,9 @@ export function POSPage() {
           {t("Add customer")}
         </button>
       </div>
-
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.7fr_1fr]">
         <div className="space-y-6">
+          {/* Product search & customer select */}
           <div className="rounded-xl border border-slate-200 bg-white p-4">
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="sm:col-span-2">
@@ -184,15 +205,14 @@ export function POSPage() {
                 >
                   <option value="">{t("Walk-in customer")}</option>
                   {customersData?.items?.map((customer) => (
-                    <option key={customer.id} value={customer.id}>
-                      {customer.name}
-                    </option>
+                    <option key={customer.id} value={customer.id}>{customer.name}</option>
                   ))}
                 </select>
               </div>
             </div>
           </div>
 
+          {/* Cart */}
           <div className="rounded-xl border border-slate-200 bg-white p-4">
             <div className="flex items-center justify-between gap-3">
               <h2 className="text-lg font-semibold text-ink-900">{t("Cart")}</h2>
@@ -278,6 +298,7 @@ export function POSPage() {
             )}
           </div>
 
+          {/* Checkout buttons */}
           <div className="space-y-4">
             <button
               type="button"
@@ -336,9 +357,21 @@ export function POSPage() {
               </div>
               <div className="flex items-center justify-between border-t border-slate-200 pt-4 text-base font-semibold text-ink-900">
                 <span>{t("Grand total")}</span>
-                <span>{formatMoney(cartTotals.total)}</span>
+                <span>{formatMoney(cartTotals.total - couponDiscount)}</span>
               </div>
             </div>
+          </div>
+
+          {/* Coupon Input */}
+          <div className="rounded-xl border border-slate-200 bg-white p-4">
+            <label className="mb-1.5 block text-xs font-medium text-slate-500">{t("Coupon")}</label>
+            <CouponInput
+              customerId={selectedCustomerId || null}
+              subtotal={cartTotals.subtotal}
+              onCouponApplied={handleCouponApplied}
+              onCouponRemoved={handleCouponRemoved}
+              initialCode={appliedCoupon?.code || ""}
+            />
           </div>
 
           <div className="rounded-xl border border-slate-200 bg-white p-4">

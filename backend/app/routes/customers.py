@@ -24,6 +24,10 @@ def list_customers():
     if search:
         query = query.filter(Customer.name.ilike(f"%{search}%"))
 
+    branch_id = request.args.get("branch_id", type=int)
+    if branch_id:
+        query = query.filter(Customer.branch_id == branch_id)
+
     pagination = query.order_by(Customer.name.asc()).paginate(page=page, per_page=per_page, error_out=False)
     return jsonify(
         {
@@ -45,14 +49,10 @@ def get_customer(customer_id):
 @customers_bp.route("", methods=["POST"])
 @require_auth
 def create_customer():
-    from flask import g
-
     try:
         data = CustomerSchema().load(request.get_json(force=True) or {})
     except ValidationError as err:
         return jsonify({"error": "Validation failed", "details": err.messages}), 422
-
-    from app.tenant_scope import TenantContext
 
     customer = Customer(tenant_id=TenantContext.get(), **data)
     db.session.add(customer)
@@ -71,6 +71,9 @@ def import_customers():
     if not file or file.filename == "":
         return jsonify({"error": "CSV file is required."}), 400
 
+    # Get branch_id from query parameters
+    branch_id = request.args.get("branch_id", type=int)
+
     try:
         content = file.stream.read().decode("utf-8-sig")
     except Exception:
@@ -88,7 +91,8 @@ def import_customers():
             errors.append({"row": row_number, "errors": err.messages})
             continue
 
-        imported.append(Customer(tenant_id=TenantContext.get(), **data))
+        # Explicitly set branch_id (overrides CSV if present)
+        imported.append(Customer(tenant_id=TenantContext.get(), branch_id=branch_id, **data))
 
     if errors:
         return jsonify({"error": "Import failed.", "details": errors}), 422

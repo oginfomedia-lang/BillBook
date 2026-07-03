@@ -7,6 +7,7 @@ import { TableSkeleton } from "../components/ui/Skeletons";
 import { formatMoney, formatDate } from "../utils/format";
 import type { InvoiceStatus } from "../types";
 import { useTranslation } from "../context/LanguageContext";
+import { useBranch } from "../context/BranchContext";
 
 const STATUS_FILTERS: { label: string; value: InvoiceStatus | "" }[] = [
   { label: "All", value: "" },
@@ -18,13 +19,18 @@ const STATUS_FILTERS: { label: string; value: InvoiceStatus | "" }[] = [
 
 export function InvoicesPage() {
   const { t } = useTranslation();
+  const { currentBranchId } = useBranch();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<InvoiceStatus | "">("");
 
-  const { data, isLoading } = useInvoices({ page, search, status: status || undefined });
+  const { data, isLoading } = useInvoices({ 
+    page, 
+    search, 
+    status: status || undefined,
+    branch_id: currentBranchId || undefined,
+  });
 
-  // Translate filter labels
   const translatedFilters = STATUS_FILTERS.map((f) => ({
     ...f,
     label: t(f.label),

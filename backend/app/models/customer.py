@@ -22,6 +22,9 @@ class Customer(TenantScopedMixin, db.Model):
     invoices = db.relationship("Invoice", back_populates="customer", lazy="dynamic")
     quotations = db.relationship("Quotation", back_populates="customer", lazy="dynamic")
 
+    branch_id = db.Column(db.Integer, db.ForeignKey("branches.id", ondelete="SET NULL"), nullable=True)
+    branch = db.relationship("Branch", back_populates="customers")
+
     def to_dict(self):
         return {
             "id": self.id,

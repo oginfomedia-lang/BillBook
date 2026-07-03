@@ -7,6 +7,7 @@ export function useAdvancePayments(params: {
   per_page?: number;
   search?: string;
   customer_id?: number;
+  branch_id?: number;
 } = {}) {
   return useQuery({
     queryKey: ["advance-payments", params],

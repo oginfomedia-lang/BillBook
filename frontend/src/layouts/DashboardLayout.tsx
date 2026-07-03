@@ -22,13 +22,15 @@ import {
   Check,
   Trash2,
   Building,
-  ShoppingBag,  // 🔽 ADD THIS IMPORT
+  ShoppingBag,
+  Gift,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useTranslation } from "../context/LanguageContext";
 import toast from "react-hot-toast";
 import * as authApi from "../api/auth";
 import { Modal } from "../components/ui/Modal";
+import { useBranch } from "../context/BranchContext";
 
 const NAV_ITEMS = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, permission: "dashboard.view" },
@@ -51,8 +53,6 @@ const NAV_ITEMS = [
   },
   { to: "/products", label: "Products", icon: Package, permission: "products.view" },
   { to: "/warehouses", label: "Warehouses", icon: Building, permission: "warehouses.view" },
-
-  // 🔽 ADD THIS - Purchase Module 🔽
   {
     label: "Purchase",
     icon: ShoppingBag,
@@ -63,13 +63,11 @@ const NAV_ITEMS = [
       { to: "/purchase/returns", label: "Purchase Returns List" },
     ],
   },
-
   { to: "/users", label: "Users", icon: Users, permission: "users.view" },
   { to: "/roles", label: "Roles", icon: ShieldCheck, permission: "roles.view" },
   { to: "/advance", label: "Advance", icon: CreditCard, permission: "advance_payments.view" },
   { to: "/quotations", label: "Quotations", icon: FileText, permission: "quotations.view" },
-  { to: "/purchases", label: "purchases", icon: ShoppingBag, permission: "purchases.view" }
-
+  { to: "/coupons", label: "Coupons", icon: Gift, permission: "coupons.view" },
 ];
 
 export function DashboardLayout() {
@@ -80,7 +78,7 @@ export function DashboardLayout() {
 
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({
     Sales: true,
-    Purchase: true,  // 🔽 ADD THIS - Keep Purchase menu open by default
+    Purchase: true,
   });
 
   // Dropdown states
@@ -93,6 +91,8 @@ export function DashboardLayout() {
   ]);
 
   const [avatarDropdownOpen, setAvatarDropdownOpen] = useState(false);
+
+  const { currentBranchId, setCurrentBranchId, branches, isLoading } = useBranch();
 
   // Profile Modal State
   const [profileModalOpen, setProfileModalOpen] = useState(false);
@@ -465,6 +465,21 @@ export function DashboardLayout() {
                 </div>
               )}
             </div>
+
+            {/* Branch Selector */}
+            <select
+              value={currentBranchId || ""}
+              onChange={(e) => setCurrentBranchId(e.target.value ? Number(e.target.value) : null)}
+              className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
+              disabled={isLoading || branches.length === 0}
+            >
+              <option value="">{t("Select Branch")}</option>
+              {branches?.map((branch) => (
+                <option key={branch.id} value={branch.id}>
+                  {branch.name} ({branch.code})
+                </option>
+              ))}
+            </select>
 
             {/* Role badge */}
             <span className="hidden rounded-full bg-brand-light px-3 py-1 text-xs font-semibold text-brand-dark sm:inline">
