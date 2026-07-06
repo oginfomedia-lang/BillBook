@@ -1,3 +1,5 @@
+# app/models/branch.py
+
 from datetime import datetime
 from app.extensions import db
 from app.tenant_scope import TenantScopedMixin
@@ -18,10 +20,11 @@ class Branch(TenantScopedMixin, db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # Relationships
+    # ✅ CORRECT Relationships
     customers = db.relationship("Customer", back_populates="branch", lazy="dynamic")
     products = db.relationship("Product", back_populates="branch", lazy="dynamic")
     invoices = db.relationship("Invoice", back_populates="branch", lazy="dynamic")
+    invoice_items = db.relationship("InvoiceItem", back_populates="branch", lazy="dynamic")  # ← ADD THIS
     suppliers = db.relationship("Supplier", back_populates="branch", lazy="dynamic")
     advance_payments = db.relationship("AdvancePayment", back_populates="branch", lazy="dynamic")
     coupons = db.relationship("Coupon", back_populates="branch", lazy="dynamic")

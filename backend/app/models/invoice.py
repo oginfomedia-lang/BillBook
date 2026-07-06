@@ -29,6 +29,7 @@ class Invoice(TenantScopedMixin, db.Model):
     invoice_number = db.Column(db.String(40), nullable=False)
 
     customer_id = db.Column(db.Integer, db.ForeignKey("customers.id"), nullable=False)
+    branch_id = db.Column(db.Integer, db.ForeignKey("branches.id", ondelete="SET NULL"), nullable=True)  # ← ADD THIS
 
     issue_date = db.Column(db.Date, default=date.today)
     due_date = db.Column(db.Date)
@@ -59,6 +60,8 @@ class Invoice(TenantScopedMixin, db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     customer = db.relationship("Customer", back_populates="invoices")
+    branch = db.relationship("Branch", back_populates="invoices")  # ← ADD THIS
+    
     items = db.relationship(
         "InvoiceItem", back_populates="invoice", cascade="all, delete-orphan", lazy="joined"
     )
@@ -110,6 +113,8 @@ class Invoice(TenantScopedMixin, db.Model):
             "invoice_number": self.invoice_number,
             "customer_id": self.customer_id,
             "customer": self.customer.to_dict() if self.customer else None,
+            "branch_id": self.branch_id,
+            "branch": self.branch.to_dict() if self.branch else None,
             "issue_date": self.issue_date.isoformat() if self.issue_date else None,
             "due_date": self.due_date.isoformat() if self.due_date else None,
             "discount_type": self.discount_type,
@@ -147,8 +152,16 @@ class InvoiceItem(db.Model):
     line_tax = db.Column(db.Numeric(12, 2), default=0)
     line_total = db.Column(db.Numeric(12, 2), default=0)
 
+    # ✅ CORRECT - Invoice relationship
     invoice = db.relationship("Invoice", back_populates="items")
 
+<<<<<<< HEAD
+=======
+    # ✅ CORRECT - Branch relationship
+    branch_id = db.Column(db.Integer, db.ForeignKey("branches.id", ondelete="SET NULL"), nullable=True)
+    branch = db.relationship("Branch", back_populates="invoice_items")  # ← This matches Branch.invoice_items
+
+>>>>>>> b3e76e16bd25fa7b0539e37903b47a8dc0330d27
     def to_dict(self):
         return {
             "id": self.id,
@@ -160,4 +173,5 @@ class InvoiceItem(db.Model):
             "line_subtotal": float(self.line_subtotal or 0),
             "line_tax": float(self.line_tax or 0),
             "line_total": float(self.line_total or 0),
+            "branch_id": self.branch_id,
         }

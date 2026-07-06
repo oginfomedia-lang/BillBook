@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import type { InvoiceItem } from "../../types";
 import { formatMoney } from "../../utils/format";
 import { useTranslation } from "../../context/LanguageContext";
@@ -25,6 +26,11 @@ export function InvoiceTotals({
   couponDiscount = 0,
 }: InvoiceTotalsProps) {
   const { t } = useTranslation();
+  const [discountInput, setDiscountInput] = useState(String(discountValue));
+
+  useEffect(() => {
+    setDiscountInput(String(discountValue));
+  }, [discountValue]);
 
   const subtotal = items.reduce((sum, item) => sum + item.quantity * item.unit_price, 0);
   const taxTotal = items.reduce(
@@ -63,8 +69,17 @@ export function InvoiceTotals({
               type="number"
               min={0}
               step="0.01"
-              value={discountValue}
-              onChange={(e) => onDiscountValueChange(Number(e.target.value) || 0)}
+              value={discountInput}
+              onChange={(e) => {
+                const nextValue = e.target.value;
+                setDiscountInput(nextValue);
+                const parsed = Number(nextValue);
+                if (nextValue === "") {
+                  onDiscountValueChange(0);
+                } else if (!Number.isNaN(parsed)) {
+                  onDiscountValueChange(parsed);
+                }
+              }}
               className="figures w-20 rounded-md border border-slate-200 px-2 py-1 text-right text-sm"
               placeholder={t("Discount value")}
             />

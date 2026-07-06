@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useCustomers } from "../hooks/useCustomers";
+import { useProducts } from "../hooks/useProducts";
 import { useCreateInvoice } from "../hooks/useInvoices";
 import { InvoiceItemsEditor } from "../components/invoices/InvoiceItemsEditor";
 import { InvoiceTotals } from "../components/invoices/InvoiceTotals";
+import type { InvoiceItem, InvoiceStatus, Product } from "../types";
 import { CouponInput } from "./Coupons/CouponInput";
 import type { InvoiceItem, InvoiceStatus } from "../types";
 import { useTranslation } from "../context/LanguageContext";
@@ -12,6 +14,8 @@ export function CreateInvoicePage() {
   const { t } = useTranslation();
   const { currentBranchId } = useBranch();
   const { data: customersData } = useCustomers({ page: 1 });
+  const [productSearch, setProductSearch] = useState("");
+  const { data: productsData } = useProducts({ page: 1, per_page: 100, search: productSearch });
   const createInvoice = useCreateInvoice();
 
   const [customerId, setCustomerId] = useState<number | "">("");
@@ -108,6 +112,12 @@ export function CreateInvoicePage() {
             </div>
           </div>
 
+          <InvoiceItemsEditor
+            items={items}
+            products={productsData?.items ?? []}
+            onChange={setItems}
+            onProductSearch={setProductSearch}
+          />
           {/* Coupon Input */}
           <div className="rounded-xl border border-slate-200 bg-white p-5">
             <label className="mb-1.5 block text-xs font-medium text-slate-500">{t("Coupon")}</label>

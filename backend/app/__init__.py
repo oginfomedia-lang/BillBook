@@ -17,18 +17,25 @@ def create_app(config_name: str | None = None) -> Flask:
     migrate.init_app(flask_app, db)
     jwt.init_app(flask_app)
 
-    # CORS: only the configured frontend origin may call this API, and only
-    # with the headers/methods actually needed (no wildcard "*").
+    # ✅ CORS Configuration - Proper Setup (No Conflicts)
+    allowed_origins = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
+    
     CORS(
         flask_app,
-        resources={r"/api/*": {"origins": flask_app.config["FRONTEND_ORIGIN"]}},
+        resources={r"/api/*": {"origins": allowed_origins}},
         supports_credentials=True,
-        allow_headers=["Content-Type", "Authorization"],
+        allow_headers=["Content-Type", "Authorization", "Accept"],
+        expose_headers=["Content-Type", "Authorization"],
         methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        max_age=86400,
     )
 
     # --- Register the tenant-scoping event hook ---
-    # Imported for its side effect: registers the SQLAlchemy event listener.
     import app.tenant_scope  # noqa: F401
 
     # --- Models (so Flask-Migrate can detect them) ---
@@ -51,22 +58,22 @@ def create_app(config_name: str | None = None) -> Flask:
     from app.routes.purchases import purchases_bp
     from app.routes.purchase_returns import purchase_returns_bp
 
-    flask_app.register_blueprint(auth_bp)
-    flask_app.register_blueprint(customers_bp)
-    flask_app.register_blueprint(suppliers_bp)
-    flask_app.register_blueprint(products_bp)
-    flask_app.register_blueprint(invoices_bp)
-    flask_app.register_blueprint(dashboard_bp)
-    flask_app.register_blueprint(roles_bp)
-    flask_app.register_blueprint(users_bp)
-    flask_app.register_blueprint(advance_payments_bp)
-    flask_app.register_blueprint(coupons_bp)
-    flask_app.register_blueprint(branches_bp)
-
-    flask_app.register_blueprint(quotations_bp)
-    flask_app.register_blueprint(warehouses_bp)
-    flask_app.register_blueprint(purchases_bp)
-    flask_app.register_blueprint(purchase_returns_bp)
+    # Register with url_prefix to ensure consistency
+    flask_app.register_blueprint(auth_bp, url_prefix='/api/v1/auth')
+    flask_app.register_blueprint(customers_bp, url_prefix='/api/v1/customers')
+    flask_app.register_blueprint(suppliers_bp, url_prefix='/api/v1/suppliers')
+    flask_app.register_blueprint(products_bp, url_prefix='/api/v1/products')
+    flask_app.register_blueprint(invoices_bp, url_prefix='/api/v1/invoices')
+    flask_app.register_blueprint(dashboard_bp, url_prefix='/api/v1/dashboard')
+    flask_app.register_blueprint(roles_bp, url_prefix='/api/v1/roles')
+    flask_app.register_blueprint(users_bp, url_prefix='/api/v1/users')
+    flask_app.register_blueprint(advance_payments_bp, url_prefix='/api/v1/advance-payments')
+    flask_app.register_blueprint(coupons_bp, url_prefix='/api/v1/coupons')
+    flask_app.register_blueprint(branches_bp, url_prefix='/api/v1/branches')
+    flask_app.register_blueprint(quotations_bp, url_prefix='/api/v1/quotations')
+    flask_app.register_blueprint(warehouses_bp, url_prefix='/api/v1/warehouses')
+    flask_app.register_blueprint(purchases_bp, url_prefix='/api/v1/purchases')
+    flask_app.register_blueprint(purchase_returns_bp, url_prefix='/api/v1/purchase-returns')
 
     @flask_app.route("/api/v1/health", methods=["GET"])
     def health():

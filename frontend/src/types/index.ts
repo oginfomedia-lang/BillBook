@@ -70,6 +70,12 @@ export interface Supplier {
   branch?: Branch | null;
 }
 
+export interface Warehouse {
+  id: number;
+  name: string;
+  location: string | null;
+}
+
 export interface Product {
   id: number;
   name: string;
