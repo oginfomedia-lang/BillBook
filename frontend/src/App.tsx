@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "./context/AuthContext";
 import { LanguageProvider } from "./context/LanguageContext";
+import { BranchProvider } from "./context/BranchContext";   // 👈 Added
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { DashboardLayout } from "./layouts/DashboardLayout";
 import { LoginPage } from "./pages/LoginPage";
@@ -26,6 +27,8 @@ import { RolesPage } from "./pages/RolesPage";
 import { AdvancePaymentsList } from "./pages/Advance/AdvancePaymentsList";
 import { CouponsListPage } from "./pages/Coupons/CouponsList";
 import { CouponFormPage } from "./pages/Coupons/CouponForm";
+import { BranchesListPage } from "./pages/Branches/BranchesList";      // 👈 Added
+import { BranchFormPage } from "./pages/Branches/BranchForm";          // 👈 Added
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -42,54 +45,61 @@ export default function App() {
       <BrowserRouter>
         <LanguageProvider>
           <AuthProvider>
-            <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
-            <Routes>
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/signup" element={<SignupPage />} />
+            <BranchProvider>   {/* 👈 Wraps the whole route tree */}
+              <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
+              <Routes>
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/signup" element={<SignupPage />} />
 
-              {/* Protected routes with sidebar */}
-              <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
-                <Route path="/dashboard" element={<DashboardPage />} />
+                {/* Protected routes with sidebar */}
+                <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+                  <Route path="/dashboard" element={<DashboardPage />} />
 
-                {/* Sales module */}
-                <Route path="/sales" element={<SalesLayout />}>
-                  <Route index element={<SalesListPage />} />
-                  <Route path="add" element={<AddSalePage />} />
-                  <Route path="pos" element={<POSPage />} />
-                  <Route path="returns" element={<SalesReturnsPage />} />
-                  <Route path=":id" element={<InvoiceDetailPage />} />
+                  {/* Sales module */}
+                  <Route path="/sales" element={<SalesLayout />}>
+                    <Route index element={<SalesListPage />} />
+                    <Route path="add" element={<AddSalePage />} />
+                    <Route path="pos" element={<POSPage />} />
+                    <Route path="returns" element={<SalesReturnsPage />} />
+                    <Route path=":id" element={<InvoiceDetailPage />} />
+                  </Route>
+                  <Route path="/pos" element={<Navigate to="/sales/pos" replace />} />
+
+                  {/* Invoices (standalone) */}
+                  <Route path="/invoices" element={<InvoicesPage />} />
+
+                  {/* Contacts module */}
+                  <Route path="/contacts" element={<ContactsLayout />}>
+                    <Route index element={<ContactsIndexRedirect />} />
+                    <Route path="customers" element={<CustomersPage />} />
+                    <Route path="suppliers" element={<SuppliersPage />} />
+                    <Route path="import/customers" element={<ImportCustomersPage />} />
+                    <Route path="import/suppliers" element={<ImportSuppliersPage />} />
+                  </Route>
+
+                  {/* Coupons */}
+                  <Route path="/coupons" element={<CouponsListPage />} />
+                  <Route path="/coupons/new" element={<CouponFormPage />} />
+                  <Route path="/coupons/:id/edit" element={<CouponFormPage />} />
+
+                  {/* Branches (new) */}
+                  <Route path="/branches" element={<BranchesListPage />} />
+                  <Route path="/branches/new" element={<BranchFormPage />} />
+                  <Route path="/branches/:id/edit" element={<BranchFormPage />} />
+
+                  {/* Other top-level modules */}
+                  <Route path="/customers" element={<CustomersPage />} />
+                  <Route path="/products" element={<ProductsPage />} />
+                  <Route path="/users" element={<UsersPage />} />
+                  <Route path="/roles" element={<RolesPage />} />
+                  <Route path="/advance" element={<AdvancePaymentsList />} />
                 </Route>
-                <Route path="/pos" element={<Navigate to="/sales/pos" replace />} />
 
-                {/* Invoices (standalone) */}
-                <Route path="/invoices" element={<InvoicesPage />} />
-
-                {/* Contacts module */}
-                <Route path="/contacts" element={<ContactsLayout />}>
-                  <Route index element={<ContactsIndexRedirect />} />
-                  <Route path="customers" element={<CustomersPage />} />
-                  <Route path="suppliers" element={<SuppliersPage />} />
-                  <Route path="import/customers" element={<ImportCustomersPage />} />
-                  <Route path="import/suppliers" element={<ImportSuppliersPage />} />
-                </Route>
-
-                {/* Coupons – top-level, not under /contacts */}
-                <Route path="/coupons" element={<CouponsListPage />} />
-                <Route path="/coupons/new" element={<CouponFormPage />} />
-                <Route path="/coupons/:id/edit" element={<CouponFormPage />} />
-
-                {/* Other top-level modules */}
-                <Route path="/customers" element={<CustomersPage />} />
-                <Route path="/products" element={<ProductsPage />} />
-                <Route path="/users" element={<UsersPage />} />
-                <Route path="/roles" element={<RolesPage />} />
-                <Route path="/advance" element={<AdvancePaymentsList />} />
-              </Route>
-
-              {/* Fallback redirects */}
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
-              <Route path="*" element={<Navigate to="/dashboard" replace />} />
-            </Routes>
+                {/* Fallback redirects */}
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                <Route path="*" element={<Navigate to="/dashboard" replace />} />
+              </Routes>
+            </BranchProvider>
           </AuthProvider>
         </LanguageProvider>
       </BrowserRouter>

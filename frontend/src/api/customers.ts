@@ -7,10 +7,12 @@ export interface CustomerPayload {
   phone?: string | null;
   billing_address?: string | null;
   gstin?: string | null;
-  branch_id?: number | null;
+  branch_id?: number | null;   // 👈 Added
 }
 
-export async function listCustomers(params: { page?: number; per_page?: number; search?: string; branch_id?: number } = {}) {
+export async function listCustomers(
+  params: { page?: number; per_page?: number; search?: string; branch_id?: number } = {}
+) {
   const { data } = await apiClient.get<PaginatedResponse<Customer>>("/customers", { params });
   return data;
 }
@@ -25,16 +27,6 @@ export async function createCustomer(payload: CustomerPayload) {
   return data;
 }
 
-export async function importCustomers(file: File) {
-  const formData = new FormData();
-  formData.append("file", file);
-
-  const { data } = await apiClient.post<{ imported: number }>("/customers/import", formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
-  return data;
-}
-
 export async function updateCustomer(id: number, payload: Partial<CustomerPayload>) {
   const { data } = await apiClient.put<Customer>(`/customers/${id}`, payload);
   return data;
@@ -42,4 +34,15 @@ export async function updateCustomer(id: number, payload: Partial<CustomerPayloa
 
 export async function deleteCustomer(id: number) {
   await apiClient.delete(`/customers/${id}`);
+}
+
+export async function importCustomers(file: File, branch_id?: number) {
+  const formData = new FormData();
+  formData.append("file", file);
+  const params = branch_id ? { branch_id } : {};
+  const { data } = await apiClient.post("/customers/import", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+    params,
+  });
+  return data;
 }

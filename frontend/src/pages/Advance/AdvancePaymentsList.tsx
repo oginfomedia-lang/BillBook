@@ -57,7 +57,6 @@ export function AdvancePaymentsList() {
   const customers = customersData?.items || [];
 
   const handleCreateSubmit = (payload: any) => {
-    // Ensure branch_id is included
     const finalPayload = {
       ...payload,
       branch_id: currentBranchId || undefined,

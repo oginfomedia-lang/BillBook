@@ -52,6 +52,9 @@ class Invoice(TenantScopedMixin, db.Model):
     coupon_code = db.Column(db.String(50), nullable=True)
     coupon_discount = db.Column(db.Numeric(12, 2), nullable=False, default=0)
 
+    branch_id = db.Column(db.Integer, db.ForeignKey("branches.id", ondelete="SET NULL"), nullable=True)
+    branch = db.relationship("Branch", back_populates="invoices")
+
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -145,9 +148,6 @@ class InvoiceItem(db.Model):
     line_total = db.Column(db.Numeric(12, 2), default=0)
 
     invoice = db.relationship("Invoice", back_populates="items")
-
-    branch_id = db.Column(db.Integer, db.ForeignKey("branches.id", ondelete="SET NULL"), nullable=True)
-    branch = db.relationship("Branch", back_populates="invoices")
 
     def to_dict(self):
         return {

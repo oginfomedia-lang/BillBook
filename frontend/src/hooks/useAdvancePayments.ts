@@ -2,13 +2,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import * as api from "../api/advancePayments";
 
-export function useAdvancePayments(params: {
-  page?: number;
-  per_page?: number;
-  search?: string;
-  customer_id?: number;
-  branch_id?: number;
-} = {}) {
+export function useAdvancePayments(
+  params: { page?: number; per_page?: number; search?: string; customer_id?: number; branch_id?: number } = {}
+) {
   return useQuery({
     queryKey: ["advance-payments", params],
     queryFn: () => api.listAdvancePayments(params),

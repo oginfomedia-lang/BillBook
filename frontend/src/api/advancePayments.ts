@@ -1,5 +1,5 @@
 import { apiClient } from "./client";
-import type { AdvancePayment, AdvancePaymentStatus, PaginatedResponse } from "../types";
+import type { AdvancePayment, PaginatedResponse } from "../types";
 
 export interface AdvancePaymentPayload {
   customer_id: number;
@@ -8,17 +8,13 @@ export interface AdvancePaymentPayload {
   payment_type: "cash" | "bank" | "cheque" | "online";
   reference?: string | null;
   notes?: string | null;
-  status?: AdvancePaymentStatus;
-  branch_id?: number | null;
+  status?: "pending" | "applied" | "cancelled";
+  branch_id?: number | null;   // 👈 Added
 }
 
-export async function listAdvancePayments(params: {
-  page?: number;
-  per_page?: number;
-  search?: string;
-  customer_id?: number;
-  branch_id?: number;
-} = {}) {
+export async function listAdvancePayments(
+  params: { page?: number; per_page?: number; search?: string; customer_id?: number; branch_id?: number } = {}
+) {
   const { data } = await apiClient.get<PaginatedResponse<AdvancePayment>>("/advance-payments", { params });
   return data;
 }

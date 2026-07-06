@@ -12,17 +12,12 @@ export interface CouponPayload {
   is_active?: boolean;
   max_uses?: number;
   customer_id?: number | null;
-  branch_id?: number | null;
+  branch_id?: number | null;   // 👈 Added
 }
 
-export async function listCoupons(params: {
-  page?: number;
-  per_page?: number;
-  search?: string;
-  status?: string;
-  customer_id?: number;
-  branch_id?: number;
-} = {}) {
+export async function listCoupons(
+  params: { page?: number; per_page?: number; search?: string; status?: string; customer_id?: number; branch_id?: number } = {}
+) {
   const { data } = await apiClient.get<PaginatedResponse<Coupon>>("/coupons", { params });
   return data;
 }

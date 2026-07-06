@@ -24,6 +24,7 @@ import { CardSkeleton } from "../components/ui/Skeletons";
 import { formatMoney } from "../utils/format";
 import { useAuth } from "../context/AuthContext";
 import { useTranslation } from "../context/LanguageContext";
+import { useBranch } from "../context/BranchContext";   // ✅ Correct import path
 
 // ── Section card wrapper ─────────────────────────────────────────────────────
 function Section({
@@ -47,10 +48,14 @@ function Section({
 
 // ── Main page ────────────────────────────────────────────────────────────────
 export function DashboardPage() {
-  const [period, setPeriod] = useState<DashboardPeriod>("all");
-  const { data, isLoading, isError } = useDashboardSummary(period);
-  const { hasPermission } = useAuth();
   const { t } = useTranslation();
+  const { hasPermission } = useAuth();
+  const { currentBranchId } = useBranch();       // 👈 Get current branch ID
+
+  const [period, setPeriod] = useState<DashboardPeriod>("all");
+
+  // 👇 Pass branch_id to the hook
+  const { data, isLoading, isError } = useDashboardSummary(period, currentBranchId || undefined);
 
   if (isError) {
     return (

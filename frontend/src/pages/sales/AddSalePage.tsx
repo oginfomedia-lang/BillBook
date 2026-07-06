@@ -55,7 +55,7 @@ export function AddSalePage() {
       notes: notes || null,
       status,
       items: validItems,
-      branch_id: currentBranchId || undefined,  // 👈 added
+      branch_id: currentBranchId || undefined,
     });
   };
 
@@ -105,6 +105,7 @@ export function AddSalePage() {
           </div>
         </div>
 
+        {/* Coupon Input */}
         <div className="rounded-xl border border-slate-200 bg-white p-5">
           <label className="mb-1.5 block text-xs font-medium text-slate-500">{t("Coupon")}</label>
           <CouponInput

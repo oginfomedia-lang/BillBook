@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Users, Package, FileText, Menu, X, LogOut, Receipt, ShieldCheck, ChevronRight, ChevronDown, Bell, Globe, Monitor, CreditCard, User as UserIcon, Lock, Camera, Check, Trash2, Gift,} from "lucide-react";
+import { LayoutDashboard, Users, Package, FileText, Menu, X, LogOut, Receipt, ShieldCheck, ChevronRight, ChevronDown, Bell, Globe, Monitor, CreditCard, User as UserIcon, Lock, Camera, Check, Trash2, Gift, Store,} from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useTranslation } from "../context/LanguageContext";
 import toast from "react-hot-toast";
@@ -35,6 +35,7 @@ const NAV_ITEMS = [
   { to: "/products",  label: "Products",  icon: Package,          permission: "products.view" },
   { to: "/advance",   label: "Advance",   icon: CreditCard,       permission: "advance_payments.view" },
   { to: "/coupons",   label: "Coupons",   icon: Gift,             permission: "coupons.view" },
+  { to: "/branches",  label: "Branches",  icon: Store,            permission: "branches.view" },
   { to: "/users",     label: "Users",     icon: Users,            permission: "users.view" },
   { to: "/roles",     label: "Roles",     icon: ShieldCheck,      permission: "roles.view" },
 ];

@@ -18,17 +18,14 @@ PERMISSION_CATALOG = {
      "quotations": ["view", "create", "edit", "delete", "convert"],
     "dashboard": ["view"],
     "advance_payments": ["view", "create", "edit", "delete"],
-<<<<<<< HEAD
     "coupons": ["view", "create","edit","delete"],
     "reports": ["view"],
     "settings": ["view", "edit"],
     "branches": ["view", "create", "edit", "delete"],
-=======
      "purchases": ["view", "create", "edit", "delete"], 
     "reports": ["view"],
     "settings": ["view", "edit"],
      "warehouses": ["view", "create", "edit", "delete"],  
->>>>>>> b84202d2f228adc8d8865588033c1b1415fa0f22
 }
 
 

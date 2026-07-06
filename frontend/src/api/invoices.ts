@@ -12,7 +12,7 @@ export interface InvoicePayload {
   items: Omit<InvoiceItem, "id" | "line_subtotal" | "line_tax" | "line_total">[];
   coupon_code?: string | null;
   coupon_discount?: number;
-  branch_id?: number | null;
+  branch_id?: number | null;   // 👈 Added
 }
 
 export async function listInvoices(

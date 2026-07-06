@@ -40,8 +40,7 @@ __all__ = [
     "Coupon",
     "CouponType",
     "CouponStatus",
-    "Branch"
-]
+    "Branch",
     "Purchase",
     "PurchaseItem",
     "PurchasePayment",

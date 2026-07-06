@@ -2,11 +2,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import * as customersApi from "../api/customers";
 
-export function useCustomers(params: { page?: number; per_page?: number; search?: string; branch_id?: number } = {}) {
+export function useCustomers(
+  params: { page?: number; per_page?: number; search?: string; branch_id?: number } = {}
+) {
   return useQuery({
     queryKey: ["customers", params],
     queryFn: () => customersApi.listCustomers(params),
-    placeholderData: (prev) => prev, // keep old page visible while fetching next page
+    placeholderData: (prev) => prev,
   });
 }
 
@@ -58,11 +60,12 @@ export function useDeleteCustomer() {
 export function useImportCustomers() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: customersApi.importCustomers,
+    mutationFn: ({ file, branch_id }: { file: File; branch_id?: number }) =>
+      customersApi.importCustomers(file, branch_id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customers"] });
-      toast.success("Customers imported successfully.");
+      toast.success("Customers imported successfully");
     },
-    onError: () => toast.error("Couldn't import customers. Check the file and try again."),
+    onError: () => toast.error("Couldn't import customers."),
   });
 }
