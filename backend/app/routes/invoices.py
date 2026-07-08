@@ -242,11 +242,13 @@ def record_payment(invoice_id):
 
     payload = request.get_json(force=True) or {}
     amount = payload.get("amount")
+    payment_mode = payload.get("payment_mode") or "Cash"
 
     if amount is None or float(amount) <= 0:
         return jsonify({"error": "amount must be a positive number"}), 422
 
     invoice.amount_paid = float(invoice.amount_paid or 0) + float(amount)
+    invoice.payment_mode = payment_mode
     if invoice.amount_paid >= float(invoice.grand_total or 0):
         invoice.status = InvoiceStatus.PAID
     else:

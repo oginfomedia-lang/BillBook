@@ -1,4 +1,4 @@
-import { apiClient } from "./client";
+import apiClient from "./client";
 import type { AdvancePayment, AdvancePaymentStatus, PaginatedResponse } from "../types";
 
 export interface AdvancePaymentPayload {

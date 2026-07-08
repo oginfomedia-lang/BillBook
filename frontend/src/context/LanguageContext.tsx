@@ -449,7 +449,6 @@ const TRANSLATIONS: Record<Language, Record<string, string>> = {
     "Image size should be less than 2MB": "छवि का आकार 2MB से कम होना चाहिए",
     "Please select a CSV file.": "कृपया CSV फ़ाइल चुनें।",
     "Couldn't import products.": "उत्पाद आयात नहीं किए जा सके।",
-    "Please fill in all required fields.": "कृपया सभी आवश्यक फ़ील्ड भरें।",
     "Language changed to English": "भाषा बदलकर अंग्रेज़ी हो गई",
     "भाषा बदलकर हिंदी हो गई है": "भाषा बदलकर हिंदी हो गई है",
     "भाषा बदलून मराठी झाली आहे": "भाषा बदलून मराठी झाली आहे",

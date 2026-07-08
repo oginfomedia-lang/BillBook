@@ -4,28 +4,27 @@ from app.extensions import db
 from app.tenant_scope import TenantScopedMixin
 
 
-# The full catalog of assignable permissions, grouped by module. The
-# frontend renders checkboxes from this same structure (see
-# /api/v1/roles/permissions) so the backend is the single source of truth —
-# add a permission here and it shows up in the Role editor automatically.
+# The full catalog of assignable permissions, grouped by module.
 PERMISSION_CATALOG = {
     "users": ["view", "create", "edit", "delete"],
     "roles": ["view", "create", "edit", "delete"],
     "customers": ["view", "create", "edit", "delete", "import"],
     "suppliers": ["view", "create", "edit", "delete", "import"],
     "products": ["view", "create", "edit", "delete", "import"],
+    "items": ["view", "create", "edit", "delete", "import"],  # ✅ ADD THIS
     "invoices": ["view", "create", "edit", "delete", "record_payment"],
-     "quotations": ["view", "create", "edit", "delete", "convert"],
+    "quotations": ["view", "create", "edit", "delete", "convert"],
+    "warehouses": ["view", "create", "edit", "delete"],
+    "purchases": ["view", "create", "edit", "delete"],
+    "accounts": ["view", "create", "edit", "delete"],
     "dashboard": ["view"],
     "advance_payments": ["view", "create", "edit", "delete"],
-    "coupons": ["view", "create","edit","delete"],
+    "stock": ["view", "create", "edit", "delete"],
+    "expenses": ["view", "create", "edit", "delete"],
+    "coupons": ["view", "create", "edit", "delete"], 
+     "branches": ["view", "create", "edit", "delete"],
     "reports": ["view"],
     "settings": ["view", "edit"],
-    "branches": ["view", "create", "edit", "delete"],
-     "purchases": ["view", "create", "edit", "delete"], 
-    "reports": ["view"],
-    "settings": ["view", "edit"],
-     "warehouses": ["view", "create", "edit", "delete"],  
 }
 
 
@@ -35,13 +34,6 @@ def all_permission_keys() -> list[str]:
 
 
 class Role(TenantScopedMixin, db.Model):
-    """
-    A named, assignable set of permissions within a tenant. Tenant Admins
-    can create/edit/delete roles freely; two roles are seeded automatically
-    for every new tenant (see seed_default_roles below) so onboarding isn't
-    blocked on someone configuring permissions first.
-    """
-
     __tablename__ = "roles"
     __table_args__ = (
         db.UniqueConstraint("tenant_id", "name", name="uq_role_tenant_name"),
@@ -51,11 +43,7 @@ class Role(TenantScopedMixin, db.Model):
     name = db.Column(db.String(80), nullable=False)
     description = db.Column(db.String(255))
 
-    # Stored as a JSON array of dotted permission keys, e.g. ["invoices.create", "invoices.view"]
     permissions = db.Column(db.JSON, nullable=False, default=list)
-
-    # System roles (Tenant Admin's own role) can't be deleted or have
-    # permissions revoked below a safety floor — see routes/roles.py
     is_system = db.Column(db.Boolean, default=False)
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -77,12 +65,6 @@ class Role(TenantScopedMixin, db.Model):
 
 
 def seed_default_roles(tenant_id: int) -> "Role":
-    """
-    Called once at tenant signup. Creates 'Tenant Admin' (full access,
-    system role) and 'Staff' (invoice-focused, matches the old hardcoded
-    STAFF behavior) so the new tenant has usable roles immediately.
-    Returns the admin role so the caller can assign it to the first user.
-    """
     admin_role = Role(
         tenant_id=tenant_id,
         name="Tenant Admin",
@@ -98,8 +80,16 @@ def seed_default_roles(tenant_id: int) -> "Role":
             "dashboard.view",
             "customers.view", "customers.create", "customers.edit",
             "products.view",
+            "items.view",  # ✅ ADD THIS
             "invoices.view", "invoices.create", "invoices.edit", "invoices.record_payment",
-            "purchases.view", "purchases.create", "purchases.edit", 
+            "quotations.view", "quotations.create", "quotations.edit", "quotations.convert",
+            "advance_payments.view", "advance_payments.create",
+            "purchases.view", "purchases.create", "purchases.edit",
+            "accounts.view",  # ✅ ADD THIS
+            "stock.view", "stock.create",
+            "expenses.view", "expenses.create",
+            "coupons.view", "coupons.create", "coupons.edit", "coupons.delete",
+            "branches.view", "branches.create", "branches.edit", "branches.delete",
         ],
         is_system=False,
     )

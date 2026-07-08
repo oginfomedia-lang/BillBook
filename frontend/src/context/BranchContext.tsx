@@ -15,16 +15,20 @@ const BranchContext = createContext<BranchContextValue | undefined>(undefined);
 export function BranchProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [currentBranchId, setCurrentBranchId] = useState<number | null>(null);
-  const { data, isLoading } = useBranches({ page: 1, per_page: 1000 });
+  const { data, isLoading } = useBranches({ page: 1, per_page: 1000 }, { enabled: !!user });
 
   const branches = data?.items || [];
 
-  // Auto-select first branch if none selected
+  // Auto-select first branch if none selected.
+  // Use branches[0]?.id and branches.length as deps (not the array reference itself)
+  // to avoid an infinite re-render loop: the `data?.items || []` expression
+  // produces a NEW array on every render even when the data hasn't changed.
+  const firstBranchId = branches[0]?.id;
   useEffect(() => {
-    if (!isLoading && branches.length > 0 && currentBranchId === null) {
-      setCurrentBranchId(branches[0].id);
+    if (!isLoading && firstBranchId !== undefined && currentBranchId === null) {
+      setCurrentBranchId(firstBranchId);
     }
-  }, [branches, isLoading, currentBranchId]);
+  }, [firstBranchId, isLoading, currentBranchId]);
 
   return (
     <BranchContext.Provider value={{ currentBranchId, setCurrentBranchId, branches, isLoading }}>

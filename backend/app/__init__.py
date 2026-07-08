@@ -17,7 +17,7 @@ def create_app(config_name: str | None = None) -> Flask:
     migrate.init_app(flask_app, db)
     jwt.init_app(flask_app)
 
-    # ✅ CORS Configuration - Proper Setup (No Conflicts)
+    # ✅ CORS Configuration
     allowed_origins = [
         "http://localhost:5173",
         "http://127.0.0.1:5173",
@@ -46,6 +46,7 @@ def create_app(config_name: str | None = None) -> Flask:
     from app.routes.customers import customers_bp
     from app.routes.suppliers import suppliers_bp
     from app.routes.products import products_bp
+    from app.routes.items import items_bp  # ✅ ADD THIS
     from app.routes.invoices import invoices_bp
     from app.routes.dashboard import dashboard_bp
     from app.routes.roles import roles_bp
@@ -57,12 +58,19 @@ def create_app(config_name: str | None = None) -> Flask:
     from app.routes.warehouses import warehouses_bp
     from app.routes.purchases import purchases_bp
     from app.routes.purchase_returns import purchase_returns_bp
+    from app.routes.accounts import accounts_bp
+    from app.routes.money_transfers import money_transfers_bp
+    from app.routes.deposits import deposits_bp
+    from app.routes.cash_transactions import cash_transactions_bp
+    from app.routes.stock import stock_bp
+    from app.routes.expenses import expenses_bp
 
     # Register with url_prefix to ensure consistency
     flask_app.register_blueprint(auth_bp, url_prefix='/api/v1/auth')
     flask_app.register_blueprint(customers_bp, url_prefix='/api/v1/customers')
     flask_app.register_blueprint(suppliers_bp, url_prefix='/api/v1/suppliers')
     flask_app.register_blueprint(products_bp, url_prefix='/api/v1/products')
+    flask_app.register_blueprint(items_bp, url_prefix='/api/v1/items')  # ✅ ADD THIS
     flask_app.register_blueprint(invoices_bp, url_prefix='/api/v1/invoices')
     flask_app.register_blueprint(dashboard_bp, url_prefix='/api/v1/dashboard')
     flask_app.register_blueprint(roles_bp, url_prefix='/api/v1/roles')
@@ -74,6 +82,12 @@ def create_app(config_name: str | None = None) -> Flask:
     flask_app.register_blueprint(warehouses_bp, url_prefix='/api/v1/warehouses')
     flask_app.register_blueprint(purchases_bp, url_prefix='/api/v1/purchases')
     flask_app.register_blueprint(purchase_returns_bp, url_prefix='/api/v1/purchase-returns')
+    flask_app.register_blueprint(accounts_bp, url_prefix='/api/v1/accounts')
+    flask_app.register_blueprint(money_transfers_bp, url_prefix='/api/v1/money-transfers')
+    flask_app.register_blueprint(deposits_bp, url_prefix='/api/v1/deposits')
+    flask_app.register_blueprint(cash_transactions_bp, url_prefix='/api/v1/cash-transactions')
+    flask_app.register_blueprint(stock_bp, url_prefix='/api/v1/stock')
+    flask_app.register_blueprint(expenses_bp, url_prefix='/api/v1/expenses')
 
     @flask_app.route("/api/v1/health", methods=["GET"])
     def health():

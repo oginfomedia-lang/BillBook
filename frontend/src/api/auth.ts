@@ -1,4 +1,4 @@
-import { apiClient, tokenStorage } from "./client";
+import apiClient, { tokenStorage } from "./client";
 import type { AuthResponse, User } from "../types";
 
 export interface SignupPayload {

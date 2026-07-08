@@ -21,6 +21,7 @@ export function InvoiceDetailPage() {
 
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState("");
+  const [paymentMode, setPaymentMode] = useState("Cash");
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
 
   if (isLoading || !invoice) {
@@ -45,11 +46,12 @@ export function InvoiceDetailPage() {
     const amt = parseFloat(paymentAmount);
     if (isNaN(amt) || amt <= 0) return;
     recordPayment.mutate(
-      { id: invoiceId, amount: amt },
+      { id: invoiceId, amount: amt, payment_mode: paymentMode },
       {
         onSuccess: () => {
           setIsPaymentOpen(false);
           setPaymentAmount("");
+          setPaymentMode("Cash");
         },
       }
     );
@@ -262,8 +264,19 @@ export function InvoiceDetailPage() {
               placeholder={t("e.g. 500.00")}
               value={paymentAmount}
               onChange={(e) => setPaymentAmount(e.target.value)}
-              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
+              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand mb-4"
             />
+            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t("Payment Mode")}</label>
+            <select
+              value={paymentMode}
+              onChange={(e) => setPaymentMode(e.target.value)}
+              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
+            >
+              <option value="Cash">Cash</option>
+              <option value="Bank Transfer">Bank Transfer</option>
+              <option value="Cheque">Cheque</option>
+              <option value="UPI">UPI</option>
+            </select>
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <button

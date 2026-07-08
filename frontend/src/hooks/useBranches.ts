@@ -2,11 +2,15 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import * as api from "../api/branches";
 
-export function useBranches(params: { page?: number; per_page?: number; search?: string } = {}) {
+export function useBranches(
+  params: { page?: number; per_page?: number; search?: string } = {},
+  options: { enabled?: boolean } = {}
+) {
   return useQuery({
     queryKey: ["branches", params],
     queryFn: () => api.listBranches(params),
     placeholderData: (prev) => prev,
+    enabled: options.enabled !== false,
   });
 }
 

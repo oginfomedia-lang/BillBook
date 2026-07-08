@@ -48,6 +48,7 @@ class Invoice(TenantScopedMixin, db.Model):
     discount_total = db.Column(db.Numeric(12, 2), default=0)
     grand_total = db.Column(db.Numeric(12, 2), default=0)
     amount_paid = db.Column(db.Numeric(12, 2), default=0)
+    payment_mode = db.Column(db.String(50), default="Cash")
 
     # Coupon fields
     coupon_code = db.Column(db.String(50), nullable=True)
@@ -123,6 +124,7 @@ class Invoice(TenantScopedMixin, db.Model):
             "discount_total": float(self.discount_total or 0),
             "grand_total": float(self.grand_total or 0),
             "amount_paid": float(self.amount_paid or 0),
+            "payment_mode": self.payment_mode,
             "balance_due": float((self.grand_total or 0) - (self.amount_paid or 0)),
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "coupon_code": self.coupon_code,

@@ -1,5 +1,5 @@
 // src/api/purchases.ts
-import { apiClient } from "./client";
+import apiClient from "./client";
 import type { PaginatedResponse, Supplier } from "../types";
 
 // -------------------------------------------------------------------

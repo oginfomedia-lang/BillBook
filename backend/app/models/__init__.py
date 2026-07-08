@@ -14,6 +14,17 @@ from .purchase import (
     Purchase, PurchaseItem, PurchasePayment, PurchaseStatus, PurchasePaymentStatus,
     PurchasePaymentType, PurchaseReturn, PurchaseReturnItem, PurchaseReturnStatus,
 )
+from .account import Account, MoneyTransfer, Deposit
+from .item import Item  # ✅ ADD THIS
+from .brand import Brand
+from .category import Category
+from .unit import Unit
+from .item_group import ItemGroup
+from .tax import Tax
+from .variant import Variant
+from .stock_adjustment import StockAdjustment, StockAdjustmentItem
+from .stock_transfer import StockTransfer, StockTransferItem
+from .expense import Expense, ExpenseCategory
 
 
 __all__ = [
@@ -50,4 +61,20 @@ __all__ = [
     "PurchaseReturn",
     "PurchaseReturnItem",
     "PurchaseReturnStatus",
+    "Account",
+    "MoneyTransfer",
+    "Deposit",
+    "Item",  # ✅ ADD THIS
+    "Brand",
+    "Category",
+    "Unit",
+    "ItemGroup",
+    "Tax",
+    "Variant",
+    "StockAdjustment",
+    "StockAdjustmentItem",
+    "StockTransfer",
+    "StockTransferItem",
+    "Expense",
+    "ExpenseCategory",
 ]

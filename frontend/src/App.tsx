@@ -27,6 +27,14 @@ import { SuppliersPage } from "./pages/contacts/SuppliersPage";
 import { ImportCustomersPage } from "./pages/contacts/ImportCustomersPage";
 import { ImportSuppliersPage } from "./pages/contacts/ImportSuppliersPage";
 import { ProductsPage } from "./pages/ProductsPage";
+import { ItemsPage } from "./pages/ItemsPage";
+import { ItemFormPage } from "./pages/ItemFormPage";
+import { CategoriesListPage } from "./pages/CategoriesListPage";
+import { BrandsListPage } from "./pages/BrandsListPage";
+import { VariantsListPage } from "./pages/VariantsListPage";
+import { PrintLabelsPage } from "./pages/PrintLabelsPage";
+import { ImportItemsPage } from "./pages/ImportItemsPage";
+import { ImportServicesPage } from "./pages/ImportServicesPage";
 import { UsersPage } from "./pages/UsersPage";
 import { RolesPage } from "./pages/RolesPage";
 import { AdvancePaymentsList } from "./pages/Advance/AdvancePaymentsList";
@@ -38,6 +46,20 @@ import { PurchaseReturnsListPage } from "./pages/purchase/PurchaseReturnsListPag
 import { NewPurchaseReturnPage } from "./pages/purchase/NewPurchaseReturnPage";
 import { CouponFormPage } from "./pages/Coupons/CouponForm";
 import { CouponsListPage } from "./pages/Coupons/CouponsList";
+import { AccountsLayout } from "./pages/accounts/AccountsLayout";
+import { AddAccountPage } from "./pages/accounts/AddAccountPage";
+import { AccountsListPage } from "./pages/accounts/AccountsListPage";
+import { MoneyTransferListPage } from "./pages/accounts/MoneyTransferListPage";
+import { DepositListPage } from "./pages/accounts/DepositListPage";
+import { CashTransactionsPage } from "./pages/accounts/CashTransactionsPage";
+import { StockLayout } from "./pages/stock/StockLayout";
+import { StockAdjustmentListPage } from "./pages/stock/StockAdjustmentListPage";
+import { StockTransferListPage } from "./pages/stock/StockTransferListPage";
+import { ExpensesLayout } from "./pages/expenses/ExpensesLayout";
+import { ExpensesListPage } from "./pages/expenses/ExpensesListPage";
+import { ExpenseCategoryListPage } from "./pages/expenses/ExpenseCategoryListPage";
+import { BranchesListPage } from "./pages/branches/BranchesList";
+import { BranchFormPage } from "./pages/branches/BranchForm";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -100,6 +122,11 @@ export default function App() {
                     <Route path="import/suppliers" element={<ImportSuppliersPage />} />
                   </Route>
 
+                  {/* ✅ BRANCHES MODULE - ADDED */}
+                  <Route path="/branches" element={<BranchesListPage />} />
+                  <Route path="/branches/new" element={<BranchFormPage />} />
+                  <Route path="/branches/:id/edit" element={<BranchFormPage />} />
+
                   {/* Coupons – top-level */}
                   <Route path="/coupons" element={<CouponsListPage />} />
                   <Route path="/coupons/new" element={<CouponFormPage />} />
@@ -111,8 +138,31 @@ export default function App() {
                   {/* Products */}
                   <Route path="/products" element={<ProductsPage />} />
 
+                  {/* Items Module */}
+                  <Route path="/items" element={<ItemsPage />} />
+                  <Route path="/items/new" element={<ItemFormPage />} />
+                  <Route path="/items/new-service" element={<ItemFormPage isService={true} />} />
+                  <Route path="/items/:itemId/edit" element={<ItemFormPage />} />
+                  <Route path="/items/categories" element={<CategoriesListPage />} />
+                  <Route path="/items/brands" element={<BrandsListPage />} />
+                  <Route path="/items/variants" element={<VariantsListPage />} />
+                  <Route path="/items/print-labels" element={<PrintLabelsPage />} />
+                  <Route path="/items/import" element={<ImportItemsPage />} />
+                  <Route path="/items/import-services" element={<ImportServicesPage />} />
+
                   {/* Warehouses */}
                   <Route path="/warehouses" element={<WarehousesPage />} />
+
+                  {/* Accounts module */}
+                  <Route path="/accounts" element={<AccountsLayout />}>
+                    <Route index element={<Navigate to="list" replace />} />
+                    <Route path="add" element={<AddAccountPage />} />
+                    <Route path="list" element={<AccountsListPage />} />
+                    <Route path=":id/edit" element={<AddAccountPage editMode={true} />} />
+                    <Route path="money-transfers" element={<MoneyTransferListPage />} />
+                    <Route path="deposits" element={<DepositListPage />} />
+                    <Route path="cash-transactions" element={<CashTransactionsPage />} />
+                  </Route>
 
                   {/* Purchase module */}
                   <Route path="/purchase" element={<PurchaseLayout />}>
@@ -122,6 +172,20 @@ export default function App() {
                     <Route path="returns" element={<PurchaseReturnsListPage />} />
                     <Route path="returns/new" element={<NewPurchaseReturnPage />} />
                     <Route path=":id/edit" element={<NewPurchasePage editMode={true} />} />
+                  </Route>
+
+                  {/* Stock module */}
+                  <Route path="/stock" element={<StockLayout />}>
+                    <Route index element={<Navigate to="adjustments" replace />} />
+                    <Route path="adjustments" element={<StockAdjustmentListPage />} />
+                    <Route path="transfers" element={<StockTransferListPage />} />
+                  </Route>
+
+                  {/* Expenses module */}
+                  <Route path="/expenses" element={<ExpensesLayout />}>
+                    <Route index element={<Navigate to="list" replace />} />
+                    <Route path="list" element={<ExpensesListPage />} />
+                    <Route path="categories" element={<ExpenseCategoryListPage />} />
                   </Route>
 
                   {/* Users */}

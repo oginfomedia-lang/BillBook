@@ -12,14 +12,9 @@ from sqlalchemy.exc import IntegrityError
 
 from app.extensions import db
 from app.models.purchase import (
-    Purchase, 
-    PurchaseItem, 
-    PurchasePayment,
-    PurchaseStatus, 
-    PurchasePaymentStatus, 
-    PurchasePaymentType,
+    Purchase, PurchaseItem, PurchasePayment,
+    PurchaseStatus, PurchasePaymentStatus, PurchasePaymentType,
 )
-from app.models.supplier import Supplier  # ✅ ADDED - Missing import
 from app.schemas.purchase_schemas import PurchaseSchema, PurchasePaymentSchema
 from app.tenant_scope import TenantContext
 from app.utils.decorators import require_auth
@@ -111,8 +106,9 @@ def list_purchases():
     if payment_status:
         query = query.filter(Purchase.payment_status == payment_status)
     if search:
+        from app.models.supplier import Supplier
         query = query.join(Purchase.supplier).filter(
-            db.or_(  # ✅ ADDED - db import needed
+            db.or_(
                 Purchase.purchase_code.ilike(f"%{search}%"),
                 Purchase.reference_no.ilike(f"%{search}%"),
                 Supplier.name.ilike(f"%{search}%"),

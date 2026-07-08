@@ -24,6 +24,10 @@ import {
   Building,
   ShoppingBag,
   Gift,
+  Wallet,
+  Boxes,
+  Layers,
+  TrendingDown,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useTranslation } from "../context/LanguageContext";
@@ -51,7 +55,24 @@ const NAV_ITEMS = [
     icon: Users,
     permission: "customers.view"
   },
-  { to: "/products", label: "Products", icon: Package, permission: "products.view" },
+  {
+    label: "Items",
+    icon: Package,
+    permission: "items.view",
+    sub: [
+      { to: "/items/new", label: "Add Item" },
+      { to: "/items/new-service", label: "Add Service" },
+      { to: "/items", label: "Items List", end: true },
+      { to: "/items/categories", label: "Categories List" },
+      { to: "/items/brands", label: "Brands List" },
+      { to: "/items/variants", label: "Variants List" },
+      { to: "/items/print-labels", label: "Print Labels" },
+      { to: "/items/import", label: "Import Items" },
+      { to: "/items/import-services", label: "Import Services" },
+    ],
+  },
+  { to: "/products", label: "Products", icon: Layers, permission: "products.view" },
+  { to: "/branches", label: "Branches", icon: Building, permission: "branches.view" },
   { to: "/warehouses", label: "Warehouses", icon: Building, permission: "warehouses.view" },
   {
     label: "Purchase",
@@ -68,6 +89,36 @@ const NAV_ITEMS = [
   { to: "/advance", label: "Advance", icon: CreditCard, permission: "advance_payments.view" },
   { to: "/quotations", label: "Quotations", icon: FileText, permission: "quotations.view" },
   { to: "/coupons", label: "Coupons", icon: Gift, permission: "coupons.view" },
+  {
+    label: "Accounts",
+    icon: Wallet,
+    permission: "dashboard.view",
+    sub: [
+      { to: "/accounts/add", label: "Add Account" },
+      { to: "/accounts/list", label: "Accounts List" },
+      { to: "/accounts/money-transfers", label: "Money Transfer List" },
+      { to: "/accounts/deposits", label: "Deposit List" },
+      { to: "/accounts/cash-transactions", label: "Cash Transactions" },
+    ],
+  },
+  {
+    label: "Stock",
+    icon: Boxes,
+    permission: "stock.view",
+    sub: [
+      { to: "/stock/adjustments", label: "Adjustment List" },
+      { to: "/stock/transfers", label: "Transfer List" },
+    ],
+  },
+  {
+    label: "Expenses",
+    icon: TrendingDown,
+    permission: "expenses.view",
+    sub: [
+      { to: "/expenses/list", label: "Expenses List" },
+      { to: "/expenses/categories", label: "Categories List" },
+    ],
+  },
 ];
 
 export function DashboardLayout() {
@@ -79,6 +130,10 @@ export function DashboardLayout() {
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({
     Sales: true,
     Purchase: true,
+    Accounts: true,
+    Items: false,
+    Stock: true,
+    Expenses: true,
   });
 
   // Dropdown states
