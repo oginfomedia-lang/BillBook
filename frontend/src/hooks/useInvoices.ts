@@ -5,7 +5,7 @@ import * as invoicesApi from "../api/invoices";
 import type { InvoiceStatus } from "../types";
 
 export function useInvoices(
-  params: { page?: number; search?: string; status?: InvoiceStatus, branch_id?: number } = {}
+  params: { page?: number; search?: string; status?: InvoiceStatus; branch_id?: number } = {}
 ) {
   return useQuery({
     queryKey: ["invoices", params],

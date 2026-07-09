@@ -23,16 +23,16 @@ export function CouponsListPage() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
 
-  const { data, isLoading } = useCoupons({ 
-    page, 
-    search, 
+  const { data, isLoading } = useCoupons({
+    page,
+    search,
     status: status || undefined,
     branch_id: currentBranchId || undefined,
   });
   const deleteCoupon = useDeleteCoupon();
 
   const handleDelete = (id: number, code: string) => {
-    if (confirm(t("Are you sure you want to delete coupon {code}?"))) {
+    if (confirm(t(`Are you sure you want to delete coupon ${code}?`))) {
       deleteCoupon.mutate(id);
     }
   };

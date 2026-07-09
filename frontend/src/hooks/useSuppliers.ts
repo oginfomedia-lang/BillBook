@@ -2,7 +2,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import * as suppliersApi from "../api/suppliers";
 
-export function useSuppliers(params: { page?: number; per_page?: number; search?: string; branch_id?: number } = {}) {
+export function useSuppliers(
+  params: { page?: number; per_page?: number; search?: string; branch_id?: number } = {}
+) {
   return useQuery({
     queryKey: ["suppliers", params],
     queryFn: () => suppliersApi.listSuppliers(params),
@@ -72,10 +74,12 @@ export function useDeleteSupplier() {
   });
 }
 
+// 👇 Corrected import mutation – accepts an object
 export function useImportSuppliers() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: suppliersApi.importSuppliers,
+    mutationFn: ({ file, branch_id }: { file: File; branch_id?: number }) =>
+      suppliersApi.importSuppliers(file, branch_id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["suppliers"] });
       toast.success("Suppliers imported successfully.");

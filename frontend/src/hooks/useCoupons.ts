@@ -2,26 +2,21 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import * as api from "../api/coupons";
 
+export function useCoupons(
+  params: { page?: number; per_page?: number; search?: string; status?: string; customer_id?: number; branch_id?: number } = {}
+) {
+  return useQuery({
+    queryKey: ["coupons", params],
+    queryFn: () => api.listCoupons(params),
+    placeholderData: (prev) => prev,
+  });
+}
+
 export function useCoupon(id: number | undefined) {
   return useQuery({
     queryKey: ["coupons", id],
     queryFn: () => api.getCoupon(id as number),
     enabled: id !== undefined,
-  });
-}
-
-export function useCoupons(params: {
-  page?: number;
-  per_page?: number;
-  search?: string;
-  status?: string;
-  customer_id?: number;
-  branch_id?: number;
-} = {}) {
-  return useQuery({
-    queryKey: ["coupons", params],
-    queryFn: () => api.listCoupons(params),
-    placeholderData: (prev) => prev,
   });
 }
 

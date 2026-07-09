@@ -6,6 +6,8 @@ import { StatusBadge } from "../../components/ui/StatusBadge";
 import { TableSkeleton } from "../../components/ui/Skeletons";
 import { formatMoney, formatDate } from "../../utils/format";
 import type { InvoiceStatus } from "../../types";
+import { useTranslation } from "../../context/LanguageContext";
+import { useBranch } from "../../context/BranchContext";
 
 const STATUS_FILTERS: { label: string; value: InvoiceStatus | "" }[] = [
   { label: "All", value: "" },
@@ -17,25 +19,37 @@ const STATUS_FILTERS: { label: string; value: InvoiceStatus | "" }[] = [
 ];
 
 export function SalesListPage() {
+  const { t } = useTranslation();
+  const { currentBranchId } = useBranch();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<InvoiceStatus | "">("");
 
-  const { data, isLoading } = useInvoices({ page, search, status: status || undefined });
+  const { data, isLoading } = useInvoices({
+    page,
+    search,
+    status: status || undefined,
+    branch_id: currentBranchId || undefined, // 👈 Branch filter
+  });
+
+  const translatedFilters = STATUS_FILTERS.map((f) => ({
+    ...f,
+    label: t(f.label),
+  }));
 
   return (
     <div className="space-y-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-ink-900">Sales List</h2>
-          <p className="text-sm text-slate-500">Browse all sales invoices and review their status.</p>
+          <h2 className="text-xl font-semibold text-ink-900">{t("Sales List")}</h2>
+          <p className="text-sm text-slate-500">{t("Browse all sales invoices and review their status.")}</p>
         </div>
         <Link
           to="/sales/add"
           className="flex items-center justify-center gap-1.5 rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-dark"
         >
           <Plus size={16} />
-          Add Sale
+          {t("Add Sale")}
         </Link>
       </div>
 
@@ -48,12 +62,12 @@ export function SalesListPage() {
               setSearch(e.target.value);
               setPage(1);
             }}
-            placeholder="Search sales invoice number…"
+            placeholder={t("Search sales invoice number…")}
             className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
           />
         </div>
         <div className="flex gap-1.5 overflow-x-auto">
-          {STATUS_FILTERS.map((filter) => (
+          {translatedFilters.map((filter) => (
             <button
               key={filter.value}
               onClick={() => {
@@ -76,11 +90,11 @@ export function SalesListPage() {
         <table className="w-full min-w-[640px] text-sm">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-medium text-slate-500">
-              <th className="px-4 py-3">Invoice</th>
-              <th className="px-4 py-3">Customer</th>
-              <th className="px-4 py-3">Date</th>
-              <th className="px-4 py-3 text-right">Amount</th>
-              <th className="px-4 py-3">Status</th>
+              <th className="px-4 py-3">{t("Invoice")}</th>
+              <th className="px-4 py-3">{t("Customer")}</th>
+              <th className="px-4 py-3">{t("Date")}</th>
+              <th className="px-4 py-3 text-right">{t("Amount")}</th>
+              <th className="px-4 py-3">{t("Status")}</th>
             </tr>
           </thead>
           <tbody>
@@ -89,7 +103,7 @@ export function SalesListPage() {
             ) : data?.items.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-4 py-10 text-center text-sm text-slate-400">
-                  No sales match this filter.
+                  {t("No sales match this filter.")}
                 </td>
               </tr>
             ) : (
@@ -102,7 +116,9 @@ export function SalesListPage() {
                   </td>
                   <td className="px-4 py-3 text-ink-700">{invoice.customer?.name}</td>
                   <td className="px-4 py-3 text-slate-500">{formatDate(invoice.issue_date)}</td>
-                  <td className="figures px-4 py-3 text-right font-medium text-ink-900">{formatMoney(invoice.grand_total)}</td>
+                  <td className="figures px-4 py-3 text-right font-medium text-ink-900">
+                    {formatMoney(invoice.grand_total)}
+                  </td>
                   <td className="px-4 py-3">
                     <StatusBadge status={invoice.status} />
                   </td>
@@ -120,17 +136,17 @@ export function SalesListPage() {
             onClick={() => setPage((value) => value - 1)}
             className="rounded-md border border-slate-200 px-3 py-1.5 text-sm disabled:opacity-40"
           >
-            Previous
+            {t("Previous")}
           </button>
           <span className="text-sm text-slate-500">
-            Page {data.page} of {data.pages}
+            {t("Page")} {data.page} {t("of")} {data.pages}
           </span>
           <button
             disabled={page >= data.pages}
             onClick={() => setPage((value) => value + 1)}
             className="rounded-md border border-slate-200 px-3 py-1.5 text-sm disabled:opacity-40"
           >
-            Next
+            {t("Next")}
           </button>
         </div>
       )}

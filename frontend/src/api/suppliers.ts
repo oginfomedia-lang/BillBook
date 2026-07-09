@@ -1,5 +1,5 @@
 import { apiClient } from "./client";
-import type { PaginatedResponse, Supplier } from "../types";
+import type { Supplier, PaginatedResponse } from "../types";
 
 export interface SupplierPayload {
   name: string;
@@ -14,22 +14,12 @@ export interface SupplierPayload {
   city?: string | null;
   postcode?: string | null;
   address?: string | null;
-  branch_id?: number | null;
+  branch_id?: number | null;   // 👈 Added
 }
 
-function cleanSupplierPayload<T extends SupplierPayload | Partial<SupplierPayload>>(payload: T): T {
-  return Object.fromEntries(
-    Object.entries(payload).map(([key, value]) => {
-      if (typeof value === "string") {
-        const trimmed = value.trim();
-        return [key, trimmed === "" ? null : trimmed];
-      }
-      return [key, value];
-    })
-  ) as T;
-}
-
-export async function listSuppliers(params: { page?: number; per_page?: number; search?: string; branch_id?: number } = {}) {
+export async function listSuppliers(
+  params: { page?: number; per_page?: number; search?: string; branch_id?: number } = {}
+) {
   const { data } = await apiClient.get<PaginatedResponse<Supplier>>("/suppliers", { params });
   return data;
 }
@@ -40,14 +30,12 @@ export async function getSupplier(id: number) {
 }
 
 export async function createSupplier(payload: SupplierPayload) {
-  const cleaned = cleanSupplierPayload(payload);
-  const { data } = await apiClient.post<Supplier>("/suppliers", cleaned);
+  const { data } = await apiClient.post<Supplier>("/suppliers", payload);
   return data;
 }
 
 export async function updateSupplier(id: number, payload: Partial<SupplierPayload>) {
-  const cleaned = cleanSupplierPayload(payload);
-  const { data } = await apiClient.put<Supplier>(`/suppliers/${id}`, cleaned);
+  const { data } = await apiClient.put<Supplier>(`/suppliers/${id}`, payload);
   return data;
 }
 
@@ -55,12 +43,13 @@ export async function deleteSupplier(id: number) {
   await apiClient.delete(`/suppliers/${id}`);
 }
 
-export async function importSuppliers(file: File) {
+export async function importSuppliers(file: File, branch_id?: number) {
   const formData = new FormData();
   formData.append("file", file);
-
-  const { data } = await apiClient.post<{ imported: number }>("/suppliers/import", formData, {
+  const params = branch_id ? { branch_id } : {};
+  const { data } = await apiClient.post("/suppliers/import", formData, {
     headers: { "Content-Type": "multipart/form-data" },
+    params,
   });
   return data;
 }

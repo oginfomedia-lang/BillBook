@@ -24,9 +24,9 @@ export function InvoicesPage() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<InvoiceStatus | "">("");
 
-  const { data, isLoading } = useInvoices({ 
-    page, 
-    search, 
+  const { data, isLoading } = useInvoices({
+    page,
+    search,
     status: status || undefined,
     branch_id: currentBranchId || undefined,
   });

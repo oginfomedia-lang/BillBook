@@ -143,6 +143,7 @@ export function AddSalePage() {
           </div>
         </div>
 
+        {/* Coupon Input */}
         <InvoiceItemsEditor
           items={items}
           onChange={setItems}

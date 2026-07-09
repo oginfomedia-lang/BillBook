@@ -10,14 +10,13 @@ import { useBranch } from "../context/BranchContext";
 
 export function CustomersPage() {
   const { t } = useTranslation();
+  const { currentBranchId } = useBranch();
+
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [showForm, setShowForm] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
 
-  const { currentBranchId } = useBranch();
-
-  // Form states
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -40,7 +39,6 @@ export function CustomersPage() {
 
   const handleCreateSubmit = (e: FormEvent) => {
     e.preventDefault();
-    // Include branch_id in payload
     const payload = {
       ...form,
       branch_id: currentBranchId || undefined,

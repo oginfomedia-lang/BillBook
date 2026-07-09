@@ -6,7 +6,6 @@ import { InvoiceItemsEditor } from "../components/invoices/InvoiceItemsEditor";
 import { InvoiceTotals } from "../components/invoices/InvoiceTotals";
 import type { InvoiceItem, InvoiceStatus, Product } from "../types";
 import { CouponInput } from "./Coupons/CouponInput";
-import type { InvoiceItem, InvoiceStatus } from "../types";
 import { useTranslation } from "../context/LanguageContext";
 import { useBranch } from "../context/BranchContext";
 
@@ -61,7 +60,7 @@ export function CreateInvoicePage() {
       notes: notes || null,
       status,
       items: validItems,
-      branch_id: currentBranchId || undefined,  // 👈 added
+      branch_id: currentBranchId || undefined,
     });
   };
 
@@ -69,7 +68,6 @@ export function CreateInvoicePage() {
 
   return (
     <div className="space-y-6">
-      {/* ... existing UI, no additional branch field needed ... */}
       <div>
         <h1 className="text-2xl font-semibold text-ink-900">{t("New Invoice")}</h1>
         <p className="text-sm text-slate-500">{t("Add line items below — totals update as you type.")}</p>

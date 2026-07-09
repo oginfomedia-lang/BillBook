@@ -9,7 +9,6 @@ export interface ProductPayload {
   tax_rate?: number;
   stock_quantity?: number;
   unit?: string;
-  branch_id?: number | null;
 }
 
 export async function listProducts(params: { page?: number; per_page?: number; search?: string; branch_id?: number } = {}) {
@@ -36,12 +35,14 @@ export async function deleteProduct(id: number) {
   await apiClient.delete(`/products/${id}`);
 }
 
-export async function importProducts(file: File) {
+// Update import function to accept branch_id
+export async function importProducts(file: File, branch_id?: number) {
   const formData = new FormData();
   formData.append("file", file);
-
-  const { data } = await apiClient.post<{ imported: number }>("/products/import", formData, {
+  const params = branch_id ? { branch_id } : {};
+  const { data } = await apiClient.post("/products/import", formData, {
     headers: { "Content-Type": "multipart/form-data" },
+    params,
   });
   return data;
 }

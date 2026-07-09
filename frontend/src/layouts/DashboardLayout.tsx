@@ -28,6 +28,7 @@ import {
   Boxes,
   Layers,
   TrendingDown,
+  Store,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useTranslation } from "../context/LanguageContext";
@@ -36,8 +37,10 @@ import * as authApi from "../api/auth";
 import { Modal } from "../components/ui/Modal";
 import { useBranch } from "../context/BranchContext";
 
+// ─── Navigation Items ────────────────────────────────────────────────────────
 const NAV_ITEMS = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, permission: "dashboard.view" },
+
   {
     label: "Sales",
     icon: Receipt,
@@ -49,12 +52,19 @@ const NAV_ITEMS = [
       { to: "/sales/returns", label: "Return Sales" },
     ],
   },
+
   {
-    to: "/contacts",
     label: "Contacts",
     icon: Users,
-    permission: "customers.view"
+    permission: "customers.view",
+    sub: [
+      { to: "/contacts/customers", label: "Customers" },
+      { to: "/contacts/suppliers", label: "Suppliers" },
+      { to: "/contacts/import/customers", label: "Import Customers" },
+      { to: "/contacts/import/suppliers", label: "Import Suppliers" },
+    ],
   },
+
   {
     label: "Items",
     icon: Package,
@@ -71,9 +81,11 @@ const NAV_ITEMS = [
       { to: "/items/import-services", label: "Import Services" },
     ],
   },
+
   { to: "/products", label: "Products", icon: Layers, permission: "products.view" },
-  { to: "/branches", label: "Branches", icon: Building, permission: "branches.view" },
+  { to: "/branches", label: "Branches", icon: Store, permission: "branches.view" },
   { to: "/warehouses", label: "Warehouses", icon: Building, permission: "warehouses.view" },
+
   {
     label: "Purchase",
     icon: ShoppingBag,
@@ -84,11 +96,13 @@ const NAV_ITEMS = [
       { to: "/purchase/returns", label: "Purchase Returns List" },
     ],
   },
+
   { to: "/users", label: "Users", icon: Users, permission: "users.view" },
   { to: "/roles", label: "Roles", icon: ShieldCheck, permission: "roles.view" },
   { to: "/advance", label: "Advance", icon: CreditCard, permission: "advance_payments.view" },
   { to: "/quotations", label: "Quotations", icon: FileText, permission: "quotations.view" },
   { to: "/coupons", label: "Coupons", icon: Gift, permission: "coupons.view" },
+
   {
     label: "Accounts",
     icon: Wallet,
@@ -101,6 +115,7 @@ const NAV_ITEMS = [
       { to: "/accounts/cash-transactions", label: "Cash Transactions" },
     ],
   },
+
   {
     label: "Stock",
     icon: Boxes,
@@ -110,6 +125,7 @@ const NAV_ITEMS = [
       { to: "/stock/transfers", label: "Transfer List" },
     ],
   },
+
   {
     label: "Expenses",
     icon: TrendingDown,
@@ -121,6 +137,7 @@ const NAV_ITEMS = [
   },
 ];
 
+// ─── Component ──────────────────────────────────────────────────────────────
 export function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user, logout, hasPermission, updateCurrentUser } = useAuth();
@@ -134,52 +151,53 @@ export function DashboardLayout() {
     Items: false,
     Stock: true,
     Expenses: true,
+    Contacts: false,
   });
 
-  // Dropdown states
+  // ── Dropdown states ──────────────────────────────────────────────────────
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const [notificationsDropdownOpen, setNotificationsDropdownOpen] = useState(false);
   const [notifications, setNotifications] = useState([
     { id: 1, title: "Welcome to BillBook workspace!", time: "Just now" },
     { id: 2, title: "Low stock alert: Premium Widget is below 10 units", time: "2 hours ago" },
-    { id: 3, title: "New customer Rohal Retail Pvt Ltd registered", time: "1 day ago" }
+    { id: 3, title: "New customer Rohal Retail Pvt Ltd registered", time: "1 day ago" },
   ]);
 
   const [avatarDropdownOpen, setAvatarDropdownOpen] = useState(false);
 
   const { currentBranchId, setCurrentBranchId, branches, isLoading } = useBranch();
 
-  // Profile Modal State
+  // ── Profile Modal State ──────────────────────────────────────────────────
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [profileForm, setProfileForm] = useState({
     name: "",
     email: "",
-    avatar: null as string | null
+    avatar: null as string | null,
   });
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Sync profile form when user object changes
+  // ── Password Modal State ──────────────────────────────────────────────────
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    current_password: "",
+    new_password: "",
+    confirm_password: "",
+  });
+  const [isSavingPassword, setIsSavingPassword] = useState(false);
+
+  // ── Sync profile form when user changes ──────────────────────────────────
   useEffect(() => {
     if (user) {
       setProfileForm({
         name: user.name || "",
         email: user.email || "",
-        avatar: user.avatar || null
+        avatar: user.avatar || null,
       });
     }
   }, [user, profileModalOpen]);
 
-  // Password Modal State
-  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
-  const [passwordForm, setPasswordForm] = useState({
-    current_password: "",
-    new_password: "",
-    confirm_password: ""
-  });
-  const [isSavingPassword, setIsSavingPassword] = useState(false);
-
-  // Close dropdowns on outside click
+  // ── Close dropdowns on outside click ─────────────────────────────────────
   const dropdownRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -193,6 +211,7 @@ export function DashboardLayout() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // ─── Handlers ─────────────────────────────────────────────────────────────
   const toggleMenu = (label: string) => {
     setOpenMenus((prev) => ({ ...prev, [label]: !prev[label] }));
   };
@@ -213,7 +232,7 @@ export function DashboardLayout() {
       const updatedUser = await authApi.updateProfile({
         name: profileForm.name,
         email: profileForm.email,
-        avatar: profileForm.avatar
+        avatar: profileForm.avatar,
       });
       updateCurrentUser(updatedUser);
       toast.success("Profile updated successfully!");
@@ -243,7 +262,7 @@ export function DashboardLayout() {
     try {
       await authApi.changePassword({
         current_password: passwordForm.current_password,
-        new_password: passwordForm.new_password
+        new_password: passwordForm.new_password,
       });
       toast.success("Password changed successfully!");
       setPasswordModalOpen(false);
@@ -270,16 +289,28 @@ export function DashboardLayout() {
     }
   };
 
-  const visibleNavItems = NAV_ITEMS.filter((item) => hasPermission(item.permission));
+  // ─── Filter nav items based on permissions ──────────────────────────────
+  const visibleNavItems = NAV_ITEMS.filter((item) => {
+    // If item has permission, check it
+    if (item.permission) {
+      return hasPermission(item.permission);
+    }
+    // If item has sub-items, check if user has permission for any sub-item
+    if (item.sub) {
+      return item.sub.some((subItem) => hasPermission(subItem.permission));
+    }
+    return true;
+  });
 
-  // User initials for avatar fallback
+  // ─── User initials for avatar fallback ──────────────────────────────────
   const initials = user?.name
     ? user.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
     : "U";
 
+  // ─── Render ──────────────────────────────────────────────────────────────
   return (
     <div className="flex min-h-screen bg-canvas">
-      {/* Mobile overlay */}
+      {/* ── Mobile overlay ──────────────────────────────────────────────── */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 z-30 bg-black/50 lg:hidden"
@@ -287,7 +318,7 @@ export function DashboardLayout() {
         />
       )}
 
-      {/* ── Sidebar ─────────────────────────────────────────────────── */}
+      {/* ── Sidebar ────────────────────────────────────────────────────── */}
       <aside
         className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-ink-900 transition-transform duration-200 lg:static lg:translate-x-0 print:hidden ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
           }`}
@@ -373,7 +404,10 @@ export function DashboardLayout() {
                 >
                   {({ isActive }) => (
                     <>
-                      <Icon size={17} className={isActive ? "text-brand-light" : "text-slate-500 group-hover:text-slate-300"} />
+                      <Icon
+                        size={17}
+                        className={isActive ? "text-brand-light" : "text-slate-500 group-hover:text-slate-300"}
+                      />
                       <span className="flex-1">{t(item.label)}</span>
                       {isActive && <ChevronRight size={14} className="text-brand-light" />}
                     </>
@@ -413,7 +447,7 @@ export function DashboardLayout() {
         </div>
       </aside>
 
-      {/* ── Main content ─────────────────────────────────────────────── */}
+      {/* ── Main content ────────────────────────────────────────────────── */}
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Header */}
         <header className="flex h-16 flex-shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 lg:px-6 print:hidden">
@@ -452,7 +486,13 @@ export function DashboardLayout() {
                       onClick={() => {
                         setLanguage(lang as any);
                         setLangDropdownOpen(false);
-                        toast.success(lang === "English" ? "Language changed to English" : lang === "Hindi" ? "भाषा बदलकर हिंदी हो गई है" : "भाषा बदलून मराठी झाली आहे");
+                        toast.success(
+                          lang === "English"
+                            ? "Language changed to English"
+                            : lang === "Hindi"
+                              ? "भाषा बदलकर हिंदी हो गई है"
+                              : "भाषा बदलून मराठी झाली आहे"
+                        );
                       }}
                       className={`flex w-full items-center justify-between px-4 py-2 text-left text-xs font-medium hover:bg-slate-50 ${language === lang ? "text-brand" : "text-slate-700"
                         }`}
@@ -514,7 +554,9 @@ export function DashboardLayout() {
                         </div>
                       ))
                     ) : (
-                      <p className="py-4 text-center text-xs text-slate-400">{t("No unread notifications")}</p>
+                      <p className="py-4 text-center text-xs text-slate-400">
+                        {t("No unread notifications")}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -616,10 +658,14 @@ export function DashboardLayout() {
         </main>
       </div>
 
-      {/* ── Modals ──────────────────────────────────────────────────── */}
+      {/* ── Modals ─────────────────────────────────────────────────────── */}
 
       {/* Update Profile Modal */}
-      <Modal isOpen={profileModalOpen} onClose={() => setProfileModalOpen(false)} title={t("Update Profile")}>
+      <Modal
+        isOpen={profileModalOpen}
+        onClose={() => setProfileModalOpen(false)}
+        title={t("Update Profile")}
+      >
         <form onSubmit={handleProfileSubmit} className="space-y-4">
           <div className="flex flex-col items-center justify-center space-y-2 border-b border-slate-100 pb-4">
             <div className="relative">
@@ -651,9 +697,7 @@ export function DashboardLayout() {
               >
                 Upload new photo
               </button>
-              {profileForm.avatar && (
-                <span className="text-slate-300">|</span>
-              )}
+              {profileForm.avatar && <span className="text-slate-300">|</span>}
               {profileForm.avatar && (
                 <button
                   type="button"
@@ -716,7 +760,11 @@ export function DashboardLayout() {
       </Modal>
 
       {/* Change Password Modal */}
-      <Modal isOpen={passwordModalOpen} onClose={() => setPasswordModalOpen(false)} title={t("Change Password")}>
+      <Modal
+        isOpen={passwordModalOpen}
+        onClose={() => setPasswordModalOpen(false)}
+        title={t("Change Password")}
+      >
         <form onSubmit={handlePasswordSubmit} className="space-y-4">
           <div className="space-y-1">
             <label className="text-xs font-bold text-slate-700">Current Password</label>

@@ -107,13 +107,16 @@ export function ProductsPage() {
     event.preventDefault();
     if (!file) return;
     const ext = file.name.split('.').pop()?.toLowerCase();
-    if(ext !== 'csv'){
-      toast.error('Please select a csv file.');
+    if (ext !== 'csv') {
+      toast.error('Please select a CSV file.');
       return;
     }
-    importProducts.mutate(file, {
-      onSuccess: () => setFile(null),
-    });
+    importProducts.mutate(
+      { file, branch_id: currentBranchId || undefined },
+      {
+        onSuccess: () => setFile(null),
+      }
+    );
   };
 
   return (

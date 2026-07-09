@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "./context/AuthContext";
 import { LanguageProvider } from "./context/LanguageContext";
-import { BranchProvider } from "./context/BranchContext";  // ✅ ADD THIS
+import { BranchProvider } from "./context/BranchContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { DashboardLayout } from "./layouts/DashboardLayout";
 import { LoginPage } from "./pages/LoginPage";
@@ -45,6 +45,8 @@ import { NewPurchasePage } from "./pages/purchase/NewPurchasePage";
 import { PurchaseReturnsListPage } from "./pages/purchase/PurchaseReturnsListPage";
 import { NewPurchaseReturnPage } from "./pages/purchase/NewPurchaseReturnPage";
 import { CouponFormPage } from "./pages/Coupons/CouponForm";
+import { BranchesListPage } from "./pages/Branches/BranchesList";      // 👈 Added
+import { BranchFormPage } from "./pages/Branches/BranchForm";          // 👈 Added
 import { CouponsListPage } from "./pages/Coupons/CouponsList";
 import { AccountsLayout } from "./pages/accounts/AccountsLayout";
 import { AddAccountPage } from "./pages/accounts/AddAccountPage";
@@ -58,8 +60,7 @@ import { StockTransferListPage } from "./pages/stock/StockTransferListPage";
 import { ExpensesLayout } from "./pages/expenses/ExpensesLayout";
 import { ExpensesListPage } from "./pages/expenses/ExpensesListPage";
 import { ExpenseCategoryListPage } from "./pages/expenses/ExpenseCategoryListPage";
-import { BranchesListPage } from "./pages/branches/BranchesList";
-import { BranchFormPage } from "./pages/branches/BranchForm";
+
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -76,7 +77,7 @@ export default function App() {
       <BrowserRouter>
         <LanguageProvider>
           <AuthProvider>
-            <BranchProvider>  {/* ✅ WRAP WITH BranchProvider */}
+            <BranchProvider>
               <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
               <Routes>
                 {/* Public routes - no sidebar */}
@@ -194,8 +195,8 @@ export default function App() {
                   {/* Roles */}
                   <Route path="/roles" element={<RolesPage />} />
 
-                  {/* Customers (standalone) */}
-                  <Route path="/customers" element={<CustomersPage />} />
+                  {/* Advance Payments */}
+                  <Route path="/advance" element={<AdvancePaymentsList />} />
                 </Route>
 
                 {/* Fallback routes */}

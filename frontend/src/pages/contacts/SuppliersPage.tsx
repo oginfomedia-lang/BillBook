@@ -202,6 +202,171 @@ export function SuppliersPage() {
         )}
       </div>
 
+      {/* ── Create Form ──────────────────────────────────────────────── */}
+      {showForm && (
+        <form onSubmit={handleCreateSubmit} className="grid grid-cols-1 gap-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:grid-cols-3">
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t("Supplier Name")}</label>
+            <input
+              required
+              placeholder={t("e.g. Acme Suppliers")}
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t("Mobile")}</label>
+            <input
+              placeholder={t("e.g. +91 98765 43210")}
+              value={form.mobile}
+              onChange={(e) => setForm({ ...form, mobile: e.target.value })}
+              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t("Email")}</label>
+            <input
+              type="email"
+              placeholder={t("e.g. supplier@example.com")}
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t("Phone")}</label>
+            <input
+              placeholder={t("e.g. 022 1234 5678")}
+              value={form.phone}
+              onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t("GST Number")}</label>
+            <input
+              placeholder={t("e.g. 27AAAAA1111A1Z1")}
+              value={form.gst_number}
+              onChange={(e) => setForm({ ...form, gst_number: e.target.value })}
+              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t("Tax Number")}</label>
+            <input
+              placeholder={t("e.g. 123456789")}
+              value={form.tax_number}
+              onChange={(e) => setForm({ ...form, tax_number: e.target.value })}
+              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t("Opening Balance")}</label>
+            <input
+              type="number"
+              min={0}
+              step="0.01"
+              value={form.opening_balance || ""}
+              onChange={(e) => setForm({ ...form, opening_balance: Number(e.target.value) || 0 })}
+              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t("Country")}</label>
+            <input
+              list="country-options-create"
+              placeholder={t("Start typing or choose a country")}
+              value={form.country}
+              onChange={(e) => {
+                const country = e.target.value;
+                const country_code = findCountryCode(country);
+                setForm({ ...form, country, country_code, state: "", state_code: "", city: "", city_code: "" });
+              }}
+              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
+            />
+            <datalist id="country-options-create">
+              {countryOptions.map((option: SelectOption) => (
+                <option key={option.value} value={option.label} />
+              ))}
+            </datalist>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t("State")}</label>
+            <input
+              list="state-options-create"
+              placeholder={form.country_code ? t("Start typing or choose a state") : t("Select country first")}
+              value={form.state}
+              disabled={!form.country_code}
+              onChange={(e) => {
+                const state = e.target.value;
+                const state_code = findStateCode(state, form.country_code);
+                setForm({ ...form, state, state_code, city: "", city_code: "" });
+              }}
+              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand disabled:cursor-not-allowed disabled:bg-slate-50"
+            />
+            <datalist id="state-options-create">
+              {createStateOptions.map((option: SelectOption) => (
+                <option key={option.value} value={option.label} />
+              ))}
+            </datalist>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t("City")}</label>
+            <input
+              list="city-options-create"
+              placeholder={form.state_code ? t("Start typing or choose a city") : t("Select state first")}
+              value={form.city}
+              disabled={!form.state_code}
+              onChange={(e) => {
+                const city = e.target.value;
+                const city_code = findCityCode(city, form.country_code, form.state_code);
+                setForm({ ...form, city, city_code });
+              }}
+              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand disabled:cursor-not-allowed disabled:bg-slate-50"
+            />
+            <datalist id="city-options-create">
+              {createCityOptions.map((option: SelectOption) => (
+                <option key={option.value} value={option.label} />
+              ))}
+            </datalist>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t("Postcode")}</label>
+            <input
+              value={form.postcode}
+              onChange={(e) => setForm({ ...form, postcode: e.target.value })}
+              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
+            />
+          </div>
+          <div className="sm:col-span-3">
+            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t("Address")}</label>
+            <textarea
+              value={form.address}
+              onChange={(e) => setForm({ ...form, address: e.target.value })}
+              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand h-24 resize-none"
+            />
+          </div>
+          <div className="sm:col-span-3 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setShowForm(false)}
+              className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+            >
+              {t("Cancel")}
+            </button>
+            <button
+              type="submit"
+              disabled={createSupplier.isPending}
+              className="rounded-lg bg-brand px-5 py-2 text-sm font-semibold text-white hover:bg-brand-dark disabled:opacity-50"
+            >
+              {createSupplier.isPending ? t("Saving…") : t("Save Supplier")}
+            </button>
+          </div>
+        </form>
+      )}
+
+      {/* ── Search ────────────────────────────────────────────────────── */}
       {/* Search */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
@@ -213,7 +378,7 @@ export function SuppliersPage() {
         />
       </div>
 
-      {/* Table */}
+      {/* ── Table ────────────────────────────────────────────────────── */}
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className="w-full min-w-[760px] text-sm">
           <thead>
@@ -299,13 +464,149 @@ export function SuppliersPage() {
         </div>
       )}
 
-      {/* Edit Modal */}
+      {/* ── Edit Modal ───────────────────────────────────────────────── */}
       <Modal
         isOpen={editingSupplier !== null}
         onClose={() => setEditingSupplier(null)}
         title={t("Edit Supplier")}
       >
         <form onSubmit={handleEditSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t("Supplier Name")}</label>
+            <input
+              required
+              value={editForm.name}
+              onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t("Mobile")}</label>
+            <input
+              value={editForm.mobile}
+              onChange={(e) => setEditForm({ ...editForm, mobile: e.target.value })}
+              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t("Email")}</label>
+            <input
+              type="email"
+              value={editForm.email}
+              onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t("Phone")}</label>
+            <input
+              value={editForm.phone}
+              onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t("GST Number")}</label>
+            <input
+              value={editForm.gst_number}
+              onChange={(e) => setEditForm({ ...editForm, gst_number: e.target.value })}
+              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t("Tax Number")}</label>
+            <input
+              value={editForm.tax_number}
+              onChange={(e) => setEditForm({ ...editForm, tax_number: e.target.value })}
+              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t("Opening Balance")}</label>
+            <input
+              type="number"
+              min={0}
+              step="0.01"
+              value={editForm.opening_balance || ""}
+              onChange={(e) => setEditForm({ ...editForm, opening_balance: Number(e.target.value) || 0 })}
+              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t("Country")}</label>
+            <input
+              list="country-options-edit"
+              placeholder={t("Start typing or choose a country")}
+              value={editForm.country}
+              onChange={(e) => {
+                const country = e.target.value;
+                const country_code = findCountryCode(country);
+                setEditForm({ ...editForm, country, country_code, state: "", state_code: "", city: "", city_code: "" });
+              }}
+              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
+            />
+            <datalist id="country-options-edit">
+              {countryOptions.map((option: SelectOption) => (
+                <option key={option.value} value={option.label} />
+              ))}
+            </datalist>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t("State")}</label>
+            <input
+              list="state-options-edit"
+              placeholder={editForm.country_code ? t("Start typing or choose a state") : t("Select country first")}
+              value={editForm.state}
+              disabled={!editForm.country_code}
+              onChange={(e) => {
+                const state = e.target.value;
+                const state_code = findStateCode(state, editForm.country_code);
+                setEditForm({ ...editForm, state, state_code, city: "", city_code: "" });
+              }}
+              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand disabled:cursor-not-allowed disabled:bg-slate-50"
+            />
+            <datalist id="state-options-edit">
+              {editStateOptions.map((option: SelectOption) => (
+                <option key={option.value} value={option.label} />
+              ))}
+            </datalist>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t("City")}</label>
+            <input
+              list="city-options-edit"
+              placeholder={editForm.state_code ? t("Start typing or choose a city") : t("Select state first")}
+              value={editForm.city}
+              disabled={!editForm.state_code}
+              onChange={(e) => {
+                const city = e.target.value;
+                const city_code = findCityCode(city, editForm.country_code, editForm.state_code);
+                setEditForm({ ...editForm, city, city_code });
+              }}
+              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand disabled:cursor-not-allowed disabled:bg-slate-50"
+            />
+            <datalist id="city-options-edit">
+              {editCityOptions.map((option: SelectOption) => (
+                <option key={option.value} value={option.label} />
+              ))}
+            </datalist>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t("Postcode")}</label>
+            <input
+              value={editForm.postcode}
+              onChange={(e) => setEditForm({ ...editForm, postcode: e.target.value })}
+              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t("Address")}</label>
+            <textarea
+              value={editForm.address}
+              onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
+              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand h-24 resize-none"
+            />
+          </div>
           {/* Add your edit form fields here */}
           <div className="flex justify-end gap-2 pt-2">
             <button
