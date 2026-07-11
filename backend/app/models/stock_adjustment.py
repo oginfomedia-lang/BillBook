@@ -21,6 +21,7 @@ class StockAdjustment(TenantScopedMixin, db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     reference_no = db.Column(db.String(100), nullable=True)
+    branch_id = db.Column(db.Integer, db.ForeignKey("branches.id", ondelete="SET NULL"), nullable=True)
     adjustment_date = db.Column(db.Date, default=date.today, nullable=False)
     warehouse_id = db.Column(db.Integer, db.ForeignKey("warehouses.id"), nullable=True)
     adjustment_type = db.Column(db.String(20), default="addition", nullable=False)

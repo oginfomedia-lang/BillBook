@@ -29,7 +29,7 @@ class Invoice(TenantScopedMixin, db.Model):
     invoice_number = db.Column(db.String(40), nullable=False)
 
     customer_id = db.Column(db.Integer, db.ForeignKey("customers.id"), nullable=False)
-    branch_id = db.Column(db.Integer, db.ForeignKey("branches.id", ondelete="SET NULL"), nullable=True)  # ← ADD THIS
+    branch_id = db.Column(db.Integer, db.ForeignKey("branches.id", ondelete="SET NULL"), nullable=True)
 
     issue_date = db.Column(db.Date, default=date.today)
     due_date = db.Column(db.Date)
@@ -54,14 +54,16 @@ class Invoice(TenantScopedMixin, db.Model):
     coupon_code = db.Column(db.String(50), nullable=True)
     coupon_discount = db.Column(db.Numeric(12, 2), nullable=False, default=0)
 
-    branch_id = db.Column(db.Integer, db.ForeignKey("branches.id", ondelete="SET NULL"), nullable=True)
+    # ✅ ADD THIS - Created By
+    created_by = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
+    creator = db.relationship("User", foreign_keys=[created_by], lazy=True)
+
     branch = db.relationship("Branch", back_populates="invoices")
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     customer = db.relationship("Customer", back_populates="invoices")
-    branch = db.relationship("Branch", back_populates="invoices")  # ← ADD THIS
     
     items = db.relationship(
         "InvoiceItem", back_populates="invoice", cascade="all, delete-orphan", lazy="joined"
@@ -132,6 +134,7 @@ class Invoice(TenantScopedMixin, db.Model):
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "coupon_code": self.coupon_code,
             "coupon_discount": float(self.coupon_discount or 0),
+            "created_by": self.created_by,  # ✅ ADD THIS
         }
         if include_items:
             data["items"] = [item.to_dict() for item in self.items]
@@ -154,12 +157,10 @@ class InvoiceItem(db.Model):
     line_tax = db.Column(db.Numeric(12, 2), default=0)
     line_total = db.Column(db.Numeric(12, 2), default=0)
 
-    # ✅ CORRECT - Invoice relationship
     invoice = db.relationship("Invoice", back_populates="items")
 
-    # ✅ CORRECT - Branch relationship
     branch_id = db.Column(db.Integer, db.ForeignKey("branches.id", ondelete="SET NULL"), nullable=True)
-    branch = db.relationship("Branch", back_populates="invoice_items")  # ← This matches Branch.invoice_items
+    branch = db.relationship("Branch", back_populates="invoice_items")
 
     def to_dict(self):
         return {

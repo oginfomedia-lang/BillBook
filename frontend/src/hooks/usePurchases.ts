@@ -1,6 +1,7 @@
 // frontend/src/hooks/usePurchases.ts
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useBranch } from "../context/BranchContext";
 import * as purchasesApi from "../api/purchases";
 import type { Purchase, PurchaseStats, PurchasePayload, PurchasePaymentType } from "../api/purchases";
 
@@ -16,8 +17,9 @@ export const usePurchases = (params: {
     status?: string;
     payment_status?: string;
 } = {}) => {
+    const { currentBranchId } = useBranch();
     return useQuery({
-        queryKey: ["purchases", params],
+        queryKey: ["purchases", { ...params, branchId: currentBranchId }],
         queryFn: () => purchasesApi.listPurchases(params),
         placeholderData: (prev) => prev,
     });
@@ -32,8 +34,9 @@ export const usePurchase = (id: number | undefined) => {
 };
 
 export const usePurchaseStats = (params?: { warehouse_id?: number }) => {
+    const { currentBranchId } = useBranch();
     return useQuery({
-        queryKey: ["purchases", "stats", params],
+        queryKey: ["purchases", "stats", { ...params, branchId: currentBranchId }],
         queryFn: () => purchasesApi.getPurchaseStats(params),
         placeholderData: (prev) => prev,
     });

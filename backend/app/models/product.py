@@ -13,14 +13,16 @@ class Product(TenantScopedMixin, db.Model):
     description = db.Column(db.Text)
 
     unit_price = db.Column(db.Numeric(12, 2), nullable=False, default=0)
-    tax_rate = db.Column(db.Numeric(5, 2), nullable=False, default=0)  # e.g. 18.00 for 18% GST
+    tax_rate = db.Column(db.Numeric(5, 2), nullable=False, default=0)
     stock_quantity = db.Column(db.Integer, default=0)
-    unit = db.Column(db.String(20), default="pcs")  # pcs, kg, hr, etc.
+    unit = db.Column(db.String(20), default="pcs")
 
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # ✅ Make sure branch_id exists
     branch_id = db.Column(db.Integer, db.ForeignKey("branches.id", ondelete="SET NULL"), nullable=True)
-    branch = db.relationship("Branch", back_populates="products")
+    branch = db.relationship("Branch", back_populates="products", lazy=True)
 
     def to_dict(self):
         return {
@@ -33,4 +35,6 @@ class Product(TenantScopedMixin, db.Model):
             "stock_quantity": self.stock_quantity,
             "unit": self.unit,
             "is_active": self.is_active,
+            "branch_id": self.branch_id,  # ✅ ADD THIS
+            "created_at": self.created_at.isoformat() if self.created_at else None,
         }

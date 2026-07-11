@@ -1,6 +1,7 @@
 // src/hooks/useAccounts.ts
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { useBranch } from "../context/BranchContext";
 import * as accountsApi from "../api/accounts";
 
 // -------------------------------------------------------------------
@@ -8,16 +9,18 @@ import * as accountsApi from "../api/accounts";
 // -------------------------------------------------------------------
 
 export function useAccounts(params: { page?: number; per_page?: number; search?: string } = {}) {
+  const { currentBranchId } = useBranch();
   return useQuery({
-    queryKey: ["accounts", params],
+    queryKey: ["accounts", { ...params, branchId: currentBranchId }],
     queryFn: () => accountsApi.listAccounts(params),
     placeholderData: (prev) => prev,
   });
 }
 
 export function useAllAccounts() {
+  const { currentBranchId } = useBranch();
   return useQuery({
-    queryKey: ["accounts", "all"],
+    queryKey: ["accounts", "all", { branchId: currentBranchId }],
     queryFn: accountsApi.getAllAccounts,
   });
 }

@@ -1,3 +1,5 @@
+// frontend/src/types/index.ts
+
 export interface Tenant {
   id: number;
   company_name: string;
@@ -22,8 +24,13 @@ export interface User {
   is_active: boolean;
   created_at?: string;
   avatar?: string | null;
+  // ✅ ADD THIS - Branch assignment
+  branch_id?: number | null;
+  branch?: Branch | null;
   // Only present on the /auth/me response, not on list/detail responses
   permissions?: string[];
+  // ✅ ADD THIS - Branches from login response
+  branches?: Branch[];
 }
 
 export interface Role {
@@ -102,6 +109,8 @@ export interface InvoiceItem {
   line_subtotal?: number;
   line_tax?: number;
   line_total?: number;
+  branch_id?: number | null;  // ✅ ADD THIS
+  branch?: Branch | null;      // ✅ ADD THIS
 }
 
 export interface Invoice {
@@ -197,6 +206,7 @@ export interface DashboardSummary {
 export interface AuthResponse {
   user: User;
   tenant?: Tenant;
+  branches?: Branch[];  // ✅ ADD THIS
   access_token: string;
   refresh_token: string;
 }
@@ -252,4 +262,356 @@ export interface Branch {
   email: string | null;
   is_active: boolean;
   created_at: string;
+  is_default?: boolean;  // ✅ ADD THIS - For login response
+}
+
+// ─── Purchase Types ──────────────────────────────────────────────────────────
+
+export type PurchaseStatus = "draft" | "pending" | "received" | "cancelled" | "returned";
+export type PurchasePaymentStatus = "pending" | "paid" | "partial";
+export type PurchasePaymentType = "cash" | "bank" | "cheque" | "online";
+
+export interface PurchaseItem {
+  id?: number;
+  product_id?: number | null;
+  description: string;
+  quantity: number;
+  unit_price: number;
+  tax_rate: number;
+  line_subtotal?: number;
+  line_tax?: number;
+  line_total?: number;
+  branch_id?: number | null;
+  branch?: Branch | null;
+}
+
+export interface Purchase {
+  id: number;
+  purchase_number: string;
+  supplier_id: number;
+  supplier?: Supplier | null;
+  issue_date: string | null;
+  due_date: string | null;
+  discount_type: "flat" | "percent";
+  discount_value: number;
+  notes: string | null;
+  status: PurchaseStatus;
+  subtotal: number;
+  tax_total: number;
+  discount_total: number;
+  grand_total: number;
+  amount_paid: number;
+  balance_due: number;
+  items?: PurchaseItem[];
+  created_at: string;
+  branch_id?: number | null;
+  branch?: Branch | null;
+}
+
+export interface PurchasePayment {
+  id: number;
+  purchase_id: number;
+  amount: number;
+  payment_date: string;
+  payment_type: PurchasePaymentType;
+  reference: string | null;
+  notes: string | null;
+  status: PurchasePaymentStatus;
+  created_at: string;
+}
+
+export interface PurchaseReturn {
+  id: number;
+  return_number: string;
+  purchase_id: number;
+  purchase?: Purchase | null;
+  supplier_id: number;
+  supplier?: Supplier | null;
+  issue_date: string;
+  notes: string | null;
+  status: PurchaseStatus;
+  subtotal: number;
+  tax_total: number;
+  discount_total: number;
+  grand_total: number;
+  items?: PurchaseReturnItem[];
+  created_at: string;
+  branch_id?: number | null;
+  branch?: Branch | null;
+}
+
+export interface PurchaseReturnItem {
+  id?: number;
+  purchase_item_id?: number | null;
+  product_id?: number | null;
+  description: string;
+  quantity: number;
+  unit_price: number;
+  tax_rate: number;
+  line_subtotal?: number;
+  line_tax?: number;
+  line_total?: number;
+  branch_id?: number | null;
+  branch?: Branch | null;
+}
+
+// ─── Stock Types ─────────────────────────────────────────────────────────────
+
+export interface StockAdjustment {
+  id: number;
+  adjustment_number: string;
+  product_id: number;
+  product?: Product | null;
+  adjustment_type: "add" | "subtract";
+  quantity: number;
+  previous_quantity: number;
+  new_quantity: number;
+  reason: string | null;
+  notes: string | null;
+  created_at: string;
+  branch_id?: number | null;
+  branch?: Branch | null;
+}
+
+export interface StockTransfer {
+  id: number;
+  transfer_number: string;
+  product_id: number;
+  product?: Product | null;
+  from_branch_id: number;
+  from_branch?: Branch | null;
+  to_branch_id: number;
+  to_branch?: Branch | null;
+  quantity: number;
+  status: "pending" | "completed" | "cancelled";
+  notes: string | null;
+  created_at: string;
+  completed_at: string | null;
+  branch_id?: number | null;
+  branch?: Branch | null;
+}
+
+// ─── Expense Types ──────────────────────────────────────────────────────────
+
+export interface ExpenseCategory {
+  id: number;
+  name: string;
+  description: string | null;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface Expense {
+  id: number;
+  expense_date: string;
+  category_id: number;
+  category?: ExpenseCategory | null;
+  reference_no: string | null;
+  expense_for: string | null;
+  amount: number;
+  account_id: number | null;
+  account?: Account | null;
+  notes: string | null;
+  created_by: number | null;
+  created_at: string;
+  branch_id?: number | null;
+  branch?: Branch | null;
+}
+
+// ─── Account Types ──────────────────────────────────────────────────────────
+
+export interface Account {
+  id: number;
+  account_name: string;
+  account_number: string | null;
+  bank_name: string | null;
+  ifsc_code: string | null;
+  branch_name: string | null;
+  opening_balance: number;
+  current_balance: number;
+  is_active: boolean;
+  created_at: string;
+  branch_id?: number | null;
+  branch?: Branch | null;
+}
+
+export interface AccountTransaction {
+  id: number;
+  account_id: number;
+  account?: Account | null;
+  transaction_type: "credit" | "debit";
+  amount: number;
+  reference: string | null;
+  notes: string | null;
+  transaction_date: string;
+  created_at: string;
+  branch_id?: number | null;
+  branch?: Branch | null;
+}
+
+export interface MoneyTransfer {
+  id: number;
+  transfer_number: string;
+  from_account_id: number;
+  from_account?: Account | null;
+  to_account_id: number;
+  to_account?: Account | null;
+  amount: number;
+  transfer_date: string;
+  reference: string | null;
+  notes: string | null;
+  status: "pending" | "completed" | "cancelled";
+  created_at: string;
+  branch_id?: number | null;
+  branch?: Branch | null;
+}
+
+export interface Deposit {
+  id: number;
+  deposit_number: string;
+  account_id: number;
+  account?: Account | null;
+  amount: number;
+  deposit_date: string;
+  reference: string | null;
+  notes: string | null;
+  status: "pending" | "completed" | "cancelled";
+  created_at: string;
+  branch_id?: number | null;
+  branch?: Branch | null;
+}
+
+export interface CashTransaction {
+  id: number;
+  transaction_number: string;
+  transaction_type: "cash_in" | "cash_out";
+  amount: number;
+  description: string | null;
+  reference: string | null;
+  transaction_date: string;
+  created_at: string;
+  branch_id?: number | null;
+  branch?: Branch | null;
+}
+
+// ─── Quotation Types ─────────────────────────────────────────────────────────
+
+export type QuotationStatus = "draft" | "sent" | "accepted" | "rejected" | "converted";
+
+export interface QuotationItem {
+  id?: number;
+  product_id?: number | null;
+  description: string;
+  quantity: number;
+  unit_price: number;
+  tax_rate: number;
+  line_subtotal?: number;
+  line_tax?: number;
+  line_total?: number;
+  branch_id?: number | null;
+  branch?: Branch | null;
+}
+
+export interface Quotation {
+  id: number;
+  quotation_number: string;
+  customer_id: number;
+  customer?: Customer | null;
+  issue_date: string | null;
+  expiry_date: string | null;
+  discount_type: "flat" | "percent";
+  discount_value: number;
+  notes: string | null;
+  status: QuotationStatus;
+  subtotal: number;
+  tax_total: number;
+  discount_total: number;
+  grand_total: number;
+  items?: QuotationItem[];
+  created_at: string;
+  branch_id?: number | null;
+  branch?: Branch | null;
+}
+
+// ─── Item Types ─────────────────────────────────────────────────────────────
+
+export interface Item {
+  id: number;
+  item_code: string;
+  item_name: string;
+  description: string | null;
+  unit_price: number;
+  purchase_price: number;
+  tax_id: number | null;
+  tax?: Tax | null;
+  opening_stock: number;
+  alert_quantity: number;
+  category_id: number | null;
+  category?: Category | null;
+  brand_id: number | null;
+  brand?: Brand | null;
+  unit_id: number | null;
+  unit?: Unit | null;
+  is_active: boolean;
+  created_at: string;
+  branch_id?: number | null;
+  branch?: Branch | null;
+}
+
+export interface Category {
+  id: number;
+  name: string;
+  description: string | null;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface Brand {
+  id: number;
+  name: string;
+  description: string | null;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface Unit {
+  id: number;
+  name: string;
+  description: string | null;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface ItemGroup {
+  id: number;
+  name: string;
+  description: string | null;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface Tax {
+  id: number;
+  name: string;
+  tax_value: number;
+  tax_type: "percentage" | "fixed";
+  description: string | null;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface Variant {
+  id: number;
+  name: string;
+  sku: string;
+  item_id: number;
+  item?: Item | null;
+  attributes: Record<string, string>;
+  unit_price: number;
+  purchase_price: number;
+  stock_quantity: number;
+  is_active: boolean;
+  created_at: string;
+  branch_id?: number | null;
+  branch?: Branch | null;
 }

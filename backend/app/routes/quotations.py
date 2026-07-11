@@ -11,6 +11,7 @@ from app.models import Customer, Product
 from app.models.quotation import Quotation, QuotationItem, QuotationStatus
 from app.schemas import QuotationSchema
 from app.tenant_scope import TenantContext
+from app.branch_scope import BranchContext, apply_branch_scope
 from app.utils.decorators import require_auth
 
 quotations_bp = Blueprint("quotations", __name__, url_prefix="/api/v1/quotations")
@@ -44,6 +45,7 @@ def list_quotations():
     search = request.args.get("search", "").strip()
 
     query = Quotation.query
+    query = apply_branch_scope(query, Quotation)
     if status:
         query = query.filter(Quotation.status == status)
     if warehouse_id:
@@ -90,6 +92,7 @@ def create_quotation():
         quotation_number = _generate_quotation_number()
         quotation = Quotation(
             tenant_id=TenantContext.get(),
+            branch_id=BranchContext.get(),
             quotation_number=quotation_number,
             customer_id=data["customer_id"],
             warehouse_id=data.get("warehouse_id"),

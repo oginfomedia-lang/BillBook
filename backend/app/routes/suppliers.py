@@ -1,13 +1,14 @@
 import csv
 import io
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, g
 from marshmallow import ValidationError
 
 from app.extensions import db
 from app.models import Supplier
 from app.schemas import SupplierSchema
 from app.tenant_scope import TenantContext
+from app.branch_scope import BranchContext, apply_branch_scope
 from app.utils.decorators import require_auth, require_permission
 
 suppliers_bp = Blueprint("suppliers", __name__, url_prefix="/api/v1/suppliers")
@@ -20,14 +21,24 @@ def list_suppliers():
     page = request.args.get("page", 1, type=int)
     per_page = min(request.args.get("per_page", 20, type=int), 100)
     search = request.args.get("search", "").strip()
-
-    query = Supplier.query
-    if search:
-        query = query.filter(Supplier.name.ilike(f"%{search}%"))
-
     branch_id = request.args.get("branch_id", type=int)
+
+    query = Supplier.query.filter_by(is_active=True)
+    
+    # Apply branch filter
     if branch_id:
         query = query.filter(Supplier.branch_id == branch_id)
+    elif g.user and g.user.branch_id and not g.user.is_super_admin:
+        query = query.filter(Supplier.branch_id == g.user.branch_id)
+    
+    if search:
+        query = query.filter(
+            db.or_(
+                Supplier.name.ilike(f"%{search}%"),
+                Supplier.email.ilike(f"%{search}%"),
+                Supplier.phone.ilike(f"%{search}%")
+            )
+        )
 
     pagination = query.order_by(Supplier.name.asc()).paginate(page=page, per_page=per_page, error_out=False)
     return jsonify(
@@ -57,52 +68,24 @@ def create_supplier():
     except ValidationError as err:
         return jsonify({"error": "Validation failed", "details": err.messages}), 422
 
-    supplier = Supplier(tenant_id=TenantContext.get(), **data)
+    # ✅ Get branch_id properly
+    branch_id = data.get('branch_id')
+    if not branch_id:
+        branch_id = BranchContext.get() or g.user.branch_id
+    
+    # ✅ Remove branch_id from data to avoid duplication
+    if 'branch_id' in data:
+        del data['branch_id']
+
+    # ✅ Create supplier with branch_id only once
+    supplier = Supplier(
+        tenant_id=TenantContext.get(),
+        branch_id=branch_id,  # ✅ Pass branch_id once
+        **data                 # ✅ data no longer contains branch_id
+    )
     db.session.add(supplier)
     db.session.commit()
     return jsonify(supplier.to_dict()), 201
-
-
-@suppliers_bp.route("/import", methods=["POST"])
-@require_auth
-@require_permission("suppliers.import")
-def import_suppliers():
-    if "file" not in request.files:
-        return jsonify({"error": "CSV file is required."}), 400
-
-    file = request.files["file"]
-    if not file or file.filename == "":
-        return jsonify({"error": "CSV file is required."}), 400
-
-    # Get branch_id from query parameters
-    branch_id = request.args.get("branch_id", type=int)
-
-    try:
-        content = file.stream.read().decode("utf-8-sig")
-    except Exception:
-        return jsonify({"error": "Unable to read uploaded file."}), 400
-
-    reader = csv.DictReader(io.StringIO(content))
-    imported = []
-    errors = []
-
-    for row_number, row in enumerate(reader, start=2):
-        cleaned = {key: (value.strip() if isinstance(value, str) else value) for key, value in row.items()}
-        try:
-            data = SupplierSchema().load(cleaned)
-        except ValidationError as err:
-            errors.append({"row": row_number, "errors": err.messages})
-            continue
-
-        # Explicitly set branch_id
-        imported.append(Supplier(tenant_id=TenantContext.get(), branch_id=branch_id, **data))
-
-    if errors:
-        return jsonify({"error": "Import failed.", "details": errors}), 422
-
-    db.session.add_all(imported)
-    db.session.commit()
-    return jsonify({"imported": len(imported)}), 201
 
 
 @suppliers_bp.route("/<int:supplier_id>", methods=["PUT"])
@@ -125,7 +108,58 @@ def update_supplier(supplier_id):
 @require_auth
 @require_permission("suppliers.delete")
 def delete_supplier(supplier_id):
+    """Soft delete supplier."""
     supplier = Supplier.query.get_or_404(supplier_id)
-    db.session.delete(supplier)
+    supplier.is_active = False
     db.session.commit()
     return "", 204
+
+
+@suppliers_bp.route("/import", methods=["POST"])
+@require_auth
+@require_permission("suppliers.import")
+def import_suppliers():
+    if "file" not in request.files:
+        return jsonify({"error": "CSV file is required."}), 400
+
+    file = request.files["file"]
+    if not file or file.filename == "":
+        return jsonify({"error": "CSV file is required."}), 400
+
+    try:
+        content = file.stream.read().decode("utf-8-sig")
+    except Exception:
+        return jsonify({"error": "Unable to read uploaded file."}), 400
+
+    reader = csv.DictReader(io.StringIO(content))
+    imported = []
+    errors = []
+
+    # ✅ Get branch_id once for all imports
+    branch_id = BranchContext.get() or g.user.branch_id
+
+    for row_number, row in enumerate(reader, start=2):
+        cleaned = {key: (value.strip() if isinstance(value, str) else value) for key, value in row.items()}
+        try:
+            data = SupplierSchema().load(cleaned)
+        except ValidationError as err:
+            errors.append({"row": row_number, "errors": err.messages})
+            continue
+
+        # ✅ Remove branch_id from data if it exists
+        if 'branch_id' in data:
+            del data['branch_id']
+
+        # ✅ Create supplier with branch_id only once
+        imported.append(Supplier(
+            tenant_id=TenantContext.get(),
+            branch_id=branch_id,  # ✅ Pass branch_id once
+            **data                 # ✅ data no longer contains branch_id
+        ))
+
+    if errors:
+        return jsonify({"error": "Import failed.", "details": errors}), 422
+
+    db.session.add_all(imported)
+    db.session.commit()
+    return jsonify({"imported": len(imported)}), 201

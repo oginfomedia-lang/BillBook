@@ -1,3 +1,5 @@
+// frontend/src/api/client.ts
+
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
@@ -8,10 +10,6 @@ export const apiClient = axios.create({
 });
 
 // --- Token storage ---
-// Kept in memory + localStorage for the refresh token only. Access tokens
-// are short-lived (30 min) so this is a reasonable tradeoff for an SPA
-// without a backend session store. For stricter security, swap to
-// HTTP-only cookies issued by Flask and drop the localStorage usage.
 const ACCESS_TOKEN_KEY = "billbook_access_token";
 const REFRESH_TOKEN_KEY = "billbook_refresh_token";
 
@@ -28,14 +26,24 @@ export const tokenStorage = {
   },
 };
 
+// ─── Request Interceptor ────────────────────────────────────────────────────
 apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+  // ✅ Add Authorization token
   const token = tokenStorage.getAccessToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
+  // ✅ Inject Branch ID if selected
+  const branchId = localStorage.getItem("billbook_branch_id");
+  if (branchId) {
+    config.headers["X-Branch-Id"] = branchId;
+  }
+
   return config;
 });
 
+// ─── Response Interceptor ───────────────────────────────────────────────────
 let isRefreshing = false;
 let refreshQueue: Array<() => void> = [];
 
@@ -44,10 +52,12 @@ apiClient.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
+    // ✅ Handle 401 Unauthorized - Token expired
     if (error.response?.status === 401 && !originalRequest._retry) {
       const refreshToken = tokenStorage.getRefreshToken();
       if (!refreshToken) {
         tokenStorage.clear();
+        localStorage.removeItem("billbook_branch_id");
         if (!window.location.pathname.startsWith("/login")) {
           window.location.href = "/login";
         }
@@ -55,7 +65,7 @@ apiClient.interceptors.response.use(
       }
 
       if (isRefreshing) {
-        // Queue requests that fail while a refresh is already in-flight.
+        // Queue requests while refresh is in progress
         return new Promise((resolve) => {
           refreshQueue.push(() => resolve(apiClient(originalRequest)));
         });
@@ -74,6 +84,7 @@ apiClient.interceptors.response.use(
         return apiClient(originalRequest);
       } catch (refreshError) {
         tokenStorage.clear();
+        localStorage.removeItem("billbook_branch_id");
         if (!window.location.pathname.startsWith("/login")) {
           window.location.href = "/login";
         }
@@ -81,6 +92,13 @@ apiClient.interceptors.response.use(
       } finally {
         isRefreshing = false;
       }
+    }
+
+    // ✅ Handle 403 Forbidden - No branch access
+    if (error.response?.status === 403) {
+      const message = (error.response?.data as any)?.error || "Access denied to this branch";
+      console.error("Branch access error:", message);
+      // Optional: Show toast notification
     }
 
     return Promise.reject(error);

@@ -13,6 +13,7 @@ from sqlalchemy.exc import IntegrityError
 from app.extensions import db
 from app.models.account import Account
 from app.tenant_scope import TenantContext
+from app.branch_scope import BranchContext, apply_branch_scope
 from app.utils.decorators import require_auth
 
 accounts_bp = Blueprint("accounts", __name__, url_prefix="/api/v1/accounts")
@@ -64,6 +65,7 @@ def list_accounts():
     search = request.args.get("search", "").strip()
 
     query = Account.query
+    query = apply_branch_scope(query, Account)
     if search:
         query = query.filter(
             db.or_(
@@ -133,6 +135,7 @@ def create_account():
         code = _generate_account_code()
         account = Account(
             tenant_id=TenantContext.get(),
+            branch_id=BranchContext.get(),
             account_code=code,
             account_name=data["account_name"],
             parent_id=data.get("parent_id"),

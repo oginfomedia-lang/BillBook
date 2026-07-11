@@ -20,6 +20,7 @@ class Supplier(TenantScopedMixin, db.Model):
     city = db.Column(db.String(80))
     postcode = db.Column(db.String(30))
     address = db.Column(db.Text)
+    is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     branch_id = db.Column(db.Integer, db.ForeignKey("branches.id", ondelete="SET NULL"), nullable=True)
     branch = db.relationship("Branch", back_populates="suppliers")
@@ -39,4 +40,7 @@ class Supplier(TenantScopedMixin, db.Model):
             "city": self.city,
             "postcode": self.postcode,
             "address": self.address,
+             "is_active": self.is_active,  # ✅ ADDED
+            "branch_id": self.branch_id,  # ✅ ADDED
+            "created_at": self.created_at.isoformat() if self.created_at else None, 
         }

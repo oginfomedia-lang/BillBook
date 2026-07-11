@@ -14,6 +14,7 @@ from sqlalchemy.exc import IntegrityError
 from app.extensions import db
 from app.models.account import Account, MoneyTransfer
 from app.tenant_scope import TenantContext
+from app.branch_scope import BranchContext, apply_branch_scope
 from app.utils.decorators import require_auth
 
 money_transfers_bp = Blueprint("money_transfers", __name__, url_prefix="/api/v1/money-transfers")
@@ -71,6 +72,7 @@ def list_transfers():
     created_by = request.args.get("created_by", type=int)
 
     query = MoneyTransfer.query
+    query = apply_branch_scope(query, MoneyTransfer)
     if transfer_date:
         query = query.filter(MoneyTransfer.transfer_date == transfer_date)
     if debit_account_id:
@@ -133,6 +135,7 @@ def create_transfer():
         code = _generate_transfer_code()
         transfer = MoneyTransfer(
             tenant_id=TenantContext.get(),
+            branch_id=BranchContext.get(),
             transfer_code=code,
             debit_account_id=data["debit_account_id"],
             credit_account_id=data["credit_account_id"],

@@ -17,6 +17,7 @@ from app.models.purchase import (
 )
 from app.schemas.purchase_schemas import PurchaseSchema, PurchasePaymentSchema
 from app.tenant_scope import TenantContext
+from app.branch_scope import BranchContext, apply_branch_scope
 from app.utils.decorators import require_auth
 
 purchases_bp = Blueprint("purchases", __name__, url_prefix="/api/v1/purchases")
@@ -63,6 +64,8 @@ def get_purchase_stats():
     warehouse_id = request.args.get("warehouse_id", type=int)
 
     q = Purchase.query
+    q = apply_branch_scope(q, Purchase)
+    
     if warehouse_id:
         q = q.filter(Purchase.warehouse_id == warehouse_id)
 
@@ -99,6 +102,8 @@ def list_purchases():
     search = request.args.get("search", "").strip()
 
     query = Purchase.query
+    query = apply_branch_scope(query, Purchase)
+    
     if warehouse_id:
         query = query.filter(Purchase.warehouse_id == warehouse_id)
     if status:
@@ -157,6 +162,7 @@ def create_purchase():
         purchase = Purchase(
             tenant_id=TenantContext.get(),
             purchase_code=purchase_code,
+            branch_id=BranchContext.get(),
             supplier_id=data["supplier_id"],
             warehouse_id=data.get("warehouse_id"),
             purchase_date=data.get("purchase_date") or date.today(),

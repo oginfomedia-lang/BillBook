@@ -4,6 +4,7 @@ from flask import Blueprint, request, jsonify
 from app.extensions import db
 from app.models import Warehouse
 from app.tenant_scope import TenantContext
+from app.branch_scope import BranchContext, apply_branch_scope
 from app.utils.decorators import require_auth, require_permission
 
 warehouses_bp = Blueprint("warehouses", __name__, url_prefix="/api/v1/warehouses")
@@ -18,6 +19,7 @@ def list_warehouses():
     search = request.args.get("search", "").strip()
 
     query = Warehouse.query.filter_by(tenant_id=TenantContext.get())
+    query = apply_branch_scope(query, Warehouse)
     if search:
         query = query.filter(Warehouse.name.ilike(f"%{search}%"))
 
@@ -44,6 +46,7 @@ def create_warehouse():
     
     warehouse = Warehouse(
         tenant_id=TenantContext.get(),
+        branch_id=BranchContext.get(),
         name=data["name"],
         location=data.get("location", ""),
     )

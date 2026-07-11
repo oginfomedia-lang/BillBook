@@ -15,6 +15,7 @@ from app.models import (
     Warehouse, Item,
 )
 from app.tenant_scope import TenantContext
+from app.branch_scope import BranchContext, apply_branch_scope
 from app.utils.decorators import require_auth
 
 stock_bp = Blueprint("stock", __name__, url_prefix="/api/v1/stock")
@@ -72,6 +73,7 @@ def list_adjustments():
     warehouse_id = request.args.get("warehouse_id", type=int)
 
     query = StockAdjustment.query.order_by(StockAdjustment.adjustment_date.desc(), StockAdjustment.id.desc())
+    query = apply_branch_scope(query, StockAdjustment)
 
     if search:
         query = query.filter(StockAdjustment.reference_no.ilike(f"%{search}%"))
@@ -106,6 +108,7 @@ def create_adjustment():
 
     adj = StockAdjustment(
         tenant_id=TenantContext.get(),
+        branch_id=BranchContext.get(),
         reference_no=data.get("reference_no"),
         adjustment_date=data.get("adjustment_date") or date.today(),
         warehouse_id=data.get("warehouse_id"),
@@ -180,6 +183,7 @@ def list_transfers():
     search = request.args.get("search", "").strip()
 
     query = StockTransfer.query.order_by(StockTransfer.transfer_date.desc(), StockTransfer.id.desc())
+    query = apply_branch_scope(query, StockTransfer)
 
     if search:
         # search by notes
@@ -216,6 +220,7 @@ def create_transfer():
 
     tr = StockTransfer(
         tenant_id=TenantContext.get(),
+        branch_id=BranchContext.get(),
         transfer_date=data.get("transfer_date") or date.today(),
         from_warehouse_id=data["from_warehouse_id"],
         to_warehouse_id=data["to_warehouse_id"],

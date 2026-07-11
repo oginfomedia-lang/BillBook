@@ -29,8 +29,8 @@ def create_app(config_name: str | None = None) -> Flask:
         flask_app,
         resources={r"/api/*": {"origins": allowed_origins}},
         supports_credentials=True,
-        allow_headers=["Content-Type", "Authorization", "Accept"],
-        expose_headers=["Content-Type", "Authorization"],
+        allow_headers=["Content-Type", "Authorization", "Accept", "X-Branch-Id"],
+        expose_headers=["Content-Type", "Authorization", "X-Branch-Id"],
         methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
         max_age=86400,
     )

@@ -1,14 +1,16 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import { useBranch } from "../context/BranchContext";
 import * as invoicesApi from "../api/invoices";
 import type { InvoiceStatus } from "../types";
 
 export function useInvoices(
   params: { page?: number; search?: string; status?: InvoiceStatus; branch_id?: number } = {}
 ) {
+  const { currentBranchId } = useBranch();
   return useQuery({
-    queryKey: ["invoices", params],
+    queryKey: ["invoices", { ...params, branchId: currentBranchId }],
     queryFn: () => invoicesApi.listInvoices(params),
     placeholderData: (prev) => prev,
   });

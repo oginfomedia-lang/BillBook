@@ -16,6 +16,7 @@ class Customer(TenantScopedMixin, db.Model):
 
     # Running balance: positive = customer owes the tenant money.
     balance = db.Column(db.Numeric(12, 2), default=0)
+    is_active = db.Column(db.Boolean, default=True)  # ✅ ADD THIS
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -34,4 +35,7 @@ class Customer(TenantScopedMixin, db.Model):
             "billing_address": self.billing_address,
             "gstin": self.gstin,
             "balance": float(self.balance or 0),
+            "is_active": self.is_active,  # ✅ ADD THIS
+            "branch_id": self.branch_id,  # ✅ ADD THIS
+            "created_at": self.created_at.isoformat() if self.created_at else None,  # ✅ ADD THIS
         }

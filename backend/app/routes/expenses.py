@@ -6,6 +6,7 @@ from sqlalchemy import func
 from app.extensions import db
 from app.models import Expense, ExpenseCategory, Account
 from app.tenant_scope import TenantContext
+from app.branch_scope import BranchContext, apply_branch_scope
 from app.utils.decorators import require_auth
 
 expenses_bp = Blueprint("expenses", __name__, url_prefix="/api/v1/expenses")
@@ -42,7 +43,9 @@ class ExpenseSchema(Schema):
 @expenses_bp.route("/categories", methods=["GET"])
 @require_auth
 def list_categories():
-    categories = ExpenseCategory.query.order_by(ExpenseCategory.name.asc()).all()
+    query = ExpenseCategory.query.order_by(ExpenseCategory.name.asc())
+    query = apply_branch_scope(query, ExpenseCategory)
+    categories = query.all()
     return jsonify([c.to_dict() for c in categories])
 
 
@@ -59,6 +62,7 @@ def create_category():
 
     cat = ExpenseCategory(
         tenant_id=TenantContext.get(),
+        branch_id=BranchContext.get(),
         name=data.get("name"),
         description=data.get("description"),
         status=data.get("status") or "active",
@@ -109,6 +113,7 @@ def list_expenses():
     category_id = request.args.get("category_id", type=int)
 
     query = Expense.query.order_by(Expense.expense_date.desc(), Expense.id.desc())
+    query = apply_branch_scope(query, Expense)
 
     if search:
         query = query.filter(
@@ -154,6 +159,7 @@ def create_expense():
 
     exp = Expense(
         tenant_id=TenantContext.get(),
+        branch_id=BranchContext.get(),
         expense_date=data.get("expense_date") or date.today(),
         category_id=data.get("category_id"),
         reference_no=data.get("reference_no"),

@@ -36,6 +36,7 @@ import toast from "react-hot-toast";
 import * as authApi from "../api/auth";
 import { Modal } from "../components/ui/Modal";
 import { useBranch } from "../context/BranchContext";
+import { BranchSelector } from "../components/BranchSelector"; // ✅ ADD THIS
 
 // ─── Navigation Items ────────────────────────────────────────────────────────
 const NAV_ITEMS = [
@@ -165,6 +166,7 @@ export function DashboardLayout() {
 
   const [avatarDropdownOpen, setAvatarDropdownOpen] = useState(false);
 
+  // ✅ Use branch context
   const { currentBranchId, setCurrentBranchId, branches, isLoading } = useBranch();
 
   // ── Profile Modal State ──────────────────────────────────────────────────
@@ -291,11 +293,9 @@ export function DashboardLayout() {
 
   // ─── Filter nav items based on permissions ──────────────────────────────
   const visibleNavItems = NAV_ITEMS.filter((item) => {
-    // If item has permission, check it
     if (item.permission) {
       return hasPermission(item.permission);
     }
-    // If item has sub-items, check if user has permission for any sub-item
     if (item.sub) {
       return item.sub.some((subItem) => hasPermission(subItem.permission));
     }
@@ -563,20 +563,8 @@ export function DashboardLayout() {
               )}
             </div>
 
-            {/* Branch Selector */}
-            <select
-              value={currentBranchId || ""}
-              onChange={(e) => setCurrentBranchId(e.target.value ? Number(e.target.value) : null)}
-              className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
-              disabled={isLoading || branches.length === 0}
-            >
-              <option value="">{t("Select Branch")}</option>
-              {branches?.map((branch) => (
-                <option key={branch.id} value={branch.id}>
-                  {branch.name} ({branch.code})
-                </option>
-              ))}
-            </select>
+            {/* ✅ Branch Selector - Using new component */}
+            <BranchSelector />
 
             {/* Role badge */}
             <span className="hidden rounded-full bg-brand-light px-3 py-1 text-xs font-semibold text-brand-dark sm:inline">

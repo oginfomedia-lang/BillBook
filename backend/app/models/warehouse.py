@@ -8,6 +8,7 @@ class Warehouse(TenantScopedMixin, db.Model):
     __tablename__ = "warehouses"
 
     id = db.Column(db.Integer, primary_key=True)
+    branch_id = db.Column(db.Integer, db.ForeignKey("branches.id", ondelete="SET NULL"), nullable=True)
     name = db.Column(db.String(150), nullable=False)
     location = db.Column(db.String(255), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

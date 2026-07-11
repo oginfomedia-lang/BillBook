@@ -17,6 +17,7 @@ from app.models.purchase import (
 )
 from app.schemas.purchase_schemas import PurchaseReturnSchema
 from app.tenant_scope import TenantContext
+from app.branch_scope import BranchContext, apply_branch_scope
 from app.utils.decorators import require_auth
 
 purchase_returns_bp = Blueprint(
@@ -57,6 +58,7 @@ def get_return_stats():
     warehouse_id = request.args.get("warehouse_id", type=int)
 
     q = PurchaseReturn.query
+    q = apply_branch_scope(q, PurchaseReturn)
     if warehouse_id:
         q = q.filter(PurchaseReturn.warehouse_id == warehouse_id)
 
@@ -92,6 +94,7 @@ def list_purchase_returns():
     search = request.args.get("search", "").strip()
 
     query = PurchaseReturn.query
+    query = apply_branch_scope(query, PurchaseReturn)
     if warehouse_id:
         query = query.filter(PurchaseReturn.warehouse_id == warehouse_id)
     if status:
@@ -152,6 +155,7 @@ def create_purchase_return():
         return_code = _generate_return_code()
         ret = PurchaseReturn(
             tenant_id=TenantContext.get(),
+            branch_id=BranchContext.get(),
             return_code=return_code,
             purchase_id=data["purchase_id"],
             supplier_id=supplier_id,

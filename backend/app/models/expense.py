@@ -11,6 +11,7 @@ class ExpenseCategory(TenantScopedMixin, db.Model):
     )
 
     id = db.Column(db.Integer, primary_key=True)
+    branch_id = db.Column(db.Integer, db.ForeignKey("branches.id", ondelete="SET NULL"), nullable=True)
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text, nullable=True)
     status = db.Column(db.String(20), default="active", nullable=False)  # 'active', 'inactive'
@@ -33,6 +34,7 @@ class Expense(TenantScopedMixin, db.Model):
     __tablename__ = "expenses"
 
     id = db.Column(db.Integer, primary_key=True)
+    branch_id = db.Column(db.Integer, db.ForeignKey("branches.id", ondelete="SET NULL"), nullable=True)
     expense_date = db.Column(db.Date, default=date.today, nullable=False)
     category_id = db.Column(db.Integer, db.ForeignKey("expense_categories.id"), nullable=False)
     reference_no = db.Column(db.String(100), nullable=True)

@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useBranch } from "../context/BranchContext";
 import {
   listExpenseCategories,
   createExpenseCategory,
@@ -23,8 +24,9 @@ export const expenseKeys = {
 // ─── Category Hooks ───────────────────────────────────────────────────────────
 
 export function useExpenseCategories() {
+  const { currentBranchId } = useBranch();
   return useQuery({
-    queryKey: expenseKeys.categories(),
+    queryKey: [...expenseKeys.categories(), { branchId: currentBranchId }],
     queryFn: listExpenseCategories,
     staleTime: 1000 * 60 * 10,
   });
@@ -69,8 +71,9 @@ export function useExpenses(params: {
   search?: string;
   category_id?: number;
 } = {}) {
+  const { currentBranchId } = useBranch();
   return useQuery({
-    queryKey: expenseKeys.expensesList(params),
+    queryKey: expenseKeys.expensesList({ ...params, branchId: currentBranchId }),
     queryFn: () => listExpenses(params),
     staleTime: 1000 * 60 * 2,
   });

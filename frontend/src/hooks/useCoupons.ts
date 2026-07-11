@@ -1,12 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { useBranch } from "../context/BranchContext";
 import * as api from "../api/coupons";
 
 export function useCoupons(
   params: { page?: number; per_page?: number; search?: string; status?: string; customer_id?: number; branch_id?: number } = {}
 ) {
+  const { currentBranchId } = useBranch();
   return useQuery({
-    queryKey: ["coupons", params],
+    queryKey: ["coupons", { ...params, branchId: currentBranchId }],
     queryFn: () => api.listCoupons(params),
     placeholderData: (prev) => prev,
   });

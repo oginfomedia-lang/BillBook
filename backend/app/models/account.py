@@ -32,6 +32,7 @@ class Account(TenantScopedMixin, db.Model):
     )
 
     id = db.Column(db.Integer, primary_key=True)
+    branch_id = db.Column(db.Integer, db.ForeignKey("branches.id", ondelete="SET NULL"), nullable=True)
     account_code = db.Column(db.String(20), nullable=False)          # e.g. AC0001
     account_name = db.Column(db.String(255), nullable=False)
     parent_id = db.Column(
@@ -99,6 +100,7 @@ class MoneyTransfer(TenantScopedMixin, db.Model):
     )
 
     id = db.Column(db.Integer, primary_key=True)
+    branch_id = db.Column(db.Integer, db.ForeignKey("branches.id", ondelete="SET NULL"), nullable=True)
     transfer_code = db.Column(db.String(20), nullable=False)      # e.g. TR-0001
 
     debit_account_id = db.Column(
@@ -144,6 +146,7 @@ class Deposit(TenantScopedMixin, db.Model):
     __tablename__ = "deposits"
 
     id = db.Column(db.Integer, primary_key=True)
+    branch_id = db.Column(db.Integer, db.ForeignKey("branches.id", ondelete="SET NULL"), nullable=True)
 
     debit_account_id = db.Column(
         db.Integer, db.ForeignKey("accounts.id"), nullable=True

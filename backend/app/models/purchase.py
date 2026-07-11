@@ -72,6 +72,7 @@ class Purchase(TenantScopedMixin, db.Model):
     purchase_code = db.Column(db.String(40), nullable=False)
 
     supplier_id = db.Column(db.Integer, db.ForeignKey("suppliers.id"), nullable=False)
+    branch_id = db.Column(db.Integer, db.ForeignKey("branches.id", ondelete="SET NULL"), nullable=True)
     warehouse_id = db.Column(db.Integer, db.ForeignKey("warehouses.id"), nullable=True)
 
     purchase_date = db.Column(db.Date, default=date.today)
@@ -341,6 +342,7 @@ class PurchaseReturn(TenantScopedMixin, db.Model):
     return_code = db.Column(db.String(40), nullable=False)
 
     purchase_id = db.Column(db.Integer, db.ForeignKey("purchases.id"), nullable=False)
+    branch_id = db.Column(db.Integer, db.ForeignKey("branches.id", ondelete="SET NULL"), nullable=True)
     supplier_id = db.Column(db.Integer, db.ForeignKey("suppliers.id"), nullable=True)
     warehouse_id = db.Column(db.Integer, db.ForeignKey("warehouses.id"), nullable=True)
 

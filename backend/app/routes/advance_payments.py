@@ -6,6 +6,7 @@ from app.extensions import db
 from app.models import AdvancePayment, Customer
 from app.schemas.advance_payment import AdvancePaymentSchema
 from app.tenant_scope import TenantContext
+from app.branch_scope import BranchContext, apply_branch_scope
 from app.utils.decorators import require_auth, require_permission
 
 advance_payments_bp = Blueprint("advance_payments", __name__, url_prefix="/api/v1/advance-payments")
@@ -39,6 +40,7 @@ def list_advance_payments():
     customer_id = request.args.get("customer_id", type=int)
 
     query = AdvancePayment.query
+    query = apply_branch_scope(query, AdvancePayment)
     if customer_id:
         query = query.filter(AdvancePayment.customer_id == customer_id)
     if search:
@@ -48,10 +50,6 @@ def list_advance_payments():
                 Customer.name.ilike(f"%{search}%")
             )
         )
-
-    branch_id = request.args.get("branch_id", type=int)
-    if branch_id:
-        query = query.filter(AdvancePayment.branch_id == branch_id)
 
     pagination = query.order_by(AdvancePayment.created_at.desc()).paginate(
         page=page, per_page=per_page, error_out=False
@@ -85,8 +83,8 @@ def create_advance_payment():
     if not customer:
         return jsonify({"error": "Customer not found"}), 404
 
-    # Extract branch_id
-    branch_id = data.get("branch_id")
+    # Assign to current branch context
+    branch_id = BranchContext.get()
 
     # Generate unique number with retry
     for attempt in range(5):
@@ -128,8 +126,8 @@ def update_advance_payment(advance_id):
         return jsonify({"error": "Cannot change status of an applied payment"}), 422
 
     # Update branch_id if provided
-    if "branch_id" in data:
-        payment.branch_id = data["branch_id"]
+    if BranchContext.get():
+        payment.branch_id = BranchContext.get()
 
     for key, value in data.items():
         setattr(payment, key, value)

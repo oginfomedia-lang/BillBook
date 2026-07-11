@@ -8,6 +8,7 @@ from app.extensions import db
 from app.models import Invoice, InvoiceItem, InvoiceStatus, Product
 from app.schemas import InvoiceSchema
 from app.tenant_scope import TenantContext
+from app.branch_scope import BranchContext, apply_branch_scope
 from app.utils.decorators import require_auth
 
 invoices_bp = Blueprint("invoices", __name__, url_prefix="/api/v1/invoices")
@@ -69,6 +70,7 @@ def list_invoices():
     search = request.args.get("search", "").strip()
 
     query = Invoice.query
+    query = apply_branch_scope(query, Invoice)
     if status:
         query = query.filter(Invoice.status == status)
     if search:
@@ -77,10 +79,6 @@ def list_invoices():
                 Invoice.invoice_number.ilike(f"%{search}%"),
             )
         )
-
-    branch_id = request.args.get("branch_id", type=int)
-    if branch_id:
-        query = query.filter(Invoice.branch_id == branch_id)
 
     pagination = query.order_by(Invoice.created_at.desc()).paginate(
         page=page, per_page=per_page, error_out=False
@@ -115,7 +113,7 @@ def create_invoice():
     # Extract coupon fields
     coupon_code = data.pop("coupon_code", None)
     coupon_discount = data.pop("coupon_discount", 0)
-    branch_id = data.pop("branch_id", None)                     # 👈 Added
+    data.pop("branch_id", None)                     # 👈 Remove if sent by client
 
     invoice = None
     for attempt in range(5):
@@ -132,7 +130,7 @@ def create_invoice():
             status=InvoiceStatus(data.get("status", "draft")),
             coupon_code=coupon_code,
             coupon_discount=coupon_discount,
-            branch_id=branch_id,                              # 👈 Added
+            branch_id=BranchContext.get(),                              # 👈 Added
         )
 
         for item_data in items_data:
@@ -187,8 +185,8 @@ def update_invoice(invoice_id):
         invoice.coupon_discount = data["coupon_discount"]
 
     # Update branch_id if provided
-    if "branch_id" in data:
-        invoice.branch_id = data["branch_id"]
+    if BranchContext.get():
+        invoice.branch_id = BranchContext.get()
 
     if "status" in data:
         invoice.status = InvoiceStatus(data["status"])

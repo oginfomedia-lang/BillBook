@@ -13,10 +13,11 @@ user's assigned Role. Super Admins pass every check automatically.
 
 from functools import wraps
 
-from flask import jsonify, g
+from flask import jsonify, g, request
 from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity, get_jwt
 
 from app.tenant_scope import TenantContext
+from app.branch_scope import BranchContext
 
 
 def require_auth(fn):
@@ -32,9 +33,24 @@ def require_auth(fn):
         tenant_id = claims.get("tenant_id")
         TenantContext.set(tenant_id)
 
+        # branch_id is sent from the frontend via the X-Branch-Id header
+        branch_id_str = request.headers.get("X-Branch-Id")
+        if branch_id_str and branch_id_str.isdigit():
+            BranchContext.set(int(branch_id_str))
+        else:
+            BranchContext.clear()
+
         g.current_user_id = int(user_id) if user_id is not None else None
         g.current_user_is_super_admin = claims.get("is_super_admin", False)
         g.current_user_permissions = set(claims.get("permissions", []))
+        
+        # ✅ ADD THIS - Set g.user for compatibility
+        from app.models import User
+        if g.current_user_id:
+            g.user = User.query.get(g.current_user_id)
+        else:
+            g.user = None
+        
         return fn(*args, **kwargs)
 
     return wrapper

@@ -1,13 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import { useBranch } from "../context/BranchContext";
 import * as quotationsApi from "../api/quotations";
 
 export function useQuotations(
   params: { page?: number; search?: string; status?: quotationsApi.QuotationStatus; warehouse_id?: number } = {}
 ) {
+  const { currentBranchId } = useBranch();
   return useQuery({
-    queryKey: ["quotations", params],
+    queryKey: ["quotations", { ...params, branchId: currentBranchId }],
     queryFn: () => quotationsApi.listQuotations(params),
     placeholderData: (prev) => prev,
   });

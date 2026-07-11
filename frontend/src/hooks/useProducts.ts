@@ -1,12 +1,24 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { useBranch } from "../context/BranchContext";
 import * as productsApi from "../api/products";
 
 export function useProducts(params: { page?: number; per_page?: number; search?: string; branch_id?: number } = {}) {
+  const { currentBranchId } = useBranch();
+
   return useQuery({
-    queryKey: ["products", params],
-    queryFn: () => productsApi.listProducts(params),
+    queryKey: ["products", { ...params, branchId: currentBranchId }],
+    queryFn: () => {
+      // ✅ Pass branch_id from context to API
+      const apiParams = {
+        ...params,
+        branch_id: params.branch_id || currentBranchId || undefined,
+      };
+      return productsApi.listProducts(apiParams);
+    },
     placeholderData: (prev) => prev,
+    staleTime: 1000 * 60 * 2, // 2 minutes
+    retry: 1,
   });
 }
 
@@ -47,7 +59,6 @@ export function useDeleteProduct() {
   });
 }
 
-//  Update import mutation to accept file and branch_id
 export function useImportProducts() {
   const queryClient = useQueryClient();
   return useMutation({

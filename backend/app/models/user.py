@@ -29,6 +29,9 @@ class User(TenantScopedMixin, db.Model):
     )
     role_id = db.Column(db.Integer, db.ForeignKey("roles.id", ondelete="SET NULL"), nullable=True)
 
+    # ✅ ADD THIS - Branch assignment for regular users
+    branch_id = db.Column(db.Integer, db.ForeignKey("branches.id", ondelete="SET NULL"), nullable=True)
+
     name = db.Column(db.String(120), nullable=False)
     email = db.Column(db.String(120), nullable=False, index=True)
     password_hash = db.Column(db.String(255), nullable=False)
@@ -40,6 +43,9 @@ class User(TenantScopedMixin, db.Model):
 
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # ✅ ADD THIS - Relationship to Branch
+    branch = db.relationship("Branch", backref="users", lazy=True)
 
     tenant = db.relationship("Tenant", back_populates="users")
     role_ref = db.relationship("Role", back_populates="users")
@@ -55,6 +61,20 @@ class User(TenantScopedMixin, db.Model):
             return True
         return self.role_ref.has_permission(key) if self.role_ref else False
 
+    def get_accessible_branches(self):
+        """Get all branches user can access"""
+        from app.models import Branch
+        
+        if self.is_super_admin:
+            return Branch.query.filter_by(tenant_id=self.tenant_id, is_active=True).all()
+        
+        if self.branch_id:
+            branch = Branch.query.get(self.branch_id)
+            if branch and branch.is_active:
+                return [branch]
+        
+        return []
+
     def to_dict(self):
         return {
             "id": self.id,
@@ -63,6 +83,7 @@ class User(TenantScopedMixin, db.Model):
             "email": self.email,
             "role_id": self.role_id,
             "role_name": self.role_ref.name if self.role_ref else ("Super Admin" if self.is_super_admin else None),
+            "branch_id": self.branch_id,  # ✅ ADD THIS
             "is_super_admin": self.is_super_admin,
             "is_active": self.is_active,
             "created_at": self.created_at.isoformat() if self.created_at else None,

@@ -2,7 +2,7 @@
 Cash Transactions Routes
 ========================
 Lists all cash invoice payments and allows linking them to accounts.
-Pulls data from InvoicePayment (or Invoice payments where payment_type=cash).
+Pulls data from Invoice (or Invoice payments where payment_type=cash).
 """
 
 from flask import Blueprint, request, jsonify
@@ -38,9 +38,14 @@ def list_cash_transactions():
     to_date = request.args.get("to_date")
     created_by = request.args.get("created_by", type=int)
     search = request.args.get("search", "").strip()
+    branch_id = request.args.get("branch_id", type=int)
 
     # Query invoices that have payments (amount_paid > 0)
     query = Invoice.query.filter(Invoice.amount_paid > 0)
+
+    # Apply branch filter
+    if branch_id:
+        query = query.filter(Invoice.branch_id == branch_id)
 
     if from_date:
         query = query.filter(Invoice.issue_date >= from_date)
@@ -69,8 +74,9 @@ def list_cash_transactions():
             "payment_type": getattr(inv, "payment_mode", "Cash") or "Cash",
             "payment": float(inv.amount_paid or 0),
             "note": inv.notes or "Paid By Cash",
-            "created_by": inv.created_by,
-            "creator_name": inv.creator.name if hasattr(inv, "creator") and inv.creator else None,
+            # ✅ FIXED: Use created_at if created_by doesn't exist
+            "created_by": None,  # Remove this if not needed
+            "creator_name": None,
             "linked_account_id": getattr(inv, "linked_account_id", None),
             "linked_account_name": None,
         })

@@ -12,6 +12,7 @@ from marshmallow import Schema, fields, validate, ValidationError
 from app.extensions import db
 from app.models.account import Account, Deposit
 from app.tenant_scope import TenantContext
+from app.branch_scope import BranchContext, apply_branch_scope
 from app.utils.decorators import require_auth
 
 deposits_bp = Blueprint("deposits", __name__, url_prefix="/api/v1/deposits")
@@ -46,6 +47,7 @@ def list_deposits():
     created_by = request.args.get("created_by", type=int)
 
     query = Deposit.query
+    query = apply_branch_scope(query, Deposit)
     if deposit_date:
         query = query.filter(Deposit.deposit_date == deposit_date)
     if debit_account_id:
@@ -93,6 +95,7 @@ def create_deposit():
 
     deposit = Deposit(
         tenant_id=TenantContext.get(),
+        branch_id=BranchContext.get(),
         debit_account_id=data.get("debit_account_id"),
         credit_account_id=data.get("credit_account_id"),
         amount=data["amount"],

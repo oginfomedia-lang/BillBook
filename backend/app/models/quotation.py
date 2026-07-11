@@ -29,6 +29,7 @@ class Quotation(TenantScopedMixin, db.Model):
     quotation_number = db.Column(db.String(40), nullable=False)
 
     customer_id = db.Column(db.Integer, db.ForeignKey("customers.id"), nullable=False)
+    branch_id = db.Column(db.Integer, db.ForeignKey("branches.id", ondelete="SET NULL"), nullable=True)
     warehouse_id = db.Column(db.Integer, db.ForeignKey("warehouses.id"), nullable=True)
 
     issue_date = db.Column(db.Date, default=date.today)

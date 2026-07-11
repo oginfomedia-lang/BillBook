@@ -14,6 +14,7 @@ class StockTransfer(TenantScopedMixin, db.Model):
     __tablename__ = "stock_transfers"
 
     id = db.Column(db.Integer, primary_key=True)
+    branch_id = db.Column(db.Integer, db.ForeignKey("branches.id", ondelete="SET NULL"), nullable=True)
     transfer_date = db.Column(db.Date, default=date.today, nullable=False)
     from_warehouse_id = db.Column(db.Integer, db.ForeignKey("warehouses.id"), nullable=False)
     to_warehouse_id = db.Column(db.Integer, db.ForeignKey("warehouses.id"), nullable=False)

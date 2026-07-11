@@ -1,37 +1,103 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
-import { useBranches } from "../hooks/useBranches";
+// frontend/src/context/BranchContext.tsx
+
+import { createContext, useContext, useState, useEffect, useMemo, type ReactNode } from "react";
 import { useAuth } from "./AuthContext";
-import { Branch } from "../types";
+import type { Branch } from "../types";
 
 interface BranchContextValue {
   currentBranchId: number | null;
   setCurrentBranchId: (id: number | null) => void;
   branches: Branch[];
+  userBranches: Branch[];
   isLoading: boolean;
+  hasBranchAccess: (branchId: number) => boolean;
+  getCurrentBranch: () => Branch | null;
 }
 
 const BranchContext = createContext<BranchContextValue | undefined>(undefined);
 
 export function BranchProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, branches: allBranches, isLoading: isAuthLoading } = useAuth();
   const [currentBranchId, setCurrentBranchId] = useState<number | null>(null);
-  const { data, isLoading } = useBranches({ page: 1, per_page: 1000 }, { enabled: !!user });
 
-  const branches = data?.items || [];
+  // ✅ Filter branches based on user access
+  const userBranches = useMemo(() => {
+    if (!user) return [];
 
-  // Auto-select first branch if none selected.
-  // Use branches[0]?.id and branches.length as deps (not the array reference itself)
-  // to avoid an infinite re-render loop: the `data?.items || []` expression
-  // produces a NEW array on every render even when the data hasn't changed.
-  const firstBranchId = branches[0]?.id;
-  useEffect(() => {
-    if (!isLoading && firstBranchId !== undefined && currentBranchId === null) {
-      setCurrentBranchId(firstBranchId);
+    // ✅ SUPER ADMIN - Gets ALL branches
+    if (user.is_super_admin) {
+      return allBranches || [];
     }
-  }, [firstBranchId, isLoading, currentBranchId]);
+
+    // ✅ Regular user - Only their assigned branch
+    if (user.branch_id) {
+      return (allBranches || []).filter(b => b.id === user.branch_id);
+    }
+
+    return [];
+  }, [allBranches, user]);
+
+  // ✅ Auto-select branch for regular users only
+  useEffect(() => {
+    // ✅ Skip for Super Admin - they can select later
+    if (user?.is_super_admin) {
+      // For Super Admin, check if they have a saved branch preference
+      const savedBranchId = localStorage.getItem("billbook_branch_id");
+      if (savedBranchId && allBranches?.some(b => b.id === Number(savedBranchId))) {
+        setCurrentBranchId(Number(savedBranchId));
+      } else if (allBranches && allBranches.length > 0) {
+        // Set first branch as default for Super Admin
+        setCurrentBranchId(allBranches[0].id);
+        localStorage.setItem("billbook_branch_id", String(allBranches[0].id));
+      }
+      return;
+    }
+
+    // ✅ Regular user - Auto-select their only branch
+    if (!isAuthLoading && userBranches.length > 0) {
+      const savedBranchId = localStorage.getItem("billbook_branch_id");
+
+      if (savedBranchId) {
+        const exists = userBranches.some(b => b.id.toString() === savedBranchId);
+        if (exists) {
+          setCurrentBranchId(Number(savedBranchId));
+          return;
+        }
+      }
+
+      // Auto-select first branch
+      setCurrentBranchId(userBranches[0].id);
+      localStorage.setItem("billbook_branch_id", String(userBranches[0].id));
+    }
+  }, [userBranches, isAuthLoading, user, allBranches]);
+
+  // ✅ Sync to localStorage
+  useEffect(() => {
+    if (currentBranchId !== null) {
+      localStorage.setItem("billbook_branch_id", currentBranchId.toString());
+    }
+  }, [currentBranchId]);
+
+  const hasBranchAccess = (branchId: number): boolean => {
+    if (user?.is_super_admin) return true;
+    return userBranches.some(b => b.id === branchId);
+  };
+
+  const getCurrentBranch = (): Branch | null => {
+    if (!currentBranchId) return null;
+    return (allBranches || []).find(b => b.id === currentBranchId) || null;
+  };
 
   return (
-    <BranchContext.Provider value={{ currentBranchId, setCurrentBranchId, branches, isLoading }}>
+    <BranchContext.Provider value={{
+      currentBranchId,
+      setCurrentBranchId,
+      branches: allBranches || [],
+      userBranches,
+      isLoading: isAuthLoading,
+      hasBranchAccess,
+      getCurrentBranch
+    }}>
       {children}
     </BranchContext.Provider>
   );

@@ -9,13 +9,13 @@ from app.models.quotation import Quotation, QuotationItem, QuotationStatus
 from app.models.warehouse import Warehouse
 from .advance_payment import AdvancePayment, PaymentType, AdvancePaymentStatus
 from .coupon import Coupon, CouponType, CouponStatus
-from .branch import Branch
+from .branch import Branch  # ✅ Make sure this is here
 from .purchase import (
     Purchase, PurchaseItem, PurchasePayment, PurchaseStatus, PurchasePaymentStatus,
     PurchasePaymentType, PurchaseReturn, PurchaseReturnItem, PurchaseReturnStatus,
 )
 from .account import Account, MoneyTransfer, Deposit
-from .item import Item  # ✅ ADD THIS
+from .item import Item
 from .brand import Brand
 from .category import Category
 from .unit import Unit
@@ -29,7 +29,6 @@ from .expense import Expense, ExpenseCategory
 
 __all__ = [
     "Tenant",
-
     "Role",
     "PERMISSION_CATALOG",
     "all_permission_keys",
@@ -51,7 +50,7 @@ __all__ = [
     "Coupon",
     "CouponType",
     "CouponStatus",
-    "Branch",
+    "Branch",  # ✅ Make sure this is here
     "Purchase",
     "PurchaseItem",
     "PurchasePayment",
@@ -64,7 +63,7 @@ __all__ = [
     "Account",
     "MoneyTransfer",
     "Deposit",
-    "Item",  # ✅ ADD THIS
+    "Item",
     "Brand",
     "Category",
     "Unit",

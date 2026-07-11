@@ -3,7 +3,7 @@ from flask_jwt_extended import create_access_token, create_refresh_token, jwt_re
 from marshmallow import ValidationError
 
 from app.extensions import db
-from app.models import Tenant, User, Role, seed_default_roles, all_permission_keys
+from app.models import Tenant, User, Role, seed_default_roles, all_permission_keys, Branch
 from app.schemas import SignupSchema, LoginSchema
 from app.tenant_scope import TenantContext
 
@@ -26,9 +26,9 @@ def _issue_tokens(user: User) -> dict:
         "tenant_id": user.tenant_id,
         "is_super_admin": user.is_super_admin,
         "role_id": user.role_id,
+        "branch_id": user.branch_id,
         "permissions": permissions,
     }
-    # identity must be a string — flask-jwt-extended stores it as the JWT "sub" claim
     access_token = create_access_token(identity=str(user.id), additional_claims=claims)
     refresh_token = create_refresh_token(identity=str(user.id), additional_claims=claims)
     return {"access_token": access_token, "refresh_token": refresh_token}
@@ -36,13 +36,7 @@ def _issue_tokens(user: User) -> dict:
 
 @auth_bp.route("/signup", methods=["POST"])
 def signup():
-    """
-    Tenant onboarding: creates the Tenant, seeds the two default Roles
-    (Tenant Admin + Staff — see seed_default_roles), and creates the first
-    user assigned to the Tenant Admin role. No tenant context exists yet,
-    so these queries run unscoped (correct, since we're creating the
-    tenant, not reading inside one).
-    """
+    """Tenant onboarding: creates the Tenant, seeds the two default Roles"""
     schema = SignupSchema()
     try:
         data = schema.load(request.get_json(force=True) or {})
@@ -61,7 +55,7 @@ def signup():
 
     tenant = Tenant(company_name=data["company_name"], slug=slug, billing_email=data["email"])
     db.session.add(tenant)
-    db.session.flush()  # get tenant.id before creating roles/user
+    db.session.flush()
 
     admin_role = seed_default_roles(tenant.id)
 
@@ -70,14 +64,33 @@ def signup():
         name=data["admin_name"],
         email=data["email"],
         role_id=admin_role.id,
+        branch_id=None,
+        is_super_admin=True,  # ✅ Make sure this is set
     )
     admin.set_password(data["password"])
     db.session.add(admin)
     db.session.commit()
 
     tokens = _issue_tokens(admin)
+    
+    # ✅ Get all branches for Super Admin
+    all_branches = Branch.query.filter_by(tenant_id=tenant.id, is_active=True).all()
+    
     return (
-        jsonify({"tenant": tenant.to_dict(), "user": admin.to_dict(), **tokens}),
+        jsonify({
+            "tenant": tenant.to_dict(),
+            "user": admin.to_dict(),
+            "branches": [
+                {
+                    "id": b.id,
+                    "name": b.name,
+                    "code": b.code,
+                    "is_default": False
+                }
+                for b in all_branches
+            ],
+            **tokens
+        }),
         201,
     )
 
@@ -90,7 +103,6 @@ def login():
     except ValidationError as err:
         return jsonify({"error": "Validation failed", "details": err.messages}), 422
 
-    # No tenant context yet — login must search across all tenants by email.
     user = User.query.filter_by(email=data["email"]).first()
 
     if not user or not user.check_password(data["password"]):
@@ -99,7 +111,28 @@ def login():
         return jsonify({"error": "This account has been deactivated"}), 403
 
     tokens = _issue_tokens(user)
-    return jsonify({"user": user.to_dict(), **tokens}), 200
+
+    # ✅ Get accessible branches for the user
+    if user.is_super_admin:
+        # Super Admin gets ALL branches
+        accessible_branches = Branch.query.filter_by(tenant_id=user.tenant_id, is_active=True).all()
+    else:
+        # Regular user gets only their assigned branch
+        accessible_branches = user.get_accessible_branches()
+
+    return jsonify({
+        "user": user.to_dict(),
+        "branches": [
+            {
+                "id": b.id,
+                "name": b.name,
+                "code": b.code,
+                "is_default": b.id == user.branch_id
+            }
+            for b in accessible_branches
+        ],
+        **tokens
+    }), 200
 
 
 @auth_bp.route("/refresh", methods=["POST"])
@@ -110,8 +143,6 @@ def refresh():
     claims = get_jwt()
     identity = get_jwt_identity()
 
-    # Re-read the user so permission changes (e.g. an admin edited this
-    # user's role) take effect on the next refresh, not just at next login.
     TenantContext.set(claims.get("tenant_id"))
     user = User.query.get(int(identity))
     if not user:
@@ -125,6 +156,7 @@ def refresh():
         "tenant_id": user.tenant_id,
         "is_super_admin": user.is_super_admin,
         "role_id": user.role_id,
+        "branch_id": user.branch_id,
         "permissions": permissions,
     }
     access_token = create_access_token(identity=identity, additional_claims=new_claims)
@@ -141,6 +173,7 @@ def me():
     user = User.query.get(int(get_jwt_identity()))
     if not user:
         return jsonify({"error": "User not found"}), 404
+    
     data = user.to_dict()
 
     if user.is_super_admin:
@@ -149,6 +182,22 @@ def me():
         data["permissions"] = all_permission_keys()
     else:
         data["permissions"] = list(user.role_ref.permissions) if user.role_ref else []
+
+    # ✅ Add branches to /me response
+    if user.is_super_admin:
+        accessible_branches = Branch.query.filter_by(tenant_id=user.tenant_id, is_active=True).all()
+    else:
+        accessible_branches = user.get_accessible_branches()
+    
+    data["branches"] = [
+        {
+            "id": b.id,
+            "name": b.name,
+            "code": b.code,
+            "is_default": b.id == user.branch_id
+        }
+        for b in accessible_branches
+    ]
 
     return jsonify(data), 200
 

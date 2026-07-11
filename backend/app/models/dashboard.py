@@ -1,5 +1,5 @@
 from datetime import date, timedelta, datetime
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, g
 from sqlalchemy import func, extract
 
 from app.extensions import db
@@ -7,6 +7,8 @@ from app.models import Invoice, InvoiceStatus
 from app.models.customer import Customer
 from app.models.product import Product
 from app.models.invoice import InvoiceItem
+from app.models.purchase import Purchase, PurchaseStatus
+from app.models.expense import Expense
 from app.utils.decorators import require_auth
 from app.branch_scope import apply_branch_scope, BranchContext
 
@@ -43,53 +45,86 @@ def summary():
     
     # ✅ Get branch_id from request
     branch_id = request.args.get("branch_id", type=int)
+    
+    # ✅ If no branch_id in request, try to get from user
+    if not branch_id and g.current_user_id:
+        from app.models import User
+        user = User.query.get(g.current_user_id)
+        if user and user.branch_id:
+            branch_id = user.branch_id
 
     # ──────────────────────────────────────────────────────────────────────────
     # 1. STAT CARDS
     # ──────────────────────────────────────────────────────────────────────────
     
-    # Total sales
+    # Total sales (amount collected on paid invoices)
     sales_q = db.session.query(func.coalesce(func.sum(Invoice.amount_paid), 0))
-    sales_q = _apply_branch_filter(sales_q, Invoice, branch_id)
+    if branch_id:
+        sales_q = sales_q.filter(Invoice.branch_id == branch_id)
     if period_filter is not None:
         sales_q = sales_q.filter(period_filter)
     total_sales = float(sales_q.scalar() or 0)
 
-    # Sales due
+    # Sales due (balance_due on pending / overdue invoices)
     sales_due_q = (
         db.session.query(
             func.coalesce(func.sum(Invoice.grand_total - Invoice.amount_paid), 0)
         )
         .filter(Invoice.status.in_([InvoiceStatus.PENDING, InvoiceStatus.OVERDUE]))
     )
-    sales_due_q = _apply_branch_filter(sales_due_q, Invoice, branch_id)
+    if branch_id:
+        sales_due_q = sales_due_q.filter(Invoice.branch_id == branch_id)
     if period_filter is not None:
         sales_due_q = sales_due_q.filter(period_filter)
     sales_due = float(sales_due_q.scalar() or 0)
 
-    purchase_due = 0.0
-    expense = 0.0
+    # ✅ FIXED: Purchase due - ANY purchase with balance due (regardless of status)
+    purchase_due_q = (
+        db.session.query(
+            func.coalesce(func.sum(Purchase.grand_total - Purchase.amount_paid), 0)
+        )
+        .filter(Purchase.grand_total > Purchase.amount_paid)
+    )
+    if branch_id:
+        purchase_due_q = purchase_due_q.filter(Purchase.branch_id == branch_id)
+    if period_filter is not None:
+        purchase_due_q = purchase_due_q.filter(period_filter)
+    purchase_due = float(purchase_due_q.scalar() or 0)
+
+    # ✅ FIXED: Total expenses
+    expense_q = db.session.query(
+        func.coalesce(func.sum(Expense.amount), 0)
+    )
+    if branch_id:
+        expense_q = expense_q.filter(Expense.branch_id == branch_id)
+    if period_filter is not None:
+        expense_q = expense_q.filter(period_filter)
+    expense = float(expense_q.scalar() or 0)
 
     # ──────────────────────────────────────────────────────────────────────────
     # 2. COUNT CARDS
     # ──────────────────────────────────────────────────────────────────────────
     
     customer_q = Customer.query
-    customer_q = _apply_branch_filter(customer_q, Customer, branch_id)
+    if branch_id:
+        customer_q = customer_q.filter(Customer.branch_id == branch_id)
     customer_count = customer_q.count()
 
     product_q = Product.query.filter_by(is_active=True)
-    product_q = _apply_branch_filter(product_q, Product, branch_id)
+    if branch_id:
+        product_q = product_q.filter(Product.branch_id == branch_id)
     product_count = product_q.count()
 
     invoice_count_q = Invoice.query
-    invoice_count_q = _apply_branch_filter(invoice_count_q, Invoice, branch_id)
+    if branch_id:
+        invoice_count_q = invoice_count_q.filter(Invoice.branch_id == branch_id)
     if period_filter is not None:
         invoice_count_q = invoice_count_q.filter(period_filter)
     invoice_count = invoice_count_q.count()
 
     paid_q = Invoice.query.filter(Invoice.status == InvoiceStatus.PAID)
-    paid_q = _apply_branch_filter(paid_q, Invoice, branch_id)
+    if branch_id:
+        paid_q = paid_q.filter(Invoice.branch_id == branch_id)
     paid_count = paid_q.count()
 
     # ──────────────────────────────────────────────────────────────────────────
@@ -109,7 +144,8 @@ def summary():
                 )
                 .filter(Invoice.issue_date == today)
             )
-            bar_rows = _apply_branch_filter(bar_rows, Invoice, branch_id)
+            if branch_id:
+                bar_rows = bar_rows.filter(Invoice.branch_id == branch_id)
             bar_rows = bar_rows.group_by('hour').order_by('hour').all()
             
             bar_data = [
@@ -126,7 +162,8 @@ def summary():
                 )
                 .filter(Invoice.issue_date >= start)
             )
-            bar_rows = _apply_branch_filter(bar_rows, Invoice, branch_id)
+            if branch_id:
+                bar_rows = bar_rows.filter(Invoice.branch_id == branch_id)
             bar_rows = bar_rows.group_by('day').order_by('day').all()
             
             day_names = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -150,7 +187,8 @@ def summary():
                 )
                 .filter(Invoice.issue_date >= start)
             )
-            bar_rows = _apply_branch_filter(bar_rows, Invoice, branch_id)
+            if branch_id:
+                bar_rows = bar_rows.filter(Invoice.branch_id == branch_id)
             bar_rows = bar_rows.group_by('week').order_by('week').all()
             
             bar_data = [
@@ -167,7 +205,8 @@ def summary():
                 )
                 .filter(Invoice.issue_date >= start)
             )
-            bar_rows = _apply_branch_filter(bar_rows, Invoice, branch_id)
+            if branch_id:
+                bar_rows = bar_rows.filter(Invoice.branch_id == branch_id)
             bar_rows = bar_rows.group_by('month').order_by('month').all()
             
             month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
@@ -186,7 +225,8 @@ def summary():
                 )
                 .filter(Invoice.issue_date >= six_months_ago)
             )
-            bar_rows = _apply_branch_filter(bar_rows, Invoice, branch_id)
+            if branch_id:
+                bar_rows = bar_rows.filter(Invoice.branch_id == branch_id)
             bar_rows = bar_rows.group_by('month').order_by('month').all()
             
             bar_data = [
@@ -208,7 +248,8 @@ def summary():
     # ──────────────────────────────────────────────────────────────────────────
     
     recent_q = Product.query.filter_by(is_active=True)
-    recent_q = _apply_branch_filter(recent_q, Product, branch_id)
+    if branch_id:
+        recent_q = recent_q.filter(Product.branch_id == branch_id)
     recent_q = recent_q.order_by(Product.created_at.desc()).limit(5)
     recent_products = recent_q.all()
     
@@ -226,7 +267,8 @@ def summary():
         Product.is_active == True,
         Product.stock_quantity <= LOW_STOCK_THRESHOLD,
     )
-    stock_q = _apply_branch_filter(stock_q, Product, branch_id)
+    if branch_id:
+        stock_q = stock_q.filter(Product.branch_id == branch_id)
     stock_q = stock_q.order_by(Product.stock_quantity.asc())
     low_stock = stock_q.all()
     
@@ -255,10 +297,8 @@ def summary():
         .order_by(func.sum(InvoiceItem.quantity).desc())
     )
     
-    # Apply branch filter before limit
-    bid = branch_id or BranchContext.get()
-    if bid:
-        trending_q = trending_q.filter(Invoice.branch_id == bid)
+    if branch_id:
+        trending_q = trending_q.filter(Invoice.branch_id == branch_id)
     
     trending_q = trending_q.limit(10)
     trending_rows = trending_q.all()
@@ -273,7 +313,8 @@ def summary():
     # ──────────────────────────────────────────────────────────────────────────
     
     recent_inv_q = Invoice.query.filter(Invoice.status != InvoiceStatus.DRAFT)
-    recent_inv_q = _apply_branch_filter(recent_inv_q, Invoice, branch_id)
+    if branch_id:
+        recent_inv_q = recent_inv_q.filter(Invoice.branch_id == branch_id)
     recent_inv_q = recent_inv_q.order_by(Invoice.created_at.desc()).limit(10)
     recent_invoices = recent_inv_q.all()
 
@@ -291,24 +332,34 @@ def summary():
         .group_by('month')
         .order_by('month')
     )
-    monthly_q = _apply_branch_filter(monthly_q, Invoice, branch_id)
+    if branch_id:
+        monthly_q = monthly_q.filter(Invoice.branch_id == branch_id)
     monthly_rows = monthly_q.all()
     monthly_sales = [{"month": row.month, "total": float(row.total)} for row in monthly_rows]
 
     # Legacy pending / paid
     pending_q = Invoice.query.filter(Invoice.status.in_([InvoiceStatus.PENDING, InvoiceStatus.OVERDUE]))
-    pending_q = _apply_branch_filter(pending_q, Invoice, branch_id)
+    if branch_id:
+        pending_q = pending_q.filter(Invoice.branch_id == branch_id)
     pending_count = pending_q.count()
     
     pending_amount_q = db.session.query(
         func.coalesce(func.sum(Invoice.grand_total - Invoice.amount_paid), 0)
     ).filter(Invoice.status.in_([InvoiceStatus.PENDING, InvoiceStatus.OVERDUE]))
-    pending_amount_q = _apply_branch_filter(pending_amount_q, Invoice, branch_id)
+    if branch_id:
+        pending_amount_q = pending_amount_q.filter(Invoice.branch_id == branch_id)
     pending_amount = float(pending_amount_q.scalar() or 0)
 
     total_revenue_q = db.session.query(func.coalesce(func.sum(Invoice.amount_paid), 0))
-    total_revenue_q = _apply_branch_filter(total_revenue_q, Invoice, branch_id)
+    if branch_id:
+        total_revenue_q = total_revenue_q.filter(Invoice.branch_id == branch_id)
     total_revenue = float(total_revenue_q.scalar() or 0)
+
+    # ✅ DEBUG: Print to check values
+    print(f"🔍 Dashboard Stats - Branch: {branch_id}")
+    print(f"   Purchase Due: {purchase_due}")
+    print(f"   Expense: {expense}")
+    print(f"   Sales: {total_sales}")
 
     return jsonify({
         "stats": {

@@ -1,60 +1,78 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import toast from "react-hot-toast";
-import * as api from "../api/branches";
+// frontend/src/hooks/useBranches.ts
+
+import { useQuery, useMutation, useQueryClient, type UseQueryOptions } from "@tanstack/react-query";  // ✅ ADD useQueryClient, useMutation
+import api from "../api/client";
+import type { Branch, PaginatedResponse } from "../types";
+
+export interface UseBranchesParams {
+  page?: number;
+  per_page?: number;
+  search?: string;
+}
 
 export function useBranches(
-  params: { page?: number; per_page?: number; search?: string } = {},
-  options: { enabled?: boolean } = {}
+  params: UseBranchesParams = {},
+  options?: Omit<UseQueryOptions<PaginatedResponse<Branch>>, "queryKey" | "queryFn">
 ) {
   return useQuery({
     queryKey: ["branches", params],
-    queryFn: () => api.listBranches(params),
-    placeholderData: (prev) => prev,
-    enabled: options.enabled !== false,
+    queryFn: () =>
+      api.get<PaginatedResponse<Branch>>("/branches", { params }).then((res) => res.data),
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 10,
+    retry: 1,
+    ...options,
   });
 }
 
-export function useBranch(id: number | undefined) {
+// ─── Single Branch ──────────────────────────────────────────────────────────
+export function useBranch(
+  id: number,
+  options?: Omit<UseQueryOptions<Branch>, "queryKey" | "queryFn">
+) {
   return useQuery({
     queryKey: ["branches", id],
-    queryFn: () => api.getBranch(id as number),
-    enabled: id !== undefined,
+    queryFn: () => api.get<Branch>(`/branches/${id}`).then((res) => res.data),
+    staleTime: 1000 * 60 * 5,
+    enabled: !!id,
+    ...options,
   });
 }
 
+// ─── Create Branch Mutation ────────────────────────────────────────────────
 export function useCreateBranch() {
   const queryClient = useQueryClient();
+
   return useMutation({
-    mutationFn: api.createBranch,
+    mutationFn: (data: Partial<Branch>) =>
+      api.post<Branch>("/branches", data).then((res) => res.data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["branches"] });
-      toast.success("Branch created successfully");
     },
-    onError: (err: any) => toast.error(err?.response?.data?.error || "Could not create branch"),
   });
 }
 
+// ─── Update Branch Mutation ────────────────────────────────────────────────
 export function useUpdateBranch() {
   const queryClient = useQueryClient();
+
   return useMutation({
-    mutationFn: ({ id, payload }: { id: number; payload: Partial<api.BranchPayload> }) =>
-      api.updateBranch(id, payload),
+    mutationFn: ({ id, data }: { id: number; data: Partial<Branch> }) =>
+      api.put<Branch>(`/branches/${id}`, data).then((res) => res.data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["branches"] });
-      toast.success("Branch updated successfully");
     },
-    onError: (err: any) => toast.error(err?.response?.data?.error || "Could not update branch"),
   });
 }
 
+// ─── Delete Branch Mutation ────────────────────────────────────────────────
 export function useDeleteBranch() {
   const queryClient = useQueryClient();
+
   return useMutation({
-    mutationFn: api.deleteBranch,
+    mutationFn: (id: number) => api.delete(`/branches/${id}`).then((res) => res.data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["branches"] });
-      toast.success("Branch deleted");
     },
-    onError: (err: any) => toast.error(err?.response?.data?.error || "Could not delete branch"),
   });
 }

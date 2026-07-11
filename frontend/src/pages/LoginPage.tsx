@@ -1,3 +1,5 @@
+// frontend/src/pages/LoginPage.tsx
+
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Receipt } from "lucide-react";
@@ -7,7 +9,7 @@ import { useTranslation } from "../context/LanguageContext";
 
 export function LoginPage() {
   const { t } = useTranslation();
-  const { login } = useAuth();
+  const { login, branches } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,9 +20,17 @@ export function LoginPage() {
     setIsSubmitting(true);
     try {
       await login(email, password);
-      navigate("/dashboard");
-    } catch {
-      toast.error(t("Incorrect email or password."));
+
+      // ✅ Check if user has branches
+      if (branches && branches.length > 0) {
+        // ✅ Auto-select first branch (handled in AuthContext)
+        toast.success("Login successful!");
+        navigate("/dashboard");
+      } else {
+        toast.error("No branch assigned. Contact admin.");
+      }
+    } catch (error: any) {
+      toast.error(error?.response?.data?.error || t("Incorrect email or password."));
     } finally {
       setIsSubmitting(false);
     }
@@ -45,6 +55,7 @@ export function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
               className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
             />
           </div>
@@ -55,13 +66,14 @@ export function LoginPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your password"
               className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
             />
           </div>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-dark disabled:opacity-50"
+            className="w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-dark disabled:opacity-50 transition-colors"
           >
             {isSubmitting ? t("Signing in…") : t("Sign in")}
           </button>

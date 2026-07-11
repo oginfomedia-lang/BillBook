@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useBranch } from "../context/BranchContext";
 import {
   listAdjustments,
   getAdjustment,
@@ -32,8 +33,9 @@ export function useAdjustments(params: {
   search?: string;
   warehouse_id?: number;
 } = {}) {
+  const { currentBranchId } = useBranch();
   return useQuery({
-    queryKey: stockKeys.adjustmentList(params),
+    queryKey: stockKeys.adjustmentList({ ...params, branchId: currentBranchId }),
     queryFn: () => listAdjustments(params),
     staleTime: 1000 * 60 * 2,
   });
@@ -87,8 +89,9 @@ export function useTransfers(params: {
   per_page?: number;
   search?: string;
 } = {}) {
+  const { currentBranchId } = useBranch();
   return useQuery({
-    queryKey: stockKeys.transferList(params),
+    queryKey: stockKeys.transferList({ ...params, branchId: currentBranchId }),
     queryFn: () => listTransfers(params),
     staleTime: 1000 * 60 * 2,
   });

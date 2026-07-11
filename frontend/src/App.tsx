@@ -45,8 +45,8 @@ import { NewPurchasePage } from "./pages/purchase/NewPurchasePage";
 import { PurchaseReturnsListPage } from "./pages/purchase/PurchaseReturnsListPage";
 import { NewPurchaseReturnPage } from "./pages/purchase/NewPurchaseReturnPage";
 import { CouponFormPage } from "./pages/Coupons/CouponForm";
-import { BranchesListPage } from "./pages/Branches/BranchesList";      // 👈 Added
-import { BranchFormPage } from "./pages/Branches/BranchForm";          // 👈 Added
+import { BranchesListPage } from "./pages/Branches/BranchesList";
+import { BranchFormPage } from "./pages/Branches/BranchForm";
 import { CouponsListPage } from "./pages/Coupons/CouponsList";
 import { AccountsLayout } from "./pages/accounts/AccountsLayout";
 import { AddAccountPage } from "./pages/accounts/AddAccountPage";
@@ -123,7 +123,7 @@ export default function App() {
                     <Route path="import/suppliers" element={<ImportSuppliersPage />} />
                   </Route>
 
-                  {/* ✅ BRANCHES MODULE - ADDED */}
+                  {/* Branches module */}
                   <Route path="/branches" element={<BranchesListPage />} />
                   <Route path="/branches/new" element={<BranchFormPage />} />
                   <Route path="/branches/:id/edit" element={<BranchFormPage />} />
