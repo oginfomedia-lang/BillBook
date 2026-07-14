@@ -60,6 +60,8 @@ import { StockTransferListPage } from "./pages/stock/StockTransferListPage";
 import { ExpensesLayout } from "./pages/expenses/ExpensesLayout";
 import { ExpensesListPage } from "./pages/expenses/ExpensesListPage";
 import { ExpenseCategoryListPage } from "./pages/expenses/ExpenseCategoryListPage";
+import { ReportsPage } from "./pages/ReportsPage";
+import { SettingsPage } from "./pages/SettingsPage";
 
 
 const queryClient = new QueryClient({
@@ -194,6 +196,12 @@ export default function App() {
 
                   {/* Roles */}
                   <Route path="/roles" element={<RolesPage />} />
+
+                  {/* Reports */}
+                  <Route path="/reports" element={<ReportsPage />} />
+
+                  {/* Settings */}
+                  <Route path="/settings" element={<SettingsPage />} />
 
                   {/* Advance Payments */}
                   <Route path="/advance" element={<AdvancePaymentsList />} />

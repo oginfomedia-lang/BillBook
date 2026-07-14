@@ -29,6 +29,8 @@ import {
   Layers,
   TrendingDown,
   Store,
+  BarChart3,
+  Settings as SettingsIcon,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useTranslation } from "../context/LanguageContext";
@@ -45,7 +47,7 @@ const NAV_ITEMS = [
   {
     label: "Sales",
     icon: Receipt,
-    permission: "invoices.view",
+    permission: "sales.view",
     sub: [
       { to: "/sales", label: "Sales List", end: true },
       { to: "/sales/add", label: "Add Sales" },
@@ -136,6 +138,42 @@ const NAV_ITEMS = [
       { to: "/expenses/categories", label: "Categories List" },
     ],
   },
+  {
+    label: "Reports",
+    icon: BarChart3,
+    permission: "reports.view",
+    sub: [
+      { to: "/reports?tab=profit_loss", label: "Profit & Loss Report" },
+      { to: "/reports?tab=sales", label: "Sales Report" },
+      { to: "/reports?tab=purchases", label: "Purchase Report" },
+      { to: "/reports?tab=expenses", label: "Expense Report" },
+      { to: "/reports?tab=stock", label: "Stock Report" },
+      { to: "/reports?tab=sales_returns", label: "Sales Return Report" },
+      { to: "/reports?tab=purchase_returns", label: "Purchase Return Report" },
+      { to: "/reports?tab=customer_orders", label: "Customer Orders" },
+      { to: "/reports?tab=supplier_items", label: "Supplier Items Report" },
+      { to: "/reports?tab=sales_payments", label: "Sales Payments Report" },
+      { to: "/reports?tab=purchase_payments", label: "Purchase Payments Report" },
+      { to: "/reports?tab=stock_transfers", label: "Stock Transfer Report" },
+    ],
+  },
+  {
+    label: "Settings",
+    icon: SettingsIcon,
+    permission: "settings.view",
+    sub: [
+      { to: "/settings?page=store", label: "Store" },
+      { to: "/settings?page=site", label: "Site Settings" },
+      { to: "/settings?page=sms", label: "SMS/WhatsApp API" },
+      { to: "/settings?page=smtp", label: "SMTP" },
+      { to: "/settings?page=taxes", label: "Tax List" },
+      { to: "/settings?page=units", label: "Units List" },
+      { to: "/settings?page=payment_types", label: "Payment Types" },
+      { to: "/settings?page=currencies", label: "Currency List" },
+      { to: "/settings?page=change_password", label: "Change Password" },
+      { to: "/settings?page=backup", label: "Database Backup" },
+    ],
+  },
 ];
 
 // ─── Component ──────────────────────────────────────────────────────────────
@@ -153,6 +191,8 @@ export function DashboardLayout() {
     Stock: true,
     Expenses: true,
     Contacts: false,
+    Reports: true,
+    Settings: false,
   });
 
   // ── Dropdown states ──────────────────────────────────────────────────────

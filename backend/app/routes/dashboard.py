@@ -7,6 +7,8 @@ from app.models import Invoice, InvoiceStatus
 from app.models.customer import Customer
 from app.models.product import Product
 from app.models.invoice import InvoiceItem
+from app.models.purchase import Purchase, PurchasePaymentStatus
+from app.models.expense import Expense
 from app.utils.decorators import require_auth
 from app.branch_scope import apply_branch_scope, BranchContext
 
@@ -24,6 +26,34 @@ def _period_filter(period: str):
         return Invoice.issue_date >= today.replace(day=1)
     if period == "yearly":
         return Invoice.issue_date >= today.replace(month=1, day=1)
+    return None
+
+
+def _purchase_period_filter(period: str):
+    """Return a SQLAlchemy filter expression for Purchase.purchase_date matching *period*."""
+    today = date.today()
+    if period == "today":
+        return Purchase.purchase_date == today
+    if period == "weekly":
+        return Purchase.purchase_date >= today - timedelta(days=7)
+    if period == "monthly":
+        return Purchase.purchase_date >= today.replace(day=1)
+    if period == "yearly":
+        return Purchase.purchase_date >= today.replace(month=1, day=1)
+    return None
+
+
+def _expense_period_filter(period: str):
+    """Return a SQLAlchemy filter expression for Expense.expense_date matching *period*."""
+    today = date.today()
+    if period == "today":
+        return Expense.expense_date == today
+    if period == "weekly":
+        return Expense.expense_date >= today - timedelta(days=7)
+    if period == "monthly":
+        return Expense.expense_date >= today.replace(day=1)
+    if period == "yearly":
+        return Expense.expense_date >= today.replace(month=1, day=1)
     return None
 
 
@@ -67,8 +97,28 @@ def summary():
         sales_due_q = sales_due_q.filter(period_filter)
     sales_due = float(sales_due_q.scalar() or 0)
 
-    purchase_due = 0.0
-    expense = 0.0
+    # Purchase due (pending + partial)
+    purchase_due_q = db.session.query(
+        func.coalesce(func.sum(Purchase.grand_total - Purchase.amount_paid), 0)
+    ).filter(Purchase.payment_status.in_([
+        PurchasePaymentStatus.PENDING,
+        PurchasePaymentStatus.PARTIAL
+    ]))
+    purchase_due_q = _apply_branch_filter(purchase_due_q, Purchase, branch_id)
+    purchase_period_f = _purchase_period_filter(period)
+    if purchase_period_f is not None:
+        purchase_due_q = purchase_due_q.filter(purchase_period_f)
+    purchase_due = float(purchase_due_q.scalar() or 0)
+
+    # Total expenses
+    expense_q = db.session.query(
+        func.coalesce(func.sum(Expense.amount), 0)
+    )
+    expense_q = _apply_branch_filter(expense_q, Expense, branch_id)
+    expense_period_f = _expense_period_filter(period)
+    if expense_period_f is not None:
+        expense_q = expense_q.filter(expense_period_f)
+    expense = float(expense_q.scalar() or 0)
 
     # ──────────────────────────────────────────────────────────────────────────
     # 2. COUNT CARDS

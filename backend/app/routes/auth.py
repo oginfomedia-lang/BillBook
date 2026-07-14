@@ -120,8 +120,19 @@ def login():
         # Regular user gets only their assigned branch
         accessible_branches = user.get_accessible_branches()
 
+    # ✅ Build permissions list for this user
+    if user.is_super_admin:
+        permissions = ["*"]
+    elif user.role_ref and user.role_ref.is_system:
+        permissions = all_permission_keys()
+    else:
+        permissions = list(user.role_ref.permissions) if user.role_ref else []
+
+    user_data = user.to_dict()
+    user_data["permissions"] = permissions
+
     return jsonify({
-        "user": user.to_dict(),
+        "user": user_data,
         "branches": [
             {
                 "id": b.id,

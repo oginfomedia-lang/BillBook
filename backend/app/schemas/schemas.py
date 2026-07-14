@@ -27,12 +27,14 @@ class UserCreateSchema(Schema):
     email = fields.Email(required=True)
     password = fields.String(required=True, validate=validate.Length(min=8))
     role_id = fields.Integer(required=True)
+    branch_id = fields.Integer(load_default=None, allow_none=True)
 
 
 class UserUpdateSchema(Schema):
     name = fields.String(validate=validate.Length(min=2, max=120))
     role_id = fields.Integer(allow_none=True)
     is_active = fields.Boolean()
+    branch_id = fields.Integer(load_default=None, allow_none=True)
 
 
 class CustomerSchema(Schema):

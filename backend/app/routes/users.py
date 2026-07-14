@@ -64,7 +64,13 @@ def create_user():
         return jsonify({"error": "That role doesn't exist"}), 422
 
     password = data.pop("password")
-    user = User(tenant_id=tenant_id, name=data["name"], email=data["email"], role_id=data["role_id"])
+    user = User(
+        tenant_id=tenant_id,
+        name=data["name"],
+        email=data["email"],
+        role_id=data["role_id"],
+        branch_id=data.get("branch_id"),
+    )
     user.set_password(password)
     db.session.add(user)
     db.session.commit()

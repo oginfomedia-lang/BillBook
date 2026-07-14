@@ -11,7 +11,8 @@ PERMISSION_CATALOG = {
     "customers": ["view", "create", "edit", "delete", "import"],
     "suppliers": ["view", "create", "edit", "delete", "import"],
     "products": ["view", "create", "edit", "delete", "import"],
-    "items": ["view", "create", "edit", "delete", "import"],  # ✅ ADD THIS
+    "items": ["view", "create", "edit", "delete", "import"],
+    "sales": ["view", "create", "edit", "delete", "return_sales"],   # Sales / POS module
     "invoices": ["view", "create", "edit", "delete", "record_payment"],
     "quotations": ["view", "create", "edit", "delete", "convert"],
     "warehouses": ["view", "create", "edit", "delete"],
@@ -21,8 +22,8 @@ PERMISSION_CATALOG = {
     "advance_payments": ["view", "create", "edit", "delete"],
     "stock": ["view", "create", "edit", "delete"],
     "expenses": ["view", "create", "edit", "delete"],
-    "coupons": ["view", "create", "edit", "delete"], 
-     "branches": ["view", "create", "edit", "delete"],
+    "coupons": ["view", "create", "edit", "delete"],
+    "branches": ["view", "create", "edit", "delete"],
     "reports": ["view"],
     "settings": ["view", "edit"],
 }
@@ -80,12 +81,13 @@ def seed_default_roles(tenant_id: int) -> "Role":
             "dashboard.view",
             "customers.view", "customers.create", "customers.edit",
             "products.view",
-            "items.view",  # ✅ ADD THIS
+            "items.view",
+            "sales.view", "sales.create", "sales.edit", "sales.return_sales",  # Sales module
             "invoices.view", "invoices.create", "invoices.edit", "invoices.record_payment",
             "quotations.view", "quotations.create", "quotations.edit", "quotations.convert",
             "advance_payments.view", "advance_payments.create",
             "purchases.view", "purchases.create", "purchases.edit",
-            "accounts.view",  # ✅ ADD THIS
+            "accounts.view",
             "stock.view", "stock.create",
             "expenses.view", "expenses.create",
             "coupons.view", "coupons.create", "coupons.edit", "coupons.delete",

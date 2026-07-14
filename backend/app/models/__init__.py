@@ -25,9 +25,11 @@ from .variant import Variant
 from .stock_adjustment import StockAdjustment, StockAdjustmentItem
 from .stock_transfer import StockTransfer, StockTransferItem
 from .expense import Expense, ExpenseCategory
+from .tenant_setting import TenantSetting
 
 
 __all__ = [
+    "TenantSetting",
     "Tenant",
     "Role",
     "PERMISSION_CATALOG",

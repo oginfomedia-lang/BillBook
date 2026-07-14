@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ChevronRight, Plus, Trash2, Search, X, ChevronDown } from "lucide-react";
 import toast from "react-hot-toast";
-import { createPurchaseReturn, getPurchase, listPurchases } from "../../api/purchases";
+import { createPurchaseReturn, getPurchase, getPurchaseByCode, listPurchases } from "../../api/purchases";
 import { formatMoney, formatDate } from "../../utils/format";
 
 export function NewPurchaseReturnPage() {
@@ -46,9 +46,9 @@ export function NewPurchaseReturnPage() {
             const data = await listPurchases({ per_page: 100 });
             console.log("📦 Purchase data:", data);
 
-            // Filter only received/partial purchases (can be returned)
+            // Show all receivable purchases (received, partial, ordered)
             const available = data.items.filter((p: any) =>
-                p.status === 'received' || p.status === 'partial'
+                ['received', 'partial', 'ordered'].includes(p.status)
             );
             console.log("📦 Available for return:", available);
             setPurchaseCodes(available);
@@ -82,7 +82,7 @@ export function NewPurchaseReturnPage() {
 
         setSearching(true);
         try {
-            const data = await getPurchase(Number(searchId));
+            const data = await getPurchaseByCode(searchId.trim());
             setPurchase(data);
             // Initialize items from purchase items
             if (data.items && data.items.length > 0) {
@@ -132,7 +132,16 @@ export function NewPurchaseReturnPage() {
             toast.success("Purchase return created successfully!");
             navigate("/purchase/returns");
         } catch (err: any) {
-            toast.error(err?.response?.data?.error || "Failed to create return");
+            const errorMsg = err?.response?.data?.error || "Failed to create return";
+            const details = err?.response?.data?.details;
+            if (details) {
+                const detailsStr = Object.entries(details)
+                    .map(([key, val]) => `${key}: ${JSON.stringify(val)}`)
+                    .join(", ");
+                toast.error(`${errorMsg} (${detailsStr})`);
+            } else {
+                toast.error(errorMsg);
+            }
         } finally {
             setSaving(false);
         }

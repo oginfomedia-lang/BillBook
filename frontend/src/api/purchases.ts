@@ -166,6 +166,11 @@ export async function getPurchase(id: number): Promise<Purchase> {
   return data;
 }
 
+export async function getPurchaseByCode(code: string): Promise<Purchase> {
+  const { data } = await apiClient.get<Purchase>(`/purchases/by-code/${encodeURIComponent(code.toUpperCase())}`);
+  return data;
+}
+
 export async function createPurchase(payload: PurchasePayload): Promise<Purchase> {
   const { data } = await apiClient.post<Purchase>("/purchases", payload);
   return data;

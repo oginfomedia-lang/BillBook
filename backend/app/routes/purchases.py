@@ -142,6 +142,19 @@ def get_purchase(purchase_id):
     return jsonify(purchase.to_dict())
 
 
+@purchases_bp.route("/by-code/<string:code>", methods=["GET"])
+@require_auth
+def get_purchase_by_code(code):
+    """Look up a purchase by its purchase_code string (e.g. PU-0009)."""
+    purchase = Purchase.query.filter(
+        Purchase.purchase_code == code.upper(),
+        Purchase.tenant_id == TenantContext.get(),
+    ).first()
+    if not purchase:
+        return jsonify({"error": f"Purchase '{code}' not found"}), 404
+    return jsonify(purchase.to_dict())
+
+
 # ---------------------------------------------------------------------------
 # Create
 # ---------------------------------------------------------------------------
