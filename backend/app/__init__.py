@@ -45,7 +45,6 @@ def create_app(config_name: str | None = None) -> Flask:
     from app.routes.auth import auth_bp
     from app.routes.customers import customers_bp
     from app.routes.suppliers import suppliers_bp
-    from app.routes.products import products_bp
     from app.routes.items import items_bp  # ✅ ADD THIS
     from app.routes.invoices import invoices_bp
     from app.routes.dashboard import dashboard_bp
@@ -71,7 +70,6 @@ def create_app(config_name: str | None = None) -> Flask:
     flask_app.register_blueprint(auth_bp, url_prefix='/api/v1/auth')
     flask_app.register_blueprint(customers_bp, url_prefix='/api/v1/customers')
     flask_app.register_blueprint(suppliers_bp, url_prefix='/api/v1/suppliers')
-    flask_app.register_blueprint(products_bp, url_prefix='/api/v1/products')
     flask_app.register_blueprint(items_bp, url_prefix='/api/v1/items')  # ✅ ADD THIS
     flask_app.register_blueprint(invoices_bp, url_prefix='/api/v1/invoices')
     flask_app.register_blueprint(dashboard_bp, url_prefix='/api/v1/dashboard')

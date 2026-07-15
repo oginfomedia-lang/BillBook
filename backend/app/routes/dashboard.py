@@ -5,12 +5,13 @@ from sqlalchemy import func, extract
 from app.extensions import db
 from app.models import Invoice, InvoiceStatus
 from app.models.customer import Customer
-from app.models.product import Product
+from app.models import Item, Warehouse
 from app.models.invoice import InvoiceItem
 from app.models.purchase import Purchase, PurchasePaymentStatus
 from app.models.expense import Expense
 from app.utils.decorators import require_auth
 from app.branch_scope import apply_branch_scope, BranchContext
+from app.tenant_scope import TenantContext
 
 dashboard_bp = Blueprint("dashboard", __name__, url_prefix="/api/v1/dashboard")
 
@@ -128,9 +129,18 @@ def summary():
     customer_q = _apply_branch_filter(customer_q, Customer, branch_id)
     customer_count = customer_q.count()
 
-    product_q = Product.query.filter_by(is_active=True)
-    product_q = _apply_branch_filter(product_q, Product, branch_id)
-    product_count = product_q.count()
+    product_q = db.session.query(func.count(Item.id)).filter(
+        Item.tenant_id == TenantContext.get(),
+        Item.status == "active"
+    )
+    if branch_id:
+        product_q = product_q.outerjoin(
+            Warehouse,
+            (Item.warehouse_id == Warehouse.id) & (Warehouse.tenant_id == TenantContext.get())
+        ).filter(
+            (Warehouse.branch_id == branch_id) | (Warehouse.branch_id.is_(None)) | (Item.warehouse_id.is_(None))
+        )
+    product_count = product_q.execution_options(skip_tenant_scope=True).scalar()
 
     invoice_count_q = Invoice.query
     invoice_count_q = _apply_branch_filter(invoice_count_q, Invoice, branch_id)
@@ -257,14 +267,23 @@ def summary():
     # 4. RECENTLY ADDED PRODUCTS
     # ──────────────────────────────────────────────────────────────────────────
     
-    recent_q = Product.query.filter_by(is_active=True)
-    recent_q = _apply_branch_filter(recent_q, Product, branch_id)
-    recent_q = recent_q.order_by(Product.created_at.desc()).limit(5)
-    recent_products = recent_q.all()
+    recent_q = Item.query.filter(
+        Item.tenant_id == TenantContext.get(),
+        Item.status == "active"
+    )
+    if branch_id:
+        recent_q = recent_q.outerjoin(
+            Warehouse,
+            (Item.warehouse_id == Warehouse.id) & (Warehouse.tenant_id == TenantContext.get())
+        ).filter(
+            (Warehouse.branch_id == branch_id) | (Warehouse.branch_id.is_(None)) | (Item.warehouse_id.is_(None))
+        )
+    recent_q = recent_q.order_by(Item.created_at.desc()).limit(5)
+    recent_products = recent_q.execution_options(skip_tenant_scope=True).all()
     
     recent_products_data = [
-        {"id": p.id, "name": p.name, "unit_price": float(p.unit_price or 0)}
-        for p in recent_products
+        {"id": i.id, "name": i.item_name, "unit_price": float(i.sales_price or 0)}
+        for i in recent_products
     ]
 
     # ──────────────────────────────────────────────────────────────────────────
@@ -272,23 +291,31 @@ def summary():
     # ──────────────────────────────────────────────────────────────────────────
     
     LOW_STOCK_THRESHOLD = 5
-    stock_q = Product.query.filter(
-        Product.is_active == True,
-        Product.stock_quantity <= LOW_STOCK_THRESHOLD,
+    stock_q = Item.query.filter(
+        Item.tenant_id == TenantContext.get(),
+        Item.status == "active",
+        Item.type == "item",
+        Item.opening_stock <= Item.alert_quantity,
     )
-    stock_q = _apply_branch_filter(stock_q, Product, branch_id)
-    stock_q = stock_q.order_by(Product.stock_quantity.asc())
-    low_stock = stock_q.all()
+    if branch_id:
+        stock_q = stock_q.outerjoin(
+            Warehouse,
+            (Item.warehouse_id == Warehouse.id) & (Warehouse.tenant_id == TenantContext.get())
+        ).filter(
+            (Warehouse.branch_id == branch_id) | (Warehouse.branch_id.is_(None)) | (Item.warehouse_id.is_(None))
+        )
+    stock_q = stock_q.order_by(Item.opening_stock.asc())
+    low_stock = stock_q.execution_options(skip_tenant_scope=True).all()
     
     stock_alert_data = [
         {
-            "id": p.id,
-            "name": p.name,
-            "sku": p.sku or "",
-            "stock_quantity": p.stock_quantity,
-            "unit": p.unit,
+            "id": i.id,
+            "name": i.item_name,
+            "sku": i.sku or "",
+            "stock_quantity": i.opening_stock,
+            "unit": i.unit.name if i.unit else "pcs",
         }
-        for p in low_stock
+        for i in low_stock
     ]
 
     # ──────────────────────────────────────────────────────────────────────────

@@ -7,7 +7,7 @@ from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
 
 from app.extensions import db
-from app.models import Customer, Product
+from app.models import Customer, Item
 from app.models.quotation import Quotation, QuotationItem, QuotationStatus
 from app.schemas import QuotationSchema
 from app.tenant_scope import TenantContext
@@ -101,14 +101,14 @@ def create_quotation():
             discount_type=data.get("discount_type", "flat"),
             discount_value=data.get("discount_value", 0),
             notes=data.get("notes"),
-            terms_conditions=data.get("terms_conditions"),  # 🔽 ADD THIS 🔽
+            terms_conditions=data.get("terms_conditions"),
             status=QuotationStatus(data.get("status", "draft")),
         )
 
         for item_data in items_data:
             quotation.items.append(
                 QuotationItem(
-                    product_id=item_data.get("product_id"),
+                    item_id=item_data.get("item_id") or item_data.get("product_id"),
                     description=item_data["description"],
                     quantity=item_data["quantity"],
                     unit_price=item_data["unit_price"],
@@ -139,7 +139,6 @@ def update_quotation(quotation_id):
 
     items_data = data.pop("items", None)
 
-    # 🔽 ADD terms_conditions to the update list 🔽
     for key in ("customer_id", "warehouse_id", "issue_date", "expiry_date", 
                 "discount_type", "discount_value", "notes", "terms_conditions"):
         if key in data:
@@ -152,7 +151,7 @@ def update_quotation(quotation_id):
         for item_data in items_data:
             quotation.items.append(
                 QuotationItem(
-                    product_id=item_data.get("product_id"),
+                    item_id=item_data.get("item_id") or item_data.get("product_id"),
                     description=item_data["description"],
                     quantity=item_data["quantity"],
                     unit_price=item_data["unit_price"],

@@ -192,7 +192,7 @@ def create_purchase():
         for item_data in items_data:
             purchase.items.append(
                 PurchaseItem(
-                    product_id=item_data.get("product_id"),
+                    item_id=item_data.get("item_id") or item_data.get("product_id"),
                     description=item_data["description"],
                     quantity=item_data["quantity"],
                     purchase_price=item_data["purchase_price"],
@@ -261,7 +261,7 @@ def update_purchase(purchase_id):
         for item_data in items_data:
             purchase.items.append(
                 PurchaseItem(
-                    product_id=item_data.get("product_id"),
+                    item_id=item_data.get("item_id") or item_data.get("product_id"),
                     description=item_data["description"],
                     quantity=item_data["quantity"],
                     purchase_price=item_data["purchase_price"],

@@ -146,6 +146,7 @@ class CreateItemSchema(Schema):
 
 class UpdateItemSchema(Schema):
     """Schema for updating item"""
+    item_code = fields.String(allow_none=True)
     item_name = fields.String(allow_none=True)
     item_group_id = fields.Integer(allow_none=True)
     category_id = fields.Integer(allow_none=True)

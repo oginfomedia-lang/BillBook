@@ -142,7 +142,7 @@ export function DashboardPage() {
               count={counts.products}
               icon={Package}
               iconBg="bg-emerald-100 text-emerald-600"
-              to={hasPermission("products.view") ? "/products" : undefined}
+              to={hasPermission("items.view") ? "/items" : undefined}
             />
             <CountCard
               label={t("Invoices")}

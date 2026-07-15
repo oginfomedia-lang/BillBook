@@ -2,18 +2,23 @@ import { useState, type FormEvent } from "react";
 import { Upload } from "lucide-react";
 import { useImportCustomers } from "../../hooks/useCustomers";
 import { useTranslation } from "../../context/LanguageContext";
+import { useBranch } from "../../context/BranchContext";
 
 export function ImportCustomersPage() {
   const { t } = useTranslation();
+  const { currentBranchId } = useBranch();
   const [file, setFile] = useState<File | null>(null);
   const importCustomers = useImportCustomers();
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
     if (!file) return;
-    importCustomers.mutate(file, {
-      onSuccess: () => setFile(null),
-    });
+    importCustomers.mutate(
+      { file, branch_id: currentBranchId || undefined },
+      {
+        onSuccess: () => setFile(null),
+      }
+    );
   };
 
   return (

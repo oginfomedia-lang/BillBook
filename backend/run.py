@@ -11,14 +11,15 @@ app = create_app()
 
 @app.shell_context_processor
 def make_shell_context():
-    from app.models import Tenant, User, Customer, Product, Invoice, InvoiceItem
+    from app.models import Tenant, User, Customer, Invoice, InvoiceItem
+    from app.models.item import Item
 
     return {
         "db": db,
         "Tenant": Tenant,
         "User": User,
         "Customer": Customer,
-        "Product": Product,
+        "Item": Item,
         "Invoice": Invoice,
         "InvoiceItem": InvoiceItem,
     }

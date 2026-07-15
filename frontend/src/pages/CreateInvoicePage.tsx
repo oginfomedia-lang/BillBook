@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useCustomers } from "../hooks/useCustomers";
-import { useProducts } from "../hooks/useProducts";
+import { useItems } from "../hooks/useItems";
 import { useCreateInvoice } from "../hooks/useInvoices";
 import { InvoiceItemsEditor } from "../components/invoices/InvoiceItemsEditor";
 import { InvoiceTotals } from "../components/invoices/InvoiceTotals";
-import type { InvoiceItem, InvoiceStatus, Product } from "../types";
+import type { InvoiceItem, InvoiceStatus } from "../types";
 import { CouponInput } from "./Coupons/CouponInput";
 import { useTranslation } from "../context/LanguageContext";
 import { useBranch } from "../context/BranchContext";
@@ -14,7 +14,7 @@ export function CreateInvoicePage() {
   const { currentBranchId } = useBranch();
   const { data: customersData } = useCustomers({ page: 1 });
   const [productSearch, setProductSearch] = useState("");
-  const { data: productsData } = useProducts({ page: 1, per_page: 100, search: productSearch });
+  const { data: itemsData } = useItems({ page: 1, per_page: 100, search: productSearch });
   const createInvoice = useCreateInvoice();
 
   const [customerId, setCustomerId] = useState<number | "">("");
@@ -113,7 +113,7 @@ export function CreateInvoicePage() {
 
           <InvoiceItemsEditor
             items={items}
-            products={productsData?.items ?? []}
+            products={itemsData?.items ?? []}
             onChange={setItems}
             onProductSearch={setProductSearch}
           />
@@ -128,8 +128,6 @@ export function CreateInvoicePage() {
               initialCode={appliedCoupon?.code || ""}
             />
           </div>
-
-          <InvoiceItemsEditor items={items} onChange={setItems} />
 
           <div className="rounded-xl border border-slate-200 bg-white p-5">
             <label className="mb-1.5 block text-xs font-medium text-slate-500">{t("Notes")}</label>

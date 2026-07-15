@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { Plus, Search, Edit2, Trash2 } from "lucide-react";
 import { TableSkeleton } from "../../components/ui/Skeletons";
 import { Modal } from "../../components/ui/Modal";
+import { ExportToolbar, type ColumnDef } from "../../components/ui/ExportToolbar";
 import { formatMoney } from "../../utils/format";
 import {
   useSuppliers,
@@ -20,6 +21,16 @@ import type { Supplier } from "../../api/suppliers";
 
 type SelectOption = { label: string; value: string };
 
+const SUPPLIER_COLUMNS: ColumnDef[] = [
+  { key: "name", label: "Name", visible: true },
+  { key: "mobile", label: "Mobile", visible: true },
+  { key: "email", label: "Email", visible: true },
+  { key: "gst_number", label: "GST Number", visible: true },
+  { key: "opening_balance", label: "Balance", visible: true },
+  { key: "city", label: "City", visible: true },
+  { key: "country", label: "Country", visible: true },
+];
+
 export function SuppliersPage() {
   const { t } = useTranslation();
   const { hasPermission } = useAuth();
@@ -30,6 +41,7 @@ export function SuppliersPage() {
   const [page, setPage] = useState(1);
   const [showForm, setShowForm] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
+  const [columns, setColumns] = useState<ColumnDef[]>(SUPPLIER_COLUMNS);
 
   // ✅ Data fetching - only once
   const { data, isLoading } = useSuppliers({ page, search, branch_id: currentBranchId || undefined });
@@ -375,6 +387,25 @@ export function SuppliersPage() {
           onChange={(e) => { setSearch(e.target.value); setPage(1); }}
           placeholder={t("Search suppliers by name…")}
           className="w-full max-w-sm rounded-lg border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+        />
+      </div>
+
+      {/* Export Toolbar */}
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-slate-400">{data?.total ?? 0} {t("records")}</span>
+        <ExportToolbar
+          data={suppliers.map((s) => ({
+            name: s.name,
+            mobile: s.mobile ?? "",
+            email: s.email ?? "",
+            gst_number: s.gst_number ?? "",
+            opening_balance: s.opening_balance ?? 0,
+            city: s.city ?? "",
+            country: s.country ?? "",
+          }))}
+          columns={columns}
+          onColumnsChange={setColumns}
+          filename="suppliers-list"
         />
       </div>
 

@@ -77,6 +77,9 @@ export interface Item {
     profit_margin?: number;
     seller_points: number;
     status: ItemStatus;
+    // Backward-compat alias (mapped from sales_price on backend)
+    unit_price?: number;
+    is_active?: boolean;
     created_at: string;
     updated_at: string;
     tenant_id: number;
@@ -127,6 +130,9 @@ export const fetchItems = async (params: {
     const { data } = await api.get('/items', { params });
     return data;
 };
+
+// Alias for convenience
+export const listItems = fetchItems;
 
 // Fetch single item
 export const fetchItem = async (id: number): Promise<Item> => {

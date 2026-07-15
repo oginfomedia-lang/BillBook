@@ -4,6 +4,7 @@ import { Plus, Search, FileText } from "lucide-react";
 import { useQuotations } from "../hooks/useQuotations";
 import { useWarehouses } from "../hooks/useWarehouses";
 import { TableSkeleton } from "../components/ui/Skeletons";
+import { ExportToolbar, type ColumnDef } from "../components/ui/ExportToolbar";
 import { formatMoney, formatDate } from "../utils/format";
 import type { PaginatedResponse } from "../types";
 import type { QuotationStatus } from "../api/quotations";
@@ -16,11 +17,21 @@ const STATUS_FILTERS: { label: string; value: QuotationStatus | "" }[] = [
   { label: "Declined", value: "declined" },
 ];
 
+const QUOTATION_COLUMNS: ColumnDef[] = [
+  { key: "quotation_number", label: "Quotation", visible: true },
+  { key: "customer", label: "Customer", visible: true },
+  { key: "warehouse", label: "Warehouse", visible: true },
+  { key: "issue_date", label: "Date", visible: true },
+  { key: "grand_total", label: "Amount", visible: true },
+  { key: "status", label: "Status", visible: true },
+];
+
 export function QuotationsPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<QuotationStatus | "">("");
   const [warehouseId, setWarehouseId] = useState<number | "">("");
+  const [columns, setColumns] = useState<ColumnDef[]>(QUOTATION_COLUMNS);
   const { data: warehousesData } = useWarehouses({ page: 1, per_page: 100 });
 
   const { data, isLoading } = useQuotations({
@@ -94,6 +105,24 @@ export function QuotationsPage() {
             ))}
           </div>
         </div>
+      </div>
+
+      {/* Export toolbar */}
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-slate-400">{data?.total ?? 0} records</span>
+        <ExportToolbar
+          data={(data?.items ?? []).map((q) => ({
+            quotation_number: q.quotation_number,
+            customer: q.customer?.name ?? "",
+            warehouse: q.warehouse?.name ?? "",
+            issue_date: formatDate(q.issue_date),
+            grand_total: q.grand_total,
+            status: q.status,
+          }))}
+          columns={columns}
+          onColumnsChange={setColumns}
+          filename="quotations-list"
+        />
       </div>
 
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">

@@ -22,6 +22,63 @@ stock_bp = Blueprint("stock", __name__, url_prefix="/api/v1/stock")
 
 
 # ---------------------------------------------------------------------------
+# Stock helper functions
+# ---------------------------------------------------------------------------
+
+def _apply_adjustment_stock(adj) -> None:
+    """Apply stock change for a StockAdjustment (call after saving items)."""
+    is_addition = adj.adjustment_type == "addition"
+    for adj_item in adj.items.all():
+        if not adj_item.item_id:
+            continue
+        db_item = db.session.get(Item, adj_item.item_id)
+        if db_item and db_item.type == "item":
+            qty = int(adj_item.quantity or 0)
+            if is_addition:
+                db_item.opening_stock = (db_item.opening_stock or 0) + qty
+            else:
+                db_item.opening_stock = max(0, (db_item.opening_stock or 0) - qty)
+
+
+def _reverse_adjustment_stock(adj) -> None:
+    """Reverse a previously applied StockAdjustment (call before deleting/updating)."""
+    is_addition = adj.adjustment_type == "addition"
+    for adj_item in adj.items.all():
+        if not adj_item.item_id:
+            continue
+        db_item = db.session.get(Item, adj_item.item_id)
+        if db_item and db_item.type == "item":
+            qty = int(adj_item.quantity or 0)
+            # Reverse: undo addition → subtract; undo subtraction → add back
+            if is_addition:
+                db_item.opening_stock = max(0, (db_item.opening_stock or 0) - qty)
+            else:
+                db_item.opening_stock = (db_item.opening_stock or 0) + qty
+
+
+def _apply_transfer_stock(tr) -> None:
+    """Apply stock movement for a StockTransfer (deduct source, add destination)."""
+    for tr_item in tr.items.all():
+        if not tr_item.item_id:
+            continue
+        db_item = db.session.get(Item, tr_item.item_id)
+        if db_item and db_item.type == "item":
+            qty = int(tr_item.quantity or 0)
+            db_item.opening_stock = max(0, (db_item.opening_stock or 0) - qty)
+
+
+def _reverse_transfer_stock(tr) -> None:
+    """Reverse a previously applied StockTransfer."""
+    for tr_item in tr.items.all():
+        if not tr_item.item_id:
+            continue
+        db_item = db.session.get(Item, tr_item.item_id)
+        if db_item and db_item.type == "item":
+            qty = int(tr_item.quantity or 0)
+            db_item.opening_stock = (db_item.opening_stock or 0) + qty
+
+
+# ---------------------------------------------------------------------------
 # Schemas
 # ---------------------------------------------------------------------------
 
@@ -114,7 +171,7 @@ def create_adjustment():
         warehouse_id=data.get("warehouse_id"),
         adjustment_type=data.get("adjustment_type", "addition"),
         notes=data.get("notes"),
-        created_by_id=g.current_user.id if hasattr(g, "current_user") else None,
+        created_by_id=g.current_user.id if hasattr(g, "current_user") and g.current_user else None,
     )
     db.session.add(adj)
     db.session.flush()  # get adj.id
@@ -128,6 +185,8 @@ def create_adjustment():
         )
         db.session.add(adj_item)
 
+    db.session.flush()  # ensure items have IDs before applying stock
+    _apply_adjustment_stock(adj)
     db.session.commit()
     return jsonify(adj.to_dict(include_items=True)), 201
 
@@ -141,6 +200,9 @@ def update_adjustment(adj_id):
     except ValidationError as err:
         return jsonify({"error": "Validation failed", "details": err.messages}), 422
 
+    # Reverse the stock effect of the old adjustment before making changes
+    _reverse_adjustment_stock(adj)
+
     for key in ("reference_no", "adjustment_date", "warehouse_id", "adjustment_type", "notes"):
         if key in data:
             setattr(adj, key, data[key])
@@ -149,6 +211,7 @@ def update_adjustment(adj_id):
     if "items" in data:
         for old in adj.items.all():
             db.session.delete(old)
+        db.session.flush()
         for item_data in data["items"]:
             adj_item = StockAdjustmentItem(
                 adjustment_id=adj.id,
@@ -157,7 +220,10 @@ def update_adjustment(adj_id):
                 unit_cost=item_data.get("unit_cost"),
             )
             db.session.add(adj_item)
+        db.session.flush()
 
+    # Apply the new stock effect
+    _apply_adjustment_stock(adj)
     db.session.commit()
     return jsonify(adj.to_dict(include_items=True))
 
@@ -166,6 +232,8 @@ def update_adjustment(adj_id):
 @require_auth
 def delete_adjustment(adj_id):
     adj = StockAdjustment.query.get_or_404(adj_id)
+    # Reverse stock before deleting
+    _reverse_adjustment_stock(adj)
     db.session.delete(adj)
     db.session.commit()
     return jsonify({"message": "Stock adjustment deleted successfully"}), 200
@@ -225,7 +293,7 @@ def create_transfer():
         from_warehouse_id=data["from_warehouse_id"],
         to_warehouse_id=data["to_warehouse_id"],
         notes=data.get("notes"),
-        created_by_id=g.current_user.id if hasattr(g, "current_user") else None,
+        created_by_id=g.current_user.id if hasattr(g, "current_user") and g.current_user else None,
     )
     db.session.add(tr)
     db.session.flush()
@@ -238,6 +306,8 @@ def create_transfer():
         )
         db.session.add(tr_item)
 
+    db.session.flush()  # ensure items have IDs
+    _apply_transfer_stock(tr)
     db.session.commit()
     return jsonify(tr.to_dict(include_items=True)), 201
 
@@ -258,6 +328,9 @@ def update_transfer(tr_id):
     ):
         return jsonify({"error": "Source and destination warehouse must be different"}), 400
 
+    # Reverse stock effect of the old transfer before applying new one
+    _reverse_transfer_stock(tr)
+
     for key in ("transfer_date", "from_warehouse_id", "to_warehouse_id", "notes"):
         if key in data:
             setattr(tr, key, data[key])
@@ -265,6 +338,7 @@ def update_transfer(tr_id):
     if "items" in data:
         for old in tr.items.all():
             db.session.delete(old)
+        db.session.flush()
         for item_data in data["items"]:
             tr_item = StockTransferItem(
                 transfer_id=tr.id,
@@ -272,7 +346,9 @@ def update_transfer(tr_id):
                 quantity=item_data["quantity"],
             )
             db.session.add(tr_item)
+        db.session.flush()
 
+    _apply_transfer_stock(tr)
     db.session.commit()
     return jsonify(tr.to_dict(include_items=True))
 
@@ -281,6 +357,8 @@ def update_transfer(tr_id):
 @require_auth
 def delete_transfer(tr_id):
     tr = StockTransfer.query.get_or_404(tr_id)
+    # Restore the stock that was moved in this transfer
+    _reverse_transfer_stock(tr)
     db.session.delete(tr)
     db.session.commit()
     return jsonify({"message": "Stock transfer deleted successfully"}), 200

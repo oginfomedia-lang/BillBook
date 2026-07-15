@@ -26,7 +26,6 @@ import { ContactsLayout, ContactsIndexRedirect } from "./pages/contacts/Contacts
 import { SuppliersPage } from "./pages/contacts/SuppliersPage";
 import { ImportCustomersPage } from "./pages/contacts/ImportCustomersPage";
 import { ImportSuppliersPage } from "./pages/contacts/ImportSuppliersPage";
-import { ProductsPage } from "./pages/ProductsPage";
 import { ItemsPage } from "./pages/ItemsPage";
 import { ItemFormPage } from "./pages/ItemFormPage";
 import { CategoriesListPage } from "./pages/CategoriesListPage";
@@ -137,9 +136,6 @@ export default function App() {
 
                   {/* Advance Payments */}
                   <Route path="/advance" element={<AdvancePaymentsList />} />
-
-                  {/* Products */}
-                  <Route path="/products" element={<ProductsPage />} />
 
                   {/* Items Module */}
                   <Route path="/items" element={<ItemsPage />} />

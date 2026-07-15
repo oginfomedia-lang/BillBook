@@ -3,7 +3,6 @@ from app.models.role import Role, PERMISSION_CATALOG, all_permission_keys, seed_
 from app.models.user import User
 from app.models.customer import Customer
 from app.models.supplier import Supplier
-from app.models.product import Product
 from app.models.invoice import Invoice, InvoiceItem, InvoiceStatus
 from app.models.quotation import Quotation, QuotationItem, QuotationStatus
 from app.models.warehouse import Warehouse
@@ -38,7 +37,6 @@ __all__ = [
     "User",
     "Customer",
     "Supplier",
-    "Product",
     "Invoice",
     "InvoiceItem",
     "InvoiceStatus",

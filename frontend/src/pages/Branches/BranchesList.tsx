@@ -5,13 +5,23 @@ import { Link } from "react-router-dom";
 import { Plus, Search, Edit2, Trash2 } from "lucide-react";
 import { useBranches, useDeleteBranch } from "../../hooks/useBranches";
 import { TableSkeleton } from "../../components/ui/Skeletons";
+import { ExportToolbar, type ColumnDef } from "../../components/ui/ExportToolbar";
 import { useTranslation } from "../../context/LanguageContext";
 import toast from "react-hot-toast";
+
+const BRANCH_COLUMNS: ColumnDef[] = [
+  { key: "code", label: "Code", visible: true },
+  { key: "name", label: "Name", visible: true },
+  { key: "phone", label: "Phone", visible: true },
+  { key: "email", label: "Email", visible: true },
+  { key: "status", label: "Status", visible: true },
+];
 
 export function BranchesListPage() {
   const { t } = useTranslation();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const [columns, setColumns] = useState<ColumnDef[]>(BRANCH_COLUMNS);
   const { data, isLoading } = useBranches({ page, search });
   const deleteBranch = useDeleteBranch();
 
@@ -53,6 +63,23 @@ export function BranchesListPage() {
           onChange={(e) => { setSearch(e.target.value); setPage(1); }}
           placeholder={t("Search branches by name or code…")}
           className="w-full max-w-sm rounded-lg border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
+        />
+      </div>
+
+      {/* Export Toolbar */}
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-slate-400">{data?.total ?? 0} {t("records")}</span>
+        <ExportToolbar
+          data={branches.map((b) => ({
+            code: b.code,
+            name: b.name,
+            phone: b.phone ?? "",
+            email: b.email ?? "",
+            status: b.is_active ? "Active" : "Inactive",
+          }))}
+          columns={columns}
+          onColumnsChange={setColumns}
+          filename="branches-list"
         />
       </div>
 

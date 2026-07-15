@@ -2,18 +2,23 @@ import { useState, type FormEvent } from "react";
 import { Upload } from "lucide-react";
 import { useImportSuppliers } from "../../hooks/useSuppliers";
 import { useTranslation } from "../../context/LanguageContext";
+import { useBranch } from "../../context/BranchContext";
 
 export function ImportSuppliersPage() {
   const { t } = useTranslation();
+  const { currentBranchId } = useBranch();
   const [file, setFile] = useState<File | null>(null);
   const importSuppliers = useImportSuppliers();
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
     if (!file) return;
-    importSuppliers.mutate(file, {
-      onSuccess: () => setFile(null),
-    });
+    importSuppliers.mutate(
+      { file, branch_id: currentBranchId || undefined },
+      {
+        onSuccess: () => setFile(null),
+      }
+    );
   };
 
   return (

@@ -24,6 +24,7 @@ import {
 } from "../../api/purchases";
 import { listWarehouses, type Warehouse } from "../../api/warehouses";
 import { formatMoney, formatDate } from "../../utils/format";
+import { ExportToolbar, type ColumnDef } from "../../components/ui/ExportToolbar";
 
 // -------------------------------------------------------------------
 // Stat Card
@@ -103,6 +104,16 @@ export function PurchaseListPage() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const PER_PAGE = 10;
+  const [columns, setColumns] = useState<ColumnDef[]>([
+    { key: 'purchase_date', label: 'Purchase Date', visible: true },
+    { key: 'purchase_code', label: 'Purchase Code', visible: true },
+    { key: 'status', label: 'Status', visible: true },
+    { key: 'reference_no', label: 'Reference No.', visible: true },
+    { key: 'supplier', label: 'Supplier', visible: true },
+    { key: 'grand_total', label: 'Total', visible: true },
+    { key: 'amount_paid', label: 'Paid', visible: true },
+    { key: 'payment_status', label: 'Payment Status', visible: true },
+  ]);
 
   // Load warehouses for filter dropdown
   useEffect(() => {
@@ -236,6 +247,26 @@ export function PurchaseListPage() {
             Create Purchase
           </button>
         </div>
+      </div>
+
+      {/* Export Toolbar */}
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-slate-400">{total} records</span>
+        <ExportToolbar
+          data={purchases.map((p) => ({
+            purchase_date: formatDate(p.purchase_date),
+            purchase_code: p.purchase_code,
+            status: p.status,
+            reference_no: p.reference_no ?? "",
+            supplier: p.supplier?.name ?? "",
+            grand_total: p.grand_total,
+            amount_paid: p.amount_paid,
+            payment_status: p.payment_status,
+          }))}
+          columns={columns}
+          onColumnsChange={setColumns}
+          filename="purchase-list"
+        />
       </div>
 
       {/* Table */}

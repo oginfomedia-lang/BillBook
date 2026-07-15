@@ -93,7 +93,6 @@ const TRANSLATIONS: Record<Language, Record<string, string>> = {
     "Invoices": "चालान",
     "Paid Invoices": "भुगतान किए गए चालान",
     "units": "इकाइयां",
-    "Stock Alert": "स्टॉक चेतावनी",
     "Purchase, Sales & Expense Bar Chart": "खरीद, बिक्री और व्यय चार्ट",
     "Purchase": "खरीद",
     "No data for the selected period.": "चयनित अवधि के लिए कोई डेटा नहीं है।",
@@ -214,7 +213,6 @@ const TRANSLATIONS: Record<Language, Record<string, string>> = {
 
     "Back to sales": "बिक्री पर वापस जाएं",
     "Change Status": "स्थिति बदलें",
-    "Record Payment": "भुगतान दर्ज करें",
     "Print Invoice": "चालान प्रिंट करें",
     "BillBook Invoice": "बिलबुक चालान",
     "Issued": "जारी किया गया",
@@ -293,7 +291,6 @@ const TRANSLATIONS: Record<Language, Record<string, string>> = {
     "Edit Supplier": "आपूर्तिकर्ता संपादित करें",
     "Select country first": "पहले देश चुनें",
     "Select state first": "पहले राज्य चुनें",
-    "Supplier": "आपूर्तिकर्ता",
 
     // ── Advance Payments ────────────────────────────────────────────
     "Advance Payments List": "अग्रिम भुगतान सूची",
@@ -312,7 +309,6 @@ const TRANSLATIONS: Record<Language, Record<string, string>> = {
     "Online": "ऑनलाइन",
     "Are you sure you want to delete this advance payment?": "क्या आप इस अग्रिम भुगतान को हटाना चाहते हैं?",
     "ID": "आईडी",
-    "Customer Name": "ग्राहक का नाम",
     "Search by ID or customer…": "आईडी या ग्राहक द्वारा खोजें…",
     "Page": "पृष्ठ",
 
@@ -342,7 +338,6 @@ const TRANSLATIONS: Record<Language, Record<string, string>> = {
     "This coupon is not valid for this customer": "यह कूपन इस ग्राहक के लिए मान्य नहीं है",
     "Create coupon": "कूपन बनाएं",
     "Update coupon": "कूपन अपडेट करें",
-    "Create": "बनाएं",
     "Update": "अपडेट करें",
     "Saving…": "सहेजा जा रहा है…",
     "Coupon Discount": "कूपन छूट",
@@ -380,7 +375,6 @@ const TRANSLATIONS: Record<Language, Record<string, string>> = {
     "Add User": "उपयोगकर्ता जोड़ें",
     "Search users…": "उपयोगकर्ता खोजें…",
     "Joined": "शामिल हुए",
-    "No users yet.": "अभी तक कोई उपयोगकर्ता नहीं।",
     "Add user": "उपयोगकर्ता जोड़ें",
     "Adding…": "जोड़ा जा रहा है…",
     "Delete user": "उपयोगकर्ता हटाएं",
@@ -535,7 +529,6 @@ const TRANSLATIONS: Record<Language, Record<string, string>> = {
     "Invoices": "पावत्या",
     "Paid Invoices": "भरलेल्या पावत्या",
     "units": "युनिट्स",
-    "Stock Alert": "स्टॉक चेतावणी",
     "Purchase, Sales & Expense Bar Chart": "खरेदी, विक्री आणि खर्च चार्ट",
     "Purchase": "खरेदी",
     "No data for the selected period.": "निवडलेल्या कालावधीसाठी कोणताही डेटा नाही.",
@@ -656,7 +649,6 @@ const TRANSLATIONS: Record<Language, Record<string, string>> = {
 
     "Back to sales": "विक्रीवर परत जा",
     "Change Status": "स्थिती बदला",
-    "Record Payment": "पेमेंट नोंदवा",
     "Print Invoice": "पावती छापा",
     "BillBook Invoice": "बिलबुक पावती",
     "Issued": "जारी केली",
@@ -735,7 +727,6 @@ const TRANSLATIONS: Record<Language, Record<string, string>> = {
     "Edit Supplier": "पुरवठादार संपादित करा",
     "Select country first": "प्रथम देश निवडा",
     "Select state first": "प्रथम राज्य निवडा",
-    "Supplier": "पुरवठादार",
 
     // ── Advance Payments ────────────────────────────────────────────
     "Advance Payments List": "आगाऊ पेमेंट सूची",
@@ -754,8 +745,7 @@ const TRANSLATIONS: Record<Language, Record<string, string>> = {
     "Online": "ऑनलाइन",
     "Are you sure you want to delete this advance payment?": "तुम्हाला ही आगाऊ पेमेंट हटवायची आहे का?",
     "ID": "आयडी",
-    "Customer Name": "ग्राहकाचे नाव",
-    "Search by ID or customer…": "आयडी किंवा ग्राहकानुसार शोधा…",
+    "Search by ID or customer…": "आयडी किंवा ग्राहकानुसार shoधा…",
     "Page": "पृष्ठ",
 
     // ── Coupons ──────────────────────────────────────────────────────
@@ -784,7 +774,6 @@ const TRANSLATIONS: Record<Language, Record<string, string>> = {
     "This coupon is not valid for this customer": "हा कूपन या ग्राहकासाठी वैध नाही",
     "Create coupon": "कूपन तयार करा",
     "Update coupon": "कूपन अद्ययावत करा",
-    "Create": "तयार करा",
     "Update": "अद्ययावत करा",
     "Saving…": "जतन करत आहे…",
     "Coupon Discount": "कूपन सूट",
@@ -822,7 +811,6 @@ const TRANSLATIONS: Record<Language, Record<string, string>> = {
     "Add User": "वापरकर्ता जोडा",
     "Search users…": "वापरकर्ते शोधा…",
     "Joined": "सामील झाले",
-    "No users yet.": "अद्याप कोणतेही वापरकर्ते नाहीत.",
     "Add user": "वापरकर्ता जोडा",
     "Adding…": "जोडत आहे…",
     "Delete user": "वापरकर्ता हटवा",

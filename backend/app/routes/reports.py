@@ -2,7 +2,7 @@ from datetime import datetime, date, timedelta
 from flask import Blueprint, jsonify, request
 from sqlalchemy import func, and_
 from app.extensions import db
-from app.models import Invoice, InvoiceStatus, Branch, Product, Category, Warehouse, Item, PurchaseReturn
+from app.models import Invoice, InvoiceStatus, Branch, Category, Warehouse, Item, PurchaseReturn
 from app.models.purchase import Purchase
 from app.models.expense import Expense, ExpenseCategory
 from app.models.customer import Customer
@@ -400,39 +400,72 @@ def get_stock_report():
     category_id = request.args.get("category_id", type=int)
     warehouse_id = request.args.get("warehouse_id", type=int)
 
-    query = Product.query
-    query = _apply_branch_filter(query, Product, branch_id)
-    
-    products = query.filter(Product.is_active == True).all()
+    # ── Build base query ─────────────────────────────────────────────
+    query = Item.query.filter(Item.status == "active")
+
+    if category_id:
+        query = query.filter(Item.category_id == category_id)
+
+    if warehouse_id:
+        # Exact warehouse match (items may have no warehouse → still include them if no filter)
+        query = query.filter(Item.warehouse_id == warehouse_id)
+    elif branch_id:
+        # Include items that belong to a warehouse in this branch
+        # OR items that have no warehouse assigned at all (they are tenant-wide).
+        # We use an outer-join so NULL warehouse_id rows survive.
+        query = (
+            query
+            .outerjoin(Warehouse, Item.warehouse_id == Warehouse.id)
+            .filter(
+                db.or_(
+                    Warehouse.branch_id == branch_id,   # item has a warehouse in this branch
+                    Item.warehouse_id.is_(None),         # item has no warehouse assigned
+                )
+            )
+        )
+
+    items = query.all()
 
     stock_items = []
     total_value = 0
     low_stock_count = 0
 
-    for p in products:
-        qty = p.stock_quantity or 0
-        price = float(p.unit_price or 0)
+    for item in items:
+        qty = item.opening_stock or 0
+        price = float(item.sales_price or 0)
+        cost = float(item.purchase_price or 0)
         value = qty * price
+        cost_value = qty * cost
         total_value += value
-        
-        is_low = qty <= 5
+
+        alert_qty = item.alert_quantity or 0
+        is_low = qty <= alert_qty
+
         if is_low:
             low_stock_count += 1
 
         stock_items.append({
-            "id": p.id,
-            "name": p.name,
-            "sku": p.sku or "-",
+            "id": item.id,
+            "name": item.item_name,
+            "sku": item.sku or "-",
             "stock_quantity": qty,
             "unit_price": price,
+            "purchase_price": cost,
             "value": value,
+            "cost_value": cost_value,
+            "alert_quantity": alert_qty,
             "is_low": is_low,
-            "unit": p.unit or "pcs"
+            "unit": item.unit.name if item.unit else "pcs",
+            "category": item.category.name if item.category else "-",
+            "type": item.type or "item",
         })
+
+    # Sort: low-stock items first, then alphabetically
+    stock_items.sort(key=lambda x: (not x["is_low"], x["name"].lower()))
 
     return jsonify({
         "summary": {
-            "total_items": len(products),
+            "total_items": len(stock_items),
             "total_value": total_value,
             "low_stock_count": low_stock_count
         },

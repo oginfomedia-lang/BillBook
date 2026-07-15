@@ -101,6 +101,7 @@ export type InvoiceStatus = "draft" | "pending" | "paid" | "overdue" | "cancelle
 
 export interface InvoiceItem {
   id?: number;
+  item_id?: number | null;
   product_id?: number | null;
   description: string;
   quantity: number;
@@ -109,8 +110,8 @@ export interface InvoiceItem {
   line_subtotal?: number;
   line_tax?: number;
   line_total?: number;
-  branch_id?: number | null;  // ✅ ADD THIS
-  branch?: Branch | null;      // ✅ ADD THIS
+  branch_id?: number | null;
+  branch?: Branch | null;
 }
 
 export interface Invoice {

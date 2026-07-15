@@ -4,7 +4,7 @@ from decimal import Decimal
 from flask import Blueprint, request, jsonify, g
 from marshmallow import ValidationError
 
-from app.extensions import db
+from app.extensions import db  # ✅ ADD THIS IMPORT
 from app.models import Item, Brand, Category, Unit, Tax, ItemGroup, Variant
 from app.schemas.item_schemas import (
     ItemSchema, CreateItemSchema, UpdateItemSchema,
@@ -27,7 +27,7 @@ def list_items():
     per_page = min(request.args.get("per_page", 20, type=int), 100)
     search = request.args.get("search", "").strip()
     status = request.args.get("status", "").strip()
-    item_type = request.args.get("type", "").strip()  # 'item' or 'service'
+    item_type = request.args.get("type", "").strip()
     category_id = request.args.get("category_id", type=int)
     brand_id = request.args.get("brand_id", type=int)
     warehouse_id = request.args.get("warehouse_id", type=int)
@@ -36,7 +36,7 @@ def list_items():
 
     if search:
         query = query.filter(
-            db.or_(
+            db.or_(  # ✅ db is now imported
                 Item.item_name.ilike(f"%{search}%"),
                 Item.item_code.ilike(f"%{search}%"),
                 Item.sku.ilike(f"%{search}%"),
@@ -103,21 +103,25 @@ def create_item():
 @require_auth
 def update_item(item_id):
     item = Item.query.get_or_404(item_id)
+    
     try:
-        data = UpdateItemSchema().load(request.get_json(force=True) or {})
+        data = request.get_json(force=True) or {}
+        # ✅ Use partial=True to allow partial updates
+        validated_data = UpdateItemSchema(partial=True).load(data)
     except ValidationError as err:
         return jsonify({"error": "Validation failed", "details": err.messages}), 422
 
     # Check uniqueness if code/barcode is being updated
-    if data.get("item_code") and data.get("item_code") != item.item_code:
-        if Item.query.filter_by(item_code=data.get("item_code")).first():
+    if validated_data.get("item_code") and validated_data.get("item_code") != item.item_code:
+        if Item.query.filter_by(item_code=validated_data.get("item_code")).first():
             return jsonify({"error": "Item code already exists"}), 400
 
-    if data.get("barcode") and data.get("barcode") != item.barcode:
-        if Item.query.filter_by(barcode=data.get("barcode")).first():
+    if validated_data.get("barcode") and validated_data.get("barcode") != item.barcode:
+        if Item.query.filter_by(barcode=validated_data.get("barcode")).first():
             return jsonify({"error": "Barcode already exists"}), 400
 
-    for key, value in data.items():
+    # ✅ Update only the fields that are sent
+    for key, value in validated_data.items():
         setattr(item, key, value)
 
     # Recalculate profit margin
@@ -172,7 +176,6 @@ def bulk_import_items():
         cleaned = {key.strip(): (value.strip() if isinstance(value, str) else value) for key, value in row.items()}
         
         # Simple lookup for related names to IDs
-        # To make import user-friendly, we try to map category name, brand name, unit name to database records.
         if cleaned.get("category"):
             cat = Category.query.filter_by(name=cleaned.get("category")).first()
             if cat:

@@ -3,10 +3,20 @@ import { Plus, Search, Trash2, Edit2 } from "lucide-react";
 import { useCustomers, useCreateCustomer, useDeleteCustomer, useUpdateCustomer } from "../hooks/useCustomers";
 import { TableSkeleton } from "../components/ui/Skeletons";
 import { Modal } from "../components/ui/Modal";
+import { ExportToolbar, type ColumnDef } from "../components/ui/ExportToolbar";
 import { formatMoney } from "../utils/format";
 import type { Customer } from "../types";
 import { useTranslation } from "../context/LanguageContext";
 import { useBranch } from "../context/BranchContext";
+
+const CUSTOMER_COLUMNS: ColumnDef[] = [
+  { key: "name", label: "Name", visible: true },
+  { key: "email", label: "Email", visible: true },
+  { key: "phone", label: "Phone", visible: true },
+  { key: "gstin", label: "GSTIN", visible: true },
+  { key: "billing_address", label: "Address", visible: true },
+  { key: "opening_balance", label: "Balance", visible: true },
+];
 
 export function CustomersPage() {
   const { t } = useTranslation();
@@ -16,6 +26,7 @@ export function CustomersPage() {
   const [page, setPage] = useState(1);
   const [showForm, setShowForm] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+  const [columns, setColumns] = useState<ColumnDef[]>(CUSTOMER_COLUMNS);
 
   const [form, setForm] = useState({
     name: "",
@@ -188,6 +199,24 @@ export function CustomersPage() {
           }}
           placeholder={t("Search customers by name…")}
           className="w-full max-w-sm rounded-lg border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm focus:outline-none focus:ring-1 focus:ring-brand shadow-sm"
+        />
+      </div>
+
+      {/* Export Toolbar */}
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-slate-400">{data?.total ?? 0} {t("records")}</span>
+        <ExportToolbar
+          data={(data?.items ?? []).map((c) => ({
+            name: c.name,
+            email: c.email ?? "",
+            phone: c.phone ?? "",
+            gstin: c.gstin ?? "",
+            billing_address: c.billing_address ?? "",
+            opening_balance: c.opening_balance ?? 0,
+          }))}
+          columns={columns}
+          onColumnsChange={setColumns}
+          filename="customers-list"
         />
       </div>
 

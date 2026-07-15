@@ -170,7 +170,7 @@ def create_purchase_return():
         for item_data in items_data:
             ret.items.append(
                 PurchaseReturnItem(
-                    product_id=item_data.get("product_id"),
+                    item_id=item_data.get("item_id") or item_data.get("product_id"),
                     description=item_data["description"],
                     quantity=item_data["quantity"],
                     purchase_price=item_data["purchase_price"],
@@ -180,14 +180,14 @@ def create_purchase_return():
 
         ret.recalculate_totals()
 
-        # Reduce stock for returned items
-        from app.models.product import Product
+        # Reduce stock for returned items (goods physically go back to supplier)
+        from app.models.item import Item
         for item in ret.items:
-            if item.product_id:
-                product = Product.query.get(item.product_id)
-                if product:
-                    product.stock_quantity = max(
-                        0, (product.stock_quantity or 0) - int(item.quantity or 0)
+            if item.item_id:
+                db_item = db.session.get(Item, item.item_id)
+                if db_item and db_item.type == "item":
+                    db_item.opening_stock = max(
+                        0, (db_item.opening_stock or 0) - int(item.quantity or 0)
                     )
 
         db.session.add(ret)
@@ -210,13 +210,13 @@ def create_purchase_return():
 def delete_purchase_return(return_id):
     ret = PurchaseReturn.query.get_or_404(return_id)
 
-    # Restore stock
-    from app.models.product import Product
+    # Restore stock (goods are back, return is undone)
+    from app.models.item import Item
     for item in ret.items:
-        if item.product_id:
-            product = Product.query.get(item.product_id)
-            if product:
-                product.stock_quantity = (product.stock_quantity or 0) + int(item.quantity or 0)
+        if item.item_id:
+            db_item = db.session.get(Item, item.item_id)
+            if db_item and db_item.type == "item":
+                db_item.opening_stock = (db_item.opening_stock or 0) + int(item.quantity or 0)
 
     db.session.delete(ret)
     db.session.commit()

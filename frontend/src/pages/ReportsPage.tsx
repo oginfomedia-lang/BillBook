@@ -1020,32 +1020,60 @@ export function ReportsPage() {
                   <tr className="bg-slate-50 text-slate-500 font-bold uppercase tracking-wider border-b border-slate-200">
                     <th className="px-5 py-3">Item Name</th>
                     <th className="px-5 py-3">SKU</th>
+                    <th className="px-5 py-3">Category</th>
+                    <th className="px-5 py-3">Type</th>
                     <th className="px-5 py-3">Current Stock</th>
+                    <th className="px-5 py-3">Alert Qty</th>
                     <th className="px-5 py-3">Sales Price</th>
-                    <th className="px-5 py-3">Stock Value (Estimated)</th>
-                    <th className="px-5 py-3">Alert</th>
+                    <th className="px-5 py-3">Purchase Price</th>
+                    <th className="px-5 py-3">Stock Value</th>
+                    <th className="px-5 py-3">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {stockReportQuery.data.items.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-5 py-10 text-center text-slate-400">
+                      <td colSpan={10} className="px-5 py-10 text-center text-slate-400">
                         {t("No stock item matches selection")}
                       </td>
                     </tr>
                   ) : (
                     stockReportQuery.data.items.map((item: any) => (
-                      <tr key={item.id} className="hover:bg-slate-50/50">
+                      <tr key={item.id} className={`hover:bg-slate-50/50 ${
+                        item.stock_quantity === 0 ? "bg-red-50/30" : ""
+                      }`}>
                         <td className="px-5 py-3 font-semibold text-ink-900">{item.name}</td>
-                        <td className="px-5 py-3 text-slate-500">{item.sku}</td>
-                        <td className="px-5 py-3 text-ink-900 font-medium">
+                        <td className="px-5 py-3 text-slate-500 font-mono">{item.sku}</td>
+                        <td className="px-5 py-3 text-slate-500">{item.category || "-"}</td>
+                        <td className="px-5 py-3">
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${
+                            item.type === "service"
+                              ? "bg-purple-100 text-purple-700"
+                              : "bg-blue-100 text-blue-700"
+                          }`}>
+                            {item.type}
+                          </span>
+                        </td>
+                        <td className={`px-5 py-3 font-bold ${
+                          item.stock_quantity === 0
+                            ? "text-red-600"
+                            : item.is_low
+                            ? "text-amber-600"
+                            : "text-green-600"
+                        }`}>
                           {item.stock_quantity} {item.unit}
                         </td>
+                        <td className="px-5 py-3 text-slate-500">{item.alert_quantity ?? 0}</td>
                         <td className="px-5 py-3 text-slate-500">{formatMoney(item.unit_price)}</td>
+                        <td className="px-5 py-3 text-slate-500">{formatMoney(item.purchase_price ?? 0)}</td>
                         <td className="px-5 py-3 font-bold text-ink-900">{formatMoney(item.value)}</td>
                         <td className="px-5 py-3">
-                          {item.is_low ? (
+                          {item.stock_quantity === 0 ? (
                             <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700 uppercase tracking-wider">
+                              {t("Out of Stock")}
+                            </span>
+                          ) : item.is_low ? (
+                            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700 uppercase tracking-wider">
                               {t("Low Stock")}
                             </span>
                           ) : (

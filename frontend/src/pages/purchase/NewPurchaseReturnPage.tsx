@@ -127,7 +127,7 @@ export function NewPurchaseReturnPage() {
                     purchase_price: item.purchase_price,
                     tax_amount: item.tax_amount || 0,
                 })),
-                notes: notes || null,
+                note: notes || null,
             });
             toast.success("Purchase return created successfully!");
             navigate("/purchase/returns");

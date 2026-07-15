@@ -4,6 +4,7 @@ import { Plus, Search } from "lucide-react";
 import { useInvoices } from "../../hooks/useInvoices";
 import { StatusBadge } from "../../components/ui/StatusBadge";
 import { TableSkeleton } from "../../components/ui/Skeletons";
+import { ExportToolbar, type ColumnDef } from "../../components/ui/ExportToolbar";
 import { formatMoney, formatDate } from "../../utils/format";
 import type { InvoiceStatus } from "../../types";
 import { useTranslation } from "../../context/LanguageContext";
@@ -18,12 +19,21 @@ const STATUS_FILTERS: { label: string; value: InvoiceStatus | "" }[] = [
   { label: "Cancelled", value: "cancelled" },
 ];
 
+const SALES_COLUMNS: ColumnDef[] = [
+  { key: "invoice_number", label: "Invoice", visible: true },
+  { key: "customer", label: "Customer", visible: true },
+  { key: "issue_date", label: "Date", visible: true },
+  { key: "grand_total", label: "Amount", visible: true },
+  { key: "status", label: "Status", visible: true },
+];
+
 export function SalesListPage() {
   const { t } = useTranslation();
   const { currentBranchId } = useBranch();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<InvoiceStatus | "">("");
+  const [columns, setColumns] = useState<ColumnDef[]>(SALES_COLUMNS);
 
   const { data, isLoading } = useInvoices({
     page,
@@ -84,6 +94,23 @@ export function SalesListPage() {
             </button>
           ))}
         </div>
+      </div>
+
+      {/* Export toolbar */}
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-slate-400">{data?.total ?? 0} {t("records")}</span>
+        <ExportToolbar
+          data={(data?.items ?? []).map((inv) => ({
+            invoice_number: inv.invoice_number,
+            customer: inv.customer?.name ?? "",
+            issue_date: formatDate(inv.issue_date),
+            grand_total: inv.grand_total,
+            status: inv.status,
+          }))}
+          columns={columns}
+          onColumnsChange={setColumns}
+          filename="sales-list"
+        />
       </div>
 
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">

@@ -22,7 +22,6 @@ class Branch(TenantScopedMixin, db.Model):
 
     # ✅ CORRECT Relationships
     customers = db.relationship("Customer", back_populates="branch", lazy="dynamic")
-    products = db.relationship("Product", back_populates="branch", lazy="dynamic")
     invoices = db.relationship("Invoice", back_populates="branch", lazy="dynamic")
     invoice_items = db.relationship("InvoiceItem", back_populates="branch", lazy="dynamic")  # ← ADD THIS
     suppliers = db.relationship("Supplier", back_populates="branch", lazy="dynamic")

@@ -5,10 +5,11 @@ import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { Modal } from "../components/ui/Modal";
 import { useCustomers, useCreateCustomer } from "../hooks/useCustomers";
-import { useProducts } from "../hooks/useProducts";
+import { useItems } from "../hooks/useItems";
 import { createInvoice } from "../api/invoices";
 import { formatMoney } from "../utils/format";
-import type { InvoiceItem, Product } from "../types";
+import type { InvoiceItem } from "../types";
+import type { Item } from "../api/items";
 import { useTranslation } from "../context/LanguageContext";
 import { CouponInput } from "../components/coupons/CouponInput";
 import { useBranch } from "../context/BranchContext";
@@ -28,7 +29,7 @@ export function POSPage() {
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
   const [couponDiscount, setCouponDiscount] = useState(0);
 
-  const { data: productsData, isLoading: productsLoading } = useProducts({ page: 1, per_page: 100, search: productSearch });
+  const { data: itemsData, isLoading: productsLoading } = useItems({ page: 1, per_page: 100, search: productSearch });
   const { data: customersData, isLoading: customersLoading } = useCustomers({ page: 1, search: customerSearch });
   const createCustomerMutation = useCreateCustomer();
   const queryClient = useQueryClient();
@@ -68,9 +69,9 @@ export function POSPage() {
     return { subtotal, tax, total };
   }, [cartItems]);
 
-  const handleAddProduct = (product: Product) => {
+  const handleAddProduct = (product: Item) => {
     setCartItems((current) => {
-      const existingIndex = current.findIndex((item) => item.product_id === product.id);
+      const existingIndex = current.findIndex((item) => item.item_id === product.id);
       if (existingIndex >= 0) {
         return current.map((item, index) =>
           index === existingIndex ? { ...item, quantity: item.quantity + 1 } : item
@@ -79,11 +80,11 @@ export function POSPage() {
       return [
         ...current,
         {
-          product_id: product.id,
-          description: product.name,
+          item_id: product.id,
+          description: product.item_name,
           quantity: 1,
-          unit_price: product.unit_price,
-          tax_rate: product.tax_rate,
+          unit_price: product.sales_price ?? product.unit_price ?? 0,
+          tax_rate: 0,
         },
       ];
     });
@@ -146,7 +147,7 @@ export function POSPage() {
       coupon_code: appliedCoupon?.code || null,
       coupon_discount: couponDiscount,
       notes: null,
-      branch_id: currentBranchId || undefined,  // 👈 added
+      branch_id: currentBranchId || undefined,
     });
   };
 
@@ -246,34 +247,72 @@ export function POSPage() {
                         <tr key={index} className="border-b border-slate-100 last:border-0">
                           <td className="px-4 py-3 text-sm text-ink-900">{item.description}</td>
                           <td className="px-3 py-3">
+                            {/* ✅ FIX: Quantity - Empty by default, no leading zeros */}
                             <input
-                              value={item.quantity}
-                              type="number"
-                              min={1}
-                              step={1}
-                              onChange={(e) => updateCartItem(index, { quantity: Number(e.target.value) || 1 })}
-                              className="w-full rounded-md border border-slate-200 px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
+                              type="text"
+                              inputMode="numeric"
+                              pattern="[0-9]*"
+                              value={item.quantity === 0 ? '' : item.quantity}
+                              onChange={(e) => {
+                                const val = e.target.value.replace(/^0+/, '');
+                                if (val === '' || /^\d*$/.test(val)) {
+                                  const numVal = val === '' ? 0 : parseInt(val);
+                                  updateCartItem(index, { quantity: numVal });
+                                }
+                              }}
+                              onBlur={() => {
+                                if (!item.quantity || item.quantity <= 0) {
+                                  updateCartItem(index, { quantity: 1 });
+                                }
+                              }}
+                              className="w-full rounded-md border border-slate-200 px-2 py-1 text-sm text-center focus:outline-none focus:ring-1 focus:ring-brand"
+                              placeholder="1"
                             />
                           </td>
                           <td className="px-3 py-3">
+                            {/* ✅ FIX: Price - Empty by default, no leading zeros */}
                             <input
-                              value={item.unit_price}
-                              type="number"
-                              min={0}
-                              step="0.01"
-                              onChange={(e) => updateCartItem(index, { unit_price: Number(e.target.value) || 0 })}
-                              className="w-full rounded-md border border-slate-200 px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
+                              type="text"
+                              inputMode="decimal"
+                              pattern="[0-9]*\.?[0-9]*"
+                              value={item.unit_price === 0 ? '' : item.unit_price}
+                              onChange={(e) => {
+                                const val = e.target.value.replace(/^0+/, '');
+                                if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                                  const numVal = val === '' ? 0 : parseFloat(val);
+                                  updateCartItem(index, { unit_price: numVal });
+                                }
+                              }}
+                              onBlur={() => {
+                                if (!item.unit_price) {
+                                  updateCartItem(index, { unit_price: 0 });
+                                }
+                              }}
+                              className="w-full rounded-md border border-slate-200 px-2 py-1 text-sm text-right focus:outline-none focus:ring-1 focus:ring-brand"
+                              placeholder="0.00"
                             />
                           </td>
                           <td className="px-3 py-3">
+                            {/* ✅ FIX: Tax % - Empty by default, no leading zeros */}
                             <input
-                              value={item.tax_rate}
-                              type="number"
-                              min={0}
-                              max={100}
-                              step="0.01"
-                              onChange={(e) => updateCartItem(index, { tax_rate: Number(e.target.value) || 0 })}
-                              className="w-full rounded-md border border-slate-200 px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
+                              type="text"
+                              inputMode="decimal"
+                              pattern="[0-9]*\.?[0-9]*"
+                              value={item.tax_rate === 0 ? '' : item.tax_rate}
+                              onChange={(e) => {
+                                const val = e.target.value.replace(/^0+/, '');
+                                if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                                  const numVal = val === '' ? 0 : parseFloat(val);
+                                  updateCartItem(index, { tax_rate: numVal });
+                                }
+                              }}
+                              onBlur={() => {
+                                if (!item.tax_rate) {
+                                  updateCartItem(index, { tax_rate: 0 });
+                                }
+                              }}
+                              className="w-full rounded-md border border-slate-200 px-2 py-1 text-sm text-center focus:outline-none focus:ring-1 focus:ring-brand"
+                              placeholder="0"
                             />
                           </td>
                           <td className="figures px-4 py-3 text-right font-medium text-ink-900">
@@ -379,12 +418,12 @@ export function POSPage() {
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               {(productsLoading
                 ? Array.from({ length: 4 }).map((_, i) => ({ id: i, skeleton: true }))
-                : (productsData?.items ?? [])
+                : (itemsData?.items ?? [])
               ).map((product, index) => {
                 const isSkeleton = (product as any).skeleton;
                 return (
                   <div
-                    key={isSkeleton ? index : (product as Product).id}
+                    key={isSkeleton ? index : (product as Item).id}
                     className="group rounded-2xl border border-slate-200 bg-slate-50 p-4 transition hover:border-brand/50 hover:bg-white"
                   >
                     {isSkeleton ? (
@@ -393,21 +432,18 @@ export function POSPage() {
                       <>
                         <div className="flex items-start justify-between gap-3">
                           <div>
-                            <p className="text-sm font-semibold text-ink-900">{(product as Product).name}</p>
+                            <p className="text-sm font-semibold text-ink-900">{(product as Item).item_name}</p>
                             <p className="mt-1 text-xs text-slate-500">
-                              {(product as Product).stock_quantity} {(product as Product).unit} {t("available")}
+                              {(product as Item).opening_stock} {t("available")}
                             </p>
                           </div>
                           <span className="rounded-full bg-white px-2 py-1 text-xs font-semibold text-slate-600">
-                            {formatMoney((product as Product).unit_price)}
+                            {formatMoney((product as Item).sales_price ?? (product as Item).unit_price ?? 0)}
                           </span>
                         </div>
-                        <p className="mt-3 text-sm text-slate-500">
-                          {t("Tax")} {(product as Product).tax_rate}%
-                        </p>
                         <button
                           type="button"
-                          onClick={() => handleAddProduct(product as Product)}
+                          onClick={() => handleAddProduct(product as Item)}
                           className="mt-4 inline-flex items-center justify-center gap-2 rounded-lg bg-brand px-3 py-2 text-sm font-semibold text-white hover:bg-brand-dark"
                         >
                           <Plus size={16} />

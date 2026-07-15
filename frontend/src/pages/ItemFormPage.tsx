@@ -152,9 +152,11 @@ export function ItemFormPage({ isService: routeIsService = false }: ItemFormPage
                 toast.success('Created successfully.');
             }
             navigate('/items');
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error saving item:', error);
-            toast.error('Failed to save.');
+            const msg = error.response?.data?.error || error.response?.data?.details || 'Failed to save.';
+            const details = typeof msg === 'object' ? JSON.stringify(msg) : msg;
+            toast.error(`Failed to save: ${details}`);
         }
     };
 

@@ -54,7 +54,7 @@ export function RecentProductsTable({ products, isLoading }: RecentProductsTable
               <td className="px-4 py-2.5 text-slate-400">{idx + 1}</td>
               <td className="px-4 py-2.5">
                 <Link
-                  to="/products"
+                  to="/items"
                   className="font-medium text-brand hover:underline"
                 >
                   {product.name}

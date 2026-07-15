@@ -1,12 +1,15 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, X, Trash2, ChevronDown, AlertCircle, Percent, Tag } from 'lucide-react';
-import { useProducts } from "../../hooks/useProducts";
-import type { Product } from "../../types";
+import { useItems } from "../../hooks/useItems";
+import { useCustomers } from "../../hooks/useCustomers";
+import type { Customer } from "../../types";
+import type { Item } from "../../api/items";
 import toast from 'react-hot-toast';
-import api from '../../api/client';  // ✅ ADD THIS IMPORT
+import api from '../../api/client';
+import { useQueryClient } from '@tanstack/react-query';
+import { useBranch } from '../../context/BranchContext';
 
-// ✅ Inline formatMoney function
 const formatMoney = (amount: number): string => {
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
@@ -41,11 +44,13 @@ interface AddSaleFormData {
 
 export function AddSalePage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { currentBranchId } = useBranch();
 
   // Product search state
   const [productSearch, setProductSearch] = useState('');
   const [showProductDropdown, setShowProductDropdown] = useState(false);
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Item[]>([]);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -55,12 +60,16 @@ export function AddSalePage() {
   const [couponDiscountAmount, setCouponDiscountAmount] = useState(0);
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
 
-  // Fetch all products
-  const { data: productsData, isLoading: productsLoading } = useProducts({
+  // Fetch items
+  const { data: itemsData, isLoading: productsLoading } = useItems({
     page: 1,
     per_page: 1000,
   });
-  const allProducts = productsData?.items ?? [];
+  const allProducts = itemsData?.items ?? [];
+
+  // Fetch customers
+  const { data: customersData } = useCustomers({ page: 1 });
+  const customers = customersData?.items || [];
 
   // Form state
   const [formData, setFormData] = useState<AddSaleFormData>({
@@ -77,23 +86,29 @@ export function AddSalePage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Filter products as user types
-  useEffect(() => {
+  // ✅ FIX: Use useMemo to prevent infinite loop
+  const filteredItems = useMemo(() => {
     if (!productSearch.trim()) {
+      return [];
+    }
+    return allProducts.filter(
+      (product) =>
+        (product.item_code && product.item_code.toLowerCase().includes(productSearch.toLowerCase())) ||
+        product.item_name.toLowerCase().includes(productSearch.toLowerCase()) ||
+        (product.sku && product.sku.toLowerCase().includes(productSearch.toLowerCase()))
+    );
+  }, [productSearch, allProducts]);
+
+  // ✅ Update filtered products
+  useEffect(() => {
+    if (productSearch.trim()) {
+      setFilteredProducts(filteredItems);
+      setShowProductDropdown(true);
+    } else {
       setFilteredProducts([]);
       setShowProductDropdown(false);
-      return;
     }
-
-    const filtered = allProducts.filter(
-      (product) =>
-        (product.sku && product.sku.toLowerCase().includes(productSearch.toLowerCase())) ||
-        product.name.toLowerCase().includes(productSearch.toLowerCase())
-    );
-
-    setFilteredProducts(filtered);
-    setShowProductDropdown(true);
-  }, [productSearch, allProducts]);
+  }, [filteredItems, productSearch]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -107,7 +122,6 @@ export function AddSalePage() {
         setShowProductDropdown(false);
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
@@ -132,7 +146,6 @@ export function AddSalePage() {
       }
     }
 
-    // ✅ Add coupon discount
     if (couponDiscountAmount > 0) {
       discountAmount += couponDiscountAmount;
     }
@@ -147,33 +160,12 @@ export function AddSalePage() {
     };
   };
 
-  // Stock Validation
-  const validateStock = (productId: number, requestedQty: number): boolean => {
-    const product = allProducts.find(p => p.id === productId);
-    if (!product) {
-      toast.error('Product not found in inventory');
-      return false;
-    }
-
-    const availableStock = product.stock_quantity || 0;
-    const totalRequested = formData.items
-      .filter(item => item.item_id === productId)
-      .reduce((sum, item) => sum + item.quantity, 0);
-
-    if (totalRequested > availableStock) {
-      toast.error(`⚠️ Only ${availableStock} pcs available in stock. Please reduce the quantity.`);
-      return false;
-    }
-
-    return true;
-  };
-
   // Add product to items
-  const handleSelectProduct = (product: Product) => {
+  const handleSelectProduct = (product: Item) => {
     const existingItem = formData.items.find((item) => item.item_id === product.id);
 
     if (existingItem) {
-      const availableStock = product.stock_quantity || 0;
+      const availableStock = product.opening_stock || 0;
       if (existingItem.quantity + 1 > availableStock) {
         toast.error(`⚠️ Only ${availableStock} pcs available in stock.`);
         return;
@@ -196,25 +188,25 @@ export function AddSalePage() {
       setProductSearch('');
       setShowProductDropdown(false);
       setFilteredProducts([]);
-      toast.success(`Added 1 more ${product.name}`);
+      toast.success(`Added 1 more ${product.item_name}`);
       return;
     }
 
-    const availableStock = product.stock_quantity || 0;
+    const availableStock = product.opening_stock || 0;
     if (availableStock <= 0) {
-      toast.error(`⚠️ ${product.name} is out of stock!`);
+      toast.error(`⚠️ ${product.item_name} is out of stock!`);
       return;
     }
 
     const newItem: SaleItem = {
       id: `${product.id}-${Date.now()}`,
       item_id: product.id,
-      item_code: product.sku || '',
-      item_name: product.name,
-      unit_price: product.unit_price || 0,
+      item_code: product.item_code || '',
+      item_name: product.item_name,
+      unit_price: product.unit_price || product.sales_price || 0,
       quantity: 1,
-      tax_percent: product.tax_rate || 0,
-      amount: product.unit_price || 0,
+      tax_percent: product.tax?.tax_value || 0,
+      amount: product.unit_price || product.sales_price || 0,
       max_stock: availableStock,
     };
 
@@ -227,7 +219,7 @@ export function AddSalePage() {
     setShowProductDropdown(false);
     setFilteredProducts([]);
     setErrors((prev) => ({ ...prev, product: '' }));
-    toast.success(`✅ ${product.name} added to sale`);
+    toast.success(`✅ ${product.item_name} added to sale`);
   };
 
   // Update item quantity or price
@@ -241,7 +233,7 @@ export function AddSalePage() {
       if (item) {
         const product = allProducts.find(p => p.id === item.item_id);
         if (product) {
-          const availableStock = product.stock_quantity || 0;
+          const availableStock = product.opening_stock || 0;
           if (value > availableStock) {
             toast.error(`⚠️ Only ${availableStock} pcs available in stock.`);
             return;
@@ -275,7 +267,7 @@ export function AddSalePage() {
     }
   };
 
-  // ✅ FIXED: Apply Coupon Handler - Calls Backend API
+  // Apply Coupon Handler
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) {
       toast.error('Please enter a coupon code');
@@ -291,16 +283,11 @@ export function AddSalePage() {
     try {
       const subtotal = calculateTotals().subtotal;
 
-      console.log('🔍 Applying coupon:', couponCode);
-      console.log('📊 Subtotal:', subtotal);
-
       const response = await api.post('/coupons/validate', {
         code: couponCode,
         subtotal: subtotal,
         customer_id: formData.customer_id || undefined
       });
-
-      console.log('✅ Coupon response:', response.data);
 
       if (response.data.valid) {
         const { coupon, discount } = response.data;
@@ -315,11 +302,10 @@ export function AddSalePage() {
           discount_value: discount.value
         }));
 
-        toast.success(`✅ Coupon ${coupon.code} applied! ${discount.value}% off`);
+        toast.success(`✅ Coupon ${coupon.code} applied!`);
         setCouponCode('');
       }
     } catch (error: any) {
-      console.error('❌ Coupon error:', error);
       const errorMsg = error?.response?.data?.error || 'Invalid coupon code';
       toast.error(errorMsg);
     } finally {
@@ -327,7 +313,7 @@ export function AddSalePage() {
     }
   };
 
-  // ✅ Remove Coupon Handler
+  // Remove Coupon Handler
   const handleRemoveCoupon = () => {
     setAppliedCoupon(null);
     setCouponDiscountAmount(0);
@@ -361,9 +347,7 @@ export function AddSalePage() {
   };
 
   // Handle submit
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const handleSubmit = async (status: 'draft' | 'pending') => {
     if (!validateForm()) {
       return;
     }
@@ -376,33 +360,44 @@ export function AddSalePage() {
       const payload = {
         customer_id: formData.customer_id,
         issue_date: formData.issue_date,
-        due_date: formData.due_date,
-        discount_type: formData.discount_type,
+        due_date: formData.due_date || null,
+        discount_type: formData.discount_type === 'percentage' ? 'percent' : 'flat',
         discount_value: formData.discount_value,
-        notes: formData.notes,
-        coupon_code: formData.coupon_code,
-        subtotal: totals.subtotal,
-        tax_total: totals.taxTotal,
-        discount_total: totals.discountAmount,
-        grand_total: totals.total,
+        notes: formData.notes || null,
+        coupon_code: appliedCoupon?.code || null,
+        coupon_discount: couponDiscountAmount,
+        status: status,
+        branch_id: currentBranchId || undefined,
         items: formData.items.map((item) => ({
-          item_id: item.item_id,
+          product_id: item.item_id,
+          description: item.item_name,
           quantity: item.quantity,
           unit_price: item.unit_price,
-          tax_percent: item.tax_percent,
-          amount: item.amount,
+          tax_rate: item.tax_percent,
         })),
       };
 
       console.log('Sale payload:', payload);
-      toast.success('✅ Sale created successfully!');
+      const response = await api.post('/invoices', payload);
+      console.log('Sale response:', response.data);
+
+      toast.success(status === 'draft' ? '✅ Sale saved as draft!' : '✅ Sale created successfully!');
+      
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['items'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      
       navigate('/sales');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating sale:', error);
-      toast.error('❌ Failed to create sale. Please try again.');
+      let errorMsg = error?.response?.data?.error || 'Failed to create sale. Please try again.';
+      if (error?.response?.data?.details) {
+        errorMsg += ': ' + JSON.stringify(error.response.data.details);
+      }
+      toast.error(`❌ ${errorMsg}`);
       setErrors((prev) => ({
         ...prev,
-        submit: 'Failed to create sale. Please try again.',
+        submit: errorMsg,
       }));
     } finally {
       setIsSubmitting(false);
@@ -428,7 +423,7 @@ export function AddSalePage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
           {/* Customer and Dates */}
           <div className="grid grid-cols-1 gap-4 rounded-xl border border-slate-200 bg-white p-5 sm:grid-cols-2">
             <div>
@@ -445,8 +440,11 @@ export function AddSalePage() {
                   }`}
               >
                 <option value="">Select a customer</option>
-                <option value="1">ABC Customer</option>
-                <option value="2">XYZ Company</option>
+                {customers.map((customer) => (
+                  <option key={customer.id} value={customer.id}>
+                    {customer.name}
+                  </option>
+                ))}
               </select>
               {errors.customer_id && (
                 <p className="mt-1 text-xs text-red-500">{errors.customer_id}</p>
@@ -503,7 +501,7 @@ export function AddSalePage() {
                   {formData.items.length > 0 ? (
                     formData.items.map((item) => {
                       const product = allProducts.find(p => p.id === item.item_id);
-                      const availableStock = product?.stock_quantity || 0;
+                      const availableStock = product?.opening_stock || 0;
                       const isLowStock = item.quantity >= availableStock;
 
                       return (
@@ -519,45 +517,81 @@ export function AddSalePage() {
                               )}
                             </div>
                           </td>
+                          {/* ✅ FIX: Quantity - Empty by default */}
                           <td className="py-2 pr-2">
                             <input
-                              type="number"
-                              min="1"
-                              max={availableStock}
-                              value={item.quantity}
+                              type="text"
+                              inputMode="numeric"
+                              pattern="[0-9]*"
+                              value={item.quantity === 0 ? '' : item.quantity}
                               onChange={(e) => {
-                                const val = parseInt(e.target.value) || 1;
-                                handleUpdateItem(item.id, 'quantity', val);
+                                const val = e.target.value.replace(/^0+/, '');
+                                if (val === '' || /^\d*$/.test(val)) {
+                                  const numVal = val === '' ? 0 : parseInt(val);
+                                  handleUpdateItem(item.id, 'quantity', numVal);
+                                }
+                              }}
+                              onBlur={() => {
+                                if (!item.quantity || item.quantity <= 0) {
+                                  handleUpdateItem(item.id, 'quantity', 1);
+                                }
                               }}
                               className={`w-full rounded-md border px-3 py-2 text-sm text-center focus:outline-none focus:ring-1 ${item.quantity > availableStock
                                 ? 'border-red-400 focus:ring-red-500 bg-red-50'
                                 : 'border-slate-200 focus:ring-brand'
                                 }`}
+                              placeholder="1"
                             />
-                            <div className="mt-1 text-[10px] text-slate-400 text-center">
-                              Max: {availableStock}
-                            </div>
+                            {item.quantity > 0 && (
+                              <div className="mt-1 text-[10px] text-slate-400 text-center">
+                                Max: {availableStock}
+                              </div>
+                            )}
                           </td>
+                          {/* ✅ FIX: Unit Price - Empty by default */}
                           <td className="py-2 pr-2">
                             <input
-                              type="number"
-                              step="0.01"
-                              value={item.unit_price}
-                              onChange={(e) =>
-                                handleUpdateItem(item.id, 'unit_price', parseFloat(e.target.value) || 0)
-                              }
+                              type="text"
+                              inputMode="decimal"
+                              pattern="[0-9]*\.?[0-9]*"
+                              value={item.unit_price === 0 ? '' : item.unit_price}
+                              onChange={(e) => {
+                                const val = e.target.value.replace(/^0+/, '');
+                                if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                                  const numVal = val === '' ? 0 : parseFloat(val);
+                                  handleUpdateItem(item.id, 'unit_price', numVal);
+                                }
+                              }}
+                              onBlur={() => {
+                                if (!item.unit_price) {
+                                  handleUpdateItem(item.id, 'unit_price', 0);
+                                }
+                              }}
                               className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-right focus:outline-none focus:ring-1 focus:ring-brand"
+                              placeholder="0.00"
                             />
                           </td>
+                          {/* ✅ FIX: Tax % - Empty by default */}
                           <td className="py-2 pr-2">
                             <input
-                              type="number"
-                              step="0.01"
-                              value={item.tax_percent}
-                              onChange={(e) =>
-                                handleUpdateItem(item.id, 'tax_percent', parseFloat(e.target.value) || 0)
-                              }
+                              type="text"
+                              inputMode="decimal"
+                              pattern="[0-9]*\.?[0-9]*"
+                              value={item.tax_percent === 0 ? '' : item.tax_percent}
+                              onChange={(e) => {
+                                const val = e.target.value.replace(/^0+/, '');
+                                if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                                  const numVal = val === '' ? 0 : parseFloat(val);
+                                  handleUpdateItem(item.id, 'tax_percent', numVal);
+                                }
+                              }}
+                              onBlur={() => {
+                                if (!item.tax_percent) {
+                                  handleUpdateItem(item.id, 'tax_percent', 0);
+                                }
+                              }}
                               className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-center focus:outline-none focus:ring-1 focus:ring-brand"
+                              placeholder="0"
                             />
                           </td>
                           <td className="py-2 pr-2 text-right font-semibold text-slate-700">
@@ -614,7 +648,7 @@ export function AddSalePage() {
                     <div className="px-3 py-2 text-sm text-slate-500">Loading products...</div>
                   ) : filteredProducts.length > 0 ? (
                     filteredProducts.map((product) => {
-                      const stock = product.stock_quantity || 0;
+                      const stock = product.opening_stock || 0;
                       return (
                         <button
                           key={product.id}
@@ -625,8 +659,8 @@ export function AddSalePage() {
                           disabled={stock <= 0}
                         >
                           <div>
-                            <div className="font-medium text-slate-800">{product.name}</div>
-                            <div className="text-xs text-slate-400">SKU: {product.sku || 'N/A'}</div>
+                            <div className="font-medium text-slate-800">{product.item_name}</div>
+                            <div className="text-xs text-slate-400">Code: {product.item_code}</div>
                           </div>
                           <div className="flex items-center gap-3">
                             <span className="font-semibold text-brand">{formatMoney(product.unit_price || 0)}</span>
@@ -667,7 +701,7 @@ export function AddSalePage() {
             </button>
           </div>
 
-          {/* ✅ Coupon Section - Updated */}
+          {/* Coupon */}
           <div className="rounded-xl border border-slate-200 bg-white p-5">
             <label className="mb-1.5 block text-xs font-medium text-slate-500">Coupon</label>
             <div className="flex gap-2">
@@ -710,9 +744,6 @@ export function AddSalePage() {
                     ? ` ${appliedCoupon.value}% off`
                     : ` ₹${appliedCoupon.value} off`}
                 </p>
-                {appliedCoupon.description && (
-                  <p className="text-xs text-green-600 mt-0.5">{appliedCoupon.description}</p>
-                )}
               </div>
             )}
           </div>
@@ -782,15 +813,24 @@ export function AddSalePage() {
             <div>
               <label className="mb-1.5 block text-xs font-medium text-slate-500">Discount Value</label>
               <input
-                type="number"
-                step="0.01"
-                value={formData.discount_value}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    discount_value: parseFloat(e.target.value) || 0,
-                  }))
-                }
+                type="text"
+                inputMode="decimal"
+                pattern="[0-9]*\.?[0-9]*"
+                value={formData.discount_value === 0 ? '' : formData.discount_value}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/^0+/, '');
+                  if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                    setFormData(prev => ({
+                      ...prev,
+                      discount_value: val === '' ? 0 : parseFloat(val)
+                    }));
+                  }
+                }}
+                onBlur={() => {
+                  if (!formData.discount_value) {
+                    setFormData(prev => ({ ...prev, discount_value: 0 }));
+                  }
+                }}
                 className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
                 placeholder="0.00"
                 disabled={!!appliedCoupon}
@@ -803,7 +843,10 @@ export function AddSalePage() {
         <div className="grid gap-2">
           <button
             type="submit"
-            onClick={handleSubmit}
+            onClick={(e) => {
+              e.preventDefault();
+              handleSubmit('pending');
+            }}
             disabled={!isFormValid || isSubmitting}
             className={`w-full rounded-lg px-4 py-3 text-sm font-semibold text-white transition-colors ${isFormValid && !isSubmitting
               ? 'bg-brand hover:bg-brand-dark'
@@ -814,24 +857,14 @@ export function AddSalePage() {
           </button>
           <button
             type="button"
-            onClick={() => {
-              setFormData({
-                customer_id: '',
-                issue_date: new Date().toISOString().split('T')[0],
-                due_date: new Date().toISOString().split('T')[0],
-                discount_type: 'percentage',
-                discount_value: 0,
-                notes: '',
-                coupon_code: '',
-                items: [],
-              });
-              setAppliedCoupon(null);
-              setCouponDiscountAmount(0);
-              setCouponCode('');
-              setErrors({});
-              toast.success('Form reset');
+            onClick={(e) => {
+              e.preventDefault();
+              handleSubmit('draft');
             }}
-            className="w-full rounded-lg border border-slate-200 px-4 py-3 text-sm font-medium text-ink-700 hover:bg-slate-50 transition-colors"
+            disabled={!isFormValid || isSubmitting}
+            className={`w-full rounded-lg border border-slate-200 px-4 py-3 text-sm font-medium text-ink-700 hover:bg-slate-50 transition-colors ${
+              !isFormValid || isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
           >
             Save as Draft
           </button>

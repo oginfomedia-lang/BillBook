@@ -187,27 +187,27 @@ class Purchase(TenantScopedMixin, db.Model):
             self.payment_status = PurchasePaymentStatus.PARTIAL
 
     def add_stock(self) -> None:
-        """Increase product stock when purchase is received."""
+        """Increase item stock when purchase is received."""
         if self.status not in (PurchaseStatus.RECEIVED, PurchaseStatus.PARTIAL):
             return
-        from app.models.product import Product
+        from app.models.item import Item
         for item in self.items:
-            if item.product_id:
-                product = Product.query.get(item.product_id)
-                if product:
-                    product.stock_quantity = (product.stock_quantity or 0) + int(item.quantity or 0)
+            if item.item_id:
+                db_item = db.session.get(Item, item.item_id)
+                if db_item and db_item.type == "item":
+                    db_item.opening_stock = (db_item.opening_stock or 0) + int(item.quantity or 0)
 
     def remove_stock(self) -> None:
         """Reverse stock increase (used before updating/deleting)."""
         if self.status not in (PurchaseStatus.RECEIVED, PurchaseStatus.PARTIAL):
             return
-        from app.models.product import Product
+        from app.models.item import Item
         for item in self.items:
-            if item.product_id:
-                product = Product.query.get(item.product_id)
-                if product:
-                    product.stock_quantity = max(
-                        0, (product.stock_quantity or 0) - int(item.quantity or 0)
+            if item.item_id:
+                db_item = db.session.get(Item, item.item_id)
+                if db_item and db_item.type == "item":
+                    db_item.opening_stock = max(
+                        0, (db_item.opening_stock or 0) - int(item.quantity or 0)
                     )
 
     def to_dict(self, include_items: bool = True, include_payments: bool = True):
@@ -261,7 +261,15 @@ class PurchaseItem(db.Model):
     purchase_id = db.Column(
         db.Integer, db.ForeignKey("purchases.id", ondelete="CASCADE"), nullable=False
     )
-    product_id = db.Column(db.Integer, db.ForeignKey("products.id"), nullable=True)
+    item_id = db.Column(db.Integer, db.ForeignKey("items.id"), nullable=True)
+
+    @property
+    def product_id(self):
+        return self.item_id
+
+    @product_id.setter
+    def product_id(self, value):
+        self.item_id = value
 
     description = db.Column(db.String(255), nullable=False)
     quantity = db.Column(db.Numeric(10, 2), nullable=False, default=1)
@@ -276,7 +284,8 @@ class PurchaseItem(db.Model):
     def to_dict(self):
         return {
             "id": self.id,
-            "product_id": self.product_id,
+            "item_id": self.item_id,
+            "product_id": self.item_id,  # Product compatibility
             "description": self.description,
             "quantity": float(self.quantity or 0),
             "purchase_price": float(self.purchase_price or 0),
@@ -435,7 +444,15 @@ class PurchaseReturnItem(db.Model):
     return_id = db.Column(
         db.Integer, db.ForeignKey("purchase_returns.id", ondelete="CASCADE"), nullable=False
     )
-    product_id = db.Column(db.Integer, db.ForeignKey("products.id"), nullable=True)
+    item_id = db.Column(db.Integer, db.ForeignKey("items.id"), nullable=True)
+
+    @property
+    def product_id(self):
+        return self.item_id
+
+    @product_id.setter
+    def product_id(self, value):
+        self.item_id = value
 
     description = db.Column(db.String(255), nullable=False)
     quantity = db.Column(db.Numeric(10, 2), nullable=False, default=1)
@@ -448,7 +465,8 @@ class PurchaseReturnItem(db.Model):
     def to_dict(self):
         return {
             "id": self.id,
-            "product_id": self.product_id,
+            "item_id": self.item_id,
+            "product_id": self.item_id,  # Product compatibility
             "description": self.description,
             "quantity": float(self.quantity or 0),
             "purchase_price": float(self.purchase_price or 0),

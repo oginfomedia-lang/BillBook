@@ -4,6 +4,7 @@ import { Plus, Search, Trash2, Edit2, Download, Printer } from 'lucide-react';
 import { useItems, useDeleteItem } from '../hooks/useItems';
 import { useWarehouses } from '../hooks/useWarehouses';
 import { TableSkeleton } from '../components/ui/Skeletons';
+import { ExportToolbar, type ColumnDef } from '../components/ui/ExportToolbar';
 import { formatMoney } from '../utils/format';
 import type { ItemStatus, ItemType } from '../api/items';
 
@@ -14,12 +15,26 @@ const STATUS_FILTERS: { label: string; value: ItemStatus | '' }[] = [
     { label: 'Discontinued', value: 'discontinued' },
 ];
 
+const ITEM_COLUMNS: ColumnDef[] = [
+  { key: 'item_code', label: 'Item Code', visible: true },
+  { key: 'item_name', label: 'Item Name', visible: true },
+  { key: 'type', label: 'Type', visible: true },
+  { key: 'category', label: 'Category', visible: true },
+  { key: 'brand', label: 'Brand', visible: true },
+  { key: 'unit', label: 'Unit', visible: true },
+  { key: 'stock', label: 'Stock', visible: true },
+  { key: 'alert_quantity', label: 'Alert Qty', visible: true },
+  { key: 'sales_price', label: 'Sales Price', visible: true },
+  { key: 'status', label: 'Status', visible: true },
+];
+
 export function ItemsPage() {
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState('');
     const [status, setStatus] = useState<ItemStatus | ''>('');
     const [itemType, setItemType] = useState<ItemType | ''>('');
     const [warehouseId, setWarehouseId] = useState<number | ''>('');
+    const [columns, setColumns] = useState<ColumnDef[]>(ITEM_COLUMNS);
 
     const { data, isLoading } = useItems({
         page,
@@ -151,6 +166,28 @@ export function ItemsPage() {
                         Reset Filters
                     </button>
                 </div>
+            </div>
+
+            {/* Export Toolbar */}
+            <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-400">{data?.total ?? 0} records</span>
+                <ExportToolbar
+                    data={items.map((item) => ({
+                        item_code: item.item_code,
+                        item_name: item.item_name,
+                        type: item.type,
+                        category: (item as any).category?.name ?? '',
+                        brand: (item as any).brand?.name ?? '',
+                        unit: (item as any).unit?.short_name ?? '',
+                        stock: item.opening_stock ?? 0,
+                        alert_quantity: item.alert_quantity ?? 0,
+                        sales_price: item.sales_price,
+                        status: item.status,
+                    }))}
+                    columns={columns}
+                    onColumnsChange={setColumns}
+                    filename="items-list"
+                />
             </div>
 
             {/* Table */}

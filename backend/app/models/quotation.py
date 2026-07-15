@@ -121,7 +121,15 @@ class QuotationItem(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     quotation_id = db.Column(db.Integer, db.ForeignKey("quotations.id", ondelete="CASCADE"), nullable=False)
-    product_id = db.Column(db.Integer, db.ForeignKey("products.id"), nullable=True)
+    item_id = db.Column(db.Integer, db.ForeignKey("items.id"), nullable=True)
+
+    @property
+    def product_id(self):
+        return self.item_id
+
+    @product_id.setter
+    def product_id(self, value):
+        self.item_id = value
 
     description = db.Column(db.String(255), nullable=False)
     quantity = db.Column(db.Numeric(10, 2), nullable=False, default=1)
@@ -137,7 +145,8 @@ class QuotationItem(db.Model):
     def to_dict(self):
         return {
             "id": self.id,
-            "product_id": self.product_id,
+            "item_id": self.item_id,
+            "product_id": self.item_id,  # Product compatibility
             "description": self.description,
             "quantity": float(self.quantity or 0),
             "unit_price": float(self.unit_price or 0),

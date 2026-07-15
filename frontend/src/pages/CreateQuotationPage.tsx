@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useCustomers } from "../hooks/useCustomers";
-import { useProducts } from "../hooks/useProducts";
+import { useItems } from "../hooks/useItems";
 import { useWarehouses } from "../hooks/useWarehouses";
 import { useCreateQuotation } from "../hooks/useQuotations";
 import { InvoiceItemsEditor } from "../components/invoices/InvoiceItemsEditor";
@@ -11,7 +11,7 @@ import type { InvoiceItem } from "../types";
 export function CreateQuotationPage() {
   const { data: customersData } = useCustomers({ page: 1 });
   const [productSearch, setProductSearch] = useState("");
-  const { data: productsData } = useProducts({ page: 1, per_page: 100, search: productSearch });
+  const { data: itemsData } = useItems({ page: 1, per_page: 100, search: productSearch });
   const { data: warehousesData } = useWarehouses({ page: 1, per_page: 100 });
   const createQuotation = useCreateQuotation();
 
@@ -120,7 +120,7 @@ export function CreateQuotationPage() {
 
           <InvoiceItemsEditor
             items={items}
-            products={productsData?.items ?? []}
+            products={itemsData?.items ?? []}
             onChange={setItems}
             onProductSearch={setProductSearch}
           />

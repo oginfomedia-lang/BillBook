@@ -6,19 +6,16 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { listAccounts, deleteAccount } from "../../api/accounts";
 import { formatMoney } from "../../utils/format";
-import { handleExport, type ExportFormat } from "../../utils/exportUtils";
+import { ExportToolbar, type ColumnDef } from "../../components/ui/ExportToolbar";
 
-// ── Export-button group helper ──────────────────────────────────────────────
-function ExportBtn({ label, color, onClick }: { label: string; color: string; onClick?: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`px-3 py-1.5 text-xs font-semibold text-white rounded transition-opacity hover:opacity-80 ${color}`}
-    >
-      {label}
-    </button>
-  );
-}
+const ACCOUNT_COLUMNS: ColumnDef[] = [
+  { key: "account_code", label: "Account Number", visible: true },
+  { key: "account_name", label: "Account Name", visible: true },
+  { key: "parent_account_name", label: "Parent Account", visible: true },
+  { key: "current_balance", label: "Balance", visible: true },
+  { key: "creator_name", label: "Created By", visible: true },
+];
+
 
 export function AccountsListPage() {
   const navigate = useNavigate();
@@ -53,18 +50,7 @@ export function AccountsListPage() {
   const accounts = data?.items ?? [];
   const total = data?.total ?? 0;
   const pages = data?.pages ?? 1;
-
-  const exportColumns = [
-    { header: "Account Number", key: "account_code" },
-    { header: "Account Name", key: "account_name" },
-    { header: "Parent Account Name", key: (row: any) => row.parent_account_name || "—" },
-    { header: "Balance", key: "current_balance" },
-    { header: "Created By", key: (row: any) => row.creator_name || "—" },
-  ];
-
-  const doExport = (format: ExportFormat) => {
-    handleExport(accounts, exportColumns, format, "Accounts");
-  };
+  const [columns, setColumns] = useState<ColumnDef[]>(ACCOUNT_COLUMNS);
 
   return (
     <div className="space-y-5">
@@ -111,14 +97,18 @@ export function AccountsListPage() {
       <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
         {/* Export + Search row */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
-          <div className="flex items-center gap-1.5">
-            <ExportBtn label="Copy" color="bg-slate-500" onClick={() => doExport("copy")} />
-            <ExportBtn label="Excel" color="bg-emerald-600" onClick={() => doExport("excel")} />
-            <ExportBtn label="PDF" color="bg-red-500" onClick={() => doExport("pdf")} />
-            <ExportBtn label="Print" color="bg-slate-600" onClick={() => doExport("print")} />
-            <ExportBtn label="CSV" color="bg-amber-500" onClick={() => doExport("csv")} />
-            <ExportBtn label="Columns" color="bg-[#1e6fa8]" onClick={() => alert("Column selector coming soon!")} />
-          </div>
+          <ExportToolbar
+            data={accounts.map((a: any) => ({
+              account_code: a.account_code ?? "",
+              account_name: a.account_name ?? "",
+              parent_account_name: a.parent_account_name ?? "—",
+              current_balance: a.current_balance ?? 0,
+              creator_name: a.creator_name ?? "—",
+            }))}
+            columns={columns}
+            onColumnsChange={setColumns}
+            filename="accounts-list"
+          />
           <div className="flex items-center gap-2">
             <label className="text-xs text-slate-500">Search:</label>
             <div className="relative">

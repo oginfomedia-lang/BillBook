@@ -85,7 +85,6 @@ const NAV_ITEMS = [
     ],
   },
 
-  { to: "/products", label: "Products", icon: Layers, permission: "products.view" },
   { to: "/branches", label: "Branches", icon: Store, permission: "branches.view" },
   { to: "/warehouses", label: "Warehouses", icon: Building, permission: "warehouses.view" },
 

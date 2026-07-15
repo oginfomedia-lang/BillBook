@@ -5,7 +5,7 @@ from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
 
 from app.extensions import db
-from app.models import Invoice, InvoiceItem, InvoiceStatus, Product
+from app.models import Invoice, InvoiceItem, InvoiceStatus, Item
 from app.schemas import InvoiceSchema
 from app.tenant_scope import TenantContext
 from app.branch_scope import BranchContext, apply_branch_scope
@@ -22,20 +22,20 @@ def restore_invoice_stock(invoice: Invoice) -> None:
     if not _is_stock_affecting(invoice.status):
         return
     for item in invoice.items:
-        if item.product_id:
-            product = Product.query.get(item.product_id)
-            if product:
-                product.stock_quantity = (product.stock_quantity or 0) + item.quantity
+        if item.item_id:
+            db_item = db.session.get(Item, item.item_id)
+            if db_item and db_item.type == "item":
+                db_item.opening_stock = (db_item.opening_stock or 0) + int(item.quantity)
 
 
 def deduct_invoice_stock(invoice: Invoice) -> None:
     if not _is_stock_affecting(invoice.status):
         return
     for item in invoice.items:
-        if item.product_id:
-            product = Product.query.get(item.product_id)
-            if product:
-                product.stock_quantity = (product.stock_quantity or 0) - item.quantity
+        if item.item_id:
+            db_item = db.session.get(Item, item.item_id)
+            if db_item and db_item.type == "item":
+                db_item.opening_stock = max(0, (db_item.opening_stock or 0) - int(item.quantity))
 
 
 def _generate_invoice_number() -> str:
@@ -136,7 +136,7 @@ def create_invoice():
         for item_data in items_data:
             invoice.items.append(
                 InvoiceItem(
-                    product_id=item_data.get("product_id"),
+                    item_id=item_data.get("item_id") or item_data.get("product_id"),
                     description=item_data["description"],
                     quantity=item_data["quantity"],
                     unit_price=item_data["unit_price"],
@@ -196,7 +196,7 @@ def update_invoice(invoice_id):
         for item_data in items_data:
             invoice.items.append(
                 InvoiceItem(
-                    product_id=item_data.get("product_id"),
+                    item_id=item_data.get("item_id") or item_data.get("product_id"),
                     description=item_data["description"],
                     quantity=item_data["quantity"],
                     unit_price=item_data["unit_price"],
@@ -236,7 +236,11 @@ def delete_invoice(invoice_id):
 def record_payment(invoice_id):
     """Records a (partial or full) payment against an invoice and updates status."""
     invoice = Invoice.query.get_or_404(invoice_id)
-    restore_invoice_stock(invoice)
+
+    # NOTE: We intentionally do NOT touch stock here.
+    # Stock is deducted when an invoice transitions from DRAFT to a stock-affecting
+    # status (PENDING / PAID / OVERDUE). Recording a payment only changes the
+    # payment amount and status — it must never double-deduct or restore stock.
 
     payload = request.get_json(force=True) or {}
     amount = payload.get("amount")
@@ -245,6 +249,8 @@ def record_payment(invoice_id):
     if amount is None or float(amount) <= 0:
         return jsonify({"error": "amount must be a positive number"}), 422
 
+    old_status = invoice.status
+
     invoice.amount_paid = float(invoice.amount_paid or 0) + float(amount)
     invoice.payment_mode = payment_mode
     if invoice.amount_paid >= float(invoice.grand_total or 0):
@@ -252,7 +258,10 @@ def record_payment(invoice_id):
     else:
         invoice.status = InvoiceStatus.PENDING
 
-    deduct_invoice_stock(invoice)
+    # If the invoice was previously DRAFT/CANCELLED (not stock-affecting) and is
+    # now transitioning to a stock-affecting status, deduct stock once.
+    if not _is_stock_affecting(old_status) and _is_stock_affecting(invoice.status):
+        deduct_invoice_stock(invoice)
 
     db.session.commit()
     return jsonify(invoice.to_dict())

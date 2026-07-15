@@ -10,7 +10,6 @@ PERMISSION_CATALOG = {
     "roles": ["view", "create", "edit", "delete"],
     "customers": ["view", "create", "edit", "delete", "import"],
     "suppliers": ["view", "create", "edit", "delete", "import"],
-    "products": ["view", "create", "edit", "delete", "import"],
     "items": ["view", "create", "edit", "delete", "import"],
     "sales": ["view", "create", "edit", "delete", "return_sales"],   # Sales / POS module
     "invoices": ["view", "create", "edit", "delete", "record_payment"],
@@ -80,7 +79,6 @@ def seed_default_roles(tenant_id: int) -> "Role":
         permissions=[
             "dashboard.view",
             "customers.view", "customers.create", "customers.edit",
-            "products.view",
             "items.view",
             "sales.view", "sales.create", "sales.edit", "sales.return_sales",  # Sales module
             "invoices.view", "invoices.create", "invoices.edit", "invoices.record_payment",

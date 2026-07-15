@@ -63,6 +63,30 @@ class Item(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     tenant_id = db.Column(db.Integer, db.ForeignKey('tenants.id'), nullable=False, index=True)
 
+    @property
+    def name(self):
+        return self.item_name
+
+    @name.setter
+    def name(self, value):
+        self.item_name = value
+
+    @property
+    def unit_price(self):
+        return self.sales_price
+
+    @unit_price.setter
+    def unit_price(self, value):
+        self.sales_price = value
+
+    @property
+    def stock_quantity(self):
+        return self.opening_stock
+
+    @stock_quantity.setter
+    def stock_quantity(self, value):
+        self.opening_stock = value
+
     def __repr__(self):
         return f'<Item {self.item_code}: {self.item_name}>'
 
@@ -103,6 +127,7 @@ class Item(db.Model):
             'id': self.id,
             'item_code': self.item_code,
             'item_name': self.item_name,
+            'name': self.item_name,  # Product compatibility
             'sku': self.sku,
             'hsn': self.hsn,
             'sac': self.sac,
@@ -112,11 +137,13 @@ class Item(db.Model):
             'price_expenses': float(self.price_expenses),
             'purchase_price': float(self.purchase_price),
             'sales_price': float(self.sales_price),
+            'unit_price': float(self.sales_price),  # Product compatibility
             'mrp': float(self.mrp) if self.mrp else None,
             'discount_type': self.discount_type,
             'discount_value': float(self.discount_value),
             'tax_type': self.tax_type,
             'opening_stock': self.opening_stock,
+            'stock_quantity': self.opening_stock,  # Product compatibility
             'alert_quantity': self.alert_quantity,
             'profit_margin': float(self.profit_margin) if self.profit_margin else None,
             'seller_points': self.seller_points,
@@ -143,3 +170,4 @@ class Item(db.Model):
             })
         
         return data
+

@@ -25,8 +25,8 @@ import {
 } from "../../api/purchases";
 import { listSuppliers } from "../../api/suppliers";
 import { listWarehouses, type Warehouse } from "../../api/warehouses";
-import { listProducts } from "../../api/products";
-import type { Supplier, Product } from "../../types";
+import { listItems, type Item } from "../../api/items";
+import type { Supplier } from "../../types";
 import { formatMoney, formatDate } from "../../utils/format";
 
 // -------------------------------------------------------------------
@@ -93,7 +93,7 @@ export function NewPurchasePage({ editMode = false }: { editMode?: boolean }) {
   // Dropdowns data
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Item[]>([]);
 
   // Search states
   const [supplierSearch, setSupplierSearch] = useState("");
@@ -109,7 +109,7 @@ export function NewPurchasePage({ editMode = false }: { editMode?: boolean }) {
     Promise.all([
       listWarehouses({ per_page: 100 }),
       listSuppliers({ per_page: 200 }),
-      listProducts({ per_page: 200 }),
+      listItems({ per_page: 200 }),
     ]).then(([w, s, p]) => {
       setWarehouses(w.items);
       setSuppliers(s.items);
@@ -166,18 +166,18 @@ export function NewPurchasePage({ editMode = false }: { editMode?: boolean }) {
     });
   }, []);
 
-  const addItemFromProduct = (product: Product) => {
+  const addItemFromProduct = (product: Item) => {
     setItems((prev) => [
       ...prev,
       {
         product_id: product.id,
-        description: product.name,
+        description: product.item_name,
         quantity: 1,
-        purchase_price: product.unit_price,
+        purchase_price: product.purchase_price || 0,
         discount: 0,
         tax_amount: 0,
-        unit_cost: product.unit_price,
-        line_total: product.unit_price,
+        unit_cost: product.purchase_price || 0,
+        line_total: product.purchase_price || 0,
       },
     ]);
     setItemSearch("");
@@ -295,8 +295,8 @@ export function NewPurchasePage({ editMode = false }: { editMode?: boolean }) {
 
   // Filtered products for item search
   const filteredProducts = products.filter((p) =>
-    p.name.toLowerCase().includes(itemSearch.toLowerCase()) ||
-    (p.sku ?? "").toLowerCase().includes(itemSearch.toLowerCase())
+    p.item_name.toLowerCase().includes(itemSearch.toLowerCase()) ||
+    (p.item_code ?? "").toLowerCase().includes(itemSearch.toLowerCase())
   );
 
   if (loading) {
@@ -493,11 +493,11 @@ export function NewPurchasePage({ editMode = false }: { editMode?: boolean }) {
                     className="flex w-full items-center justify-between px-4 py-2.5 text-left hover:bg-slate-50"
                   >
                     <div>
-                      <p className="text-sm font-semibold text-slate-800">{p.name}</p>
-                      {p.sku && <p className="text-xs text-slate-400">SKU: {p.sku}</p>}
+                      <p className="text-sm font-semibold text-slate-800">{p.item_name}</p>
+                      {p.item_code && <p className="text-xs text-slate-400">Code: {p.item_code}</p>}
                     </div>
                     <span className="text-sm font-bold text-slate-700">
-                      {formatMoney(p.unit_price)}
+                      {formatMoney(p.sales_price || p.purchase_price || 0)}
                     </span>
                   </button>
                 ))}
