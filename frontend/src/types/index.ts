@@ -109,6 +109,9 @@ export interface InvoiceItem {
   tax_rate: number;
   line_subtotal?: number;
   line_tax?: number;
+  line_cgst?: number;
+  line_sgst?: number;
+  line_igst?: number;
   line_total?: number;
   branch_id?: number | null;
   branch?: Branch | null;
@@ -127,6 +130,9 @@ export interface Invoice {
   status: InvoiceStatus;
   subtotal: number;
   tax_total: number;
+  cgst_total: number;
+  sgst_total: number;
+  igst_total: number;
   discount_total: number;
   grand_total: number;
   amount_paid: number;
@@ -497,7 +503,7 @@ export interface CashTransaction {
 
 // ─── Quotation Types ─────────────────────────────────────────────────────────
 
-export type QuotationStatus = "draft" | "sent" | "accepted" | "rejected" | "converted";
+export type QuotationStatus = "draft" | "sent" | "accepted" | "declined";
 
 export interface QuotationItem {
   id?: number;
@@ -523,7 +529,9 @@ export interface Quotation {
   discount_type: "flat" | "percent";
   discount_value: number;
   notes: string | null;
+  terms_conditions?: string | null;
   status: QuotationStatus;
+  converted_invoice_id?: number | null;
   subtotal: number;
   tax_total: number;
   discount_total: number;

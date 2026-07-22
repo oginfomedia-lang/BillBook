@@ -1,5 +1,7 @@
 from marshmallow import Schema, fields, validate
 
+from app.utils.validators import validate_gstin
+
 
 class SignupSchema(Schema):
     """Tenant onboarding: creates a new Tenant + its first Tenant Admin user."""
@@ -42,7 +44,7 @@ class CustomerSchema(Schema):
     email = fields.Email(load_default=None, allow_none=True)
     phone = fields.String(load_default=None, allow_none=True)
     billing_address = fields.String(load_default=None, allow_none=True)
-    gstin = fields.String(load_default=None, allow_none=True)
+    gstin = fields.String(load_default=None, allow_none=True, validate=validate_gstin)
     branch_id = fields.Integer(load_default=None, allow_none=True)
 
 
@@ -51,7 +53,7 @@ class SupplierSchema(Schema):
     mobile = fields.String(load_default=None, allow_none=True)
     email = fields.Email(load_default=None, allow_none=True)
     phone = fields.String(load_default=None, allow_none=True)
-    gst_number = fields.String(load_default=None, allow_none=True)
+    gst_number = fields.String(load_default=None, allow_none=True, validate=validate_gstin)
     tax_number = fields.String(load_default=None, allow_none=True)
     opening_balance = fields.Decimal(load_default=0, validate=validate.Range(min=0))
     country = fields.String(load_default=None, allow_none=True)

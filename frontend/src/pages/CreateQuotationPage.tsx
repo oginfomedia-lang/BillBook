@@ -6,7 +6,7 @@ import { useCreateQuotation } from "../hooks/useQuotations";
 import { InvoiceItemsEditor } from "../components/invoices/InvoiceItemsEditor";
 import { InvoiceTotals } from "../components/invoices/InvoiceTotals";
 import { TermsEditor } from "../components/ui/TermsEditor";
-import type { InvoiceItem } from "../types";
+import type { InvoiceItem, Product } from "../types";
 
 export function CreateQuotationPage() {
   const { data: customersData } = useCustomers({ page: 1 });
@@ -55,6 +55,20 @@ export function CreateQuotationPage() {
   };
 
   const canSubmit = customerId !== "" && warehouseId !== "" && items.some((item) => item.description.trim().length > 0);
+
+  const mappedProducts: Product[] = (itemsData?.items ?? []).map((item) => ({
+    id: item.id,
+    name: item.item_name,
+    sku: item.item_code,
+    description: item.description,
+    unit_price: item.unit_price,
+    tax_rate: item.tax?.tax_value ?? 0,
+    stock_quantity: item.opening_stock,
+    unit: item.unit?.name ?? "pcs",
+    is_active: item.is_active,
+    branch_id: item.branch_id,
+    branch: item.branch,
+  }));
 
   return (
     <div className="space-y-6">
@@ -120,7 +134,7 @@ export function CreateQuotationPage() {
 
           <InvoiceItemsEditor
             items={items}
-            products={itemsData?.items ?? []}
+            products={mappedProducts}
             onChange={setItems}
             onProductSearch={setProductSearch}
           />

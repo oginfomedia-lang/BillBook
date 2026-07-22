@@ -18,6 +18,8 @@ from app.models import (
 )
 from app.tenant_scope import TenantContext
 from app.utils.decorators import require_auth
+from app.utils.validators import validate_gstin
+from marshmallow import ValidationError
 
 settings_bp = Blueprint("settings", __name__, url_prefix="/api/v1/settings")
 
@@ -140,13 +142,19 @@ def update_store_settings():
     tenant_id = TenantContext.get()
     tenant = Tenant.query.get_or_404(tenant_id)
     payload = request.get_json(force=True) or {}
-    
+
+    new_gstin = payload.get("gstin", tenant.gstin)
+    try:
+        validate_gstin(new_gstin)
+    except ValidationError as err:
+        return jsonify({"error": "Validation failed", "details": {"gstin": err.messages}}), 422
+
     # Update Core columns
     tenant.company_name = payload.get("company_name", tenant.company_name)
     tenant.billing_email = payload.get("billing_email", tenant.billing_email)
     tenant.phone = payload.get("phone", tenant.phone)
     tenant.address = payload.get("address", tenant.address)
-    tenant.gstin = payload.get("gstin", tenant.gstin)
+    tenant.gstin = new_gstin
     
     # Update key-values
     settings_keys = {

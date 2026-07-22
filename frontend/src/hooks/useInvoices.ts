@@ -33,7 +33,7 @@ export function useCreateInvoice() {
       queryClient.invalidateQueries({ queryKey: ["invoices"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       toast.success(`Invoice ${invoice.invoice_number} created`);
-      navigate(`/invoices/${invoice.id}`);
+      navigate(`/sales/${invoice.id}`);
     },
     onError: () => toast.error("Couldn't create the invoice. Check the line items and try again."),
   });

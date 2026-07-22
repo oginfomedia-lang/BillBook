@@ -336,7 +336,7 @@ export function DashboardLayout() {
       return hasPermission(item.permission);
     }
     if (item.sub) {
-      return item.sub.some((subItem) => hasPermission(subItem.permission));
+      return item.sub.some((subItem: any) => !subItem.permission || hasPermission(subItem.permission));
     }
     return true;
   });

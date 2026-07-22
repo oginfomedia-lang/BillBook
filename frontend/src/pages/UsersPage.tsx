@@ -10,12 +10,14 @@ import { TableSkeleton } from "../components/ui/Skeletons";
 import { useAuth } from "../context/AuthContext";
 import { formatDate } from "../utils/format";
 import { useTranslation } from "../context/LanguageContext";
+import { validateEmail } from "../hooks/useContactValidation";
 
 export function UsersPage() {
   const { t } = useTranslation();
   const { user: currentUser, hasPermission } = useAuth();
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
+  const [emailError, setEmailError] = useState("");
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -44,13 +46,19 @@ export function UsersPage() {
 
   const handleSubmit = () => {
     if (!form.role_id) return;
+
+    const emailV = validateEmail(form.email);
+    if (!form.email.trim()) { setEmailError("Email address is required"); return; }
+    if (emailV.error) { setEmailError(emailV.error); return; }
+    setEmailError("");
+
     createUser.mutate(
       {
         ...form,
         role_id: Number(form.role_id),
         branch_id: form.branch_id ? Number(form.branch_id) : null,
       },
-      { onSuccess: () => setModalOpen(false) }
+      { onSuccess: () => { setModalOpen(false); setEmailError(""); } }
     );
   };
 
@@ -253,13 +261,22 @@ export function UsersPage() {
           <div>
             <label className="mb-1.5 block text-xs font-medium text-slate-500">{t("Email")} *</label>
             <input
-              type="email"
+              id="email"
+              type="text"
               value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              onChange={(e) => {
+                const lc = e.target.value.toLowerCase();
+                setForm({ ...form, email: lc });
+                setEmailError(validateEmail(lc).error || (lc ? "" : ""));
+              }}
               placeholder="Enter email address"
-              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
+              className={`w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
+                emailError ? "border-red-400 focus:ring-red-400" : form.email && !emailError ? "border-green-400 focus:ring-green-400" : "border-slate-200 focus:ring-brand"
+              }`}
               required
             />
+            <p className="mt-0.5 text-xs text-slate-400">e.g. username@domain.com</p>
+            {emailError && <p id="email-error" className="mt-1 text-xs text-red-500">{emailError}</p>}
           </div>
 
           <div>

@@ -3,7 +3,15 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useBranch } from "../context/BranchContext";
 import * as purchasesApi from "../api/purchases";
-import type { Purchase, PurchaseStats, PurchasePayload, PurchasePaymentType } from "../api/purchases";
+import type {
+    Purchase,
+    PurchaseStats,
+    PurchasePayload,
+    PurchasePaymentType,
+    PurchaseStatus,
+    PurchasePaymentStatus,
+    PurchaseReturnStatus
+} from "../api/purchases";
 
 // ============================================================
 // Purchase Hooks
@@ -14,8 +22,8 @@ export const usePurchases = (params: {
     per_page?: number;
     search?: string;
     warehouse_id?: number;
-    status?: string;
-    payment_status?: string;
+    status?: PurchaseStatus;
+    payment_status?: PurchasePaymentStatus;
 } = {}) => {
     const { currentBranchId } = useBranch();
     return useQuery({
@@ -125,7 +133,7 @@ export const usePurchaseReturns = (params: {
     per_page?: number;
     search?: string;
     warehouse_id?: number;
-    status?: string;
+    status?: PurchaseReturnStatus;
 } = {}) => {
     return useQuery({
         queryKey: ["purchase-returns", params],

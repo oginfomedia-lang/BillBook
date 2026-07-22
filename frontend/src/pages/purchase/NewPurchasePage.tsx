@@ -28,6 +28,7 @@ import { listWarehouses, type Warehouse } from "../../api/warehouses";
 import { listItems, type Item } from "../../api/items";
 import type { Supplier } from "../../types";
 import { formatMoney, formatDate } from "../../utils/format";
+import { PurchaseReceiptModal } from "../../components/PurchaseReceiptModal";
 
 // -------------------------------------------------------------------
 // Empty line item factory
@@ -87,6 +88,8 @@ export function NewPurchasePage({ editMode = false }: { editMode?: boolean }) {
   const [paymentAccount, setPaymentAccount] = useState("");
   const [paymentNote, setPaymentNote] = useState("");
   const [existingPayments, setExistingPayments] = useState<PurchasePayment[]>([]);
+  const [amountPaid, setAmountPaid] = useState(0);
+  const [paymentStatus, setPaymentStatus] = useState<string>("pending");
   const [addingPayment, setAddingPayment] = useState(false);
   const [deletingPaymentId, setDeletingPaymentId] = useState<number | null>(null);
 
@@ -103,6 +106,7 @@ export function NewPurchasePage({ editMode = false }: { editMode?: boolean }) {
 
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(editMode);
+  const [createdPurchase, setCreatedPurchase] = useState<Purchase | null>(null);
 
   // Load reference data
   useEffect(() => {
@@ -136,6 +140,8 @@ export function NewPurchasePage({ editMode = false }: { editMode?: boolean }) {
           setNote(p.note ?? "");
           setStatus(p.status || "received");
           setExistingPayments(p.payments ?? []);
+          setAmountPaid(p.amount_paid ?? 0);
+          setPaymentStatus(p.payment_status ?? "pending");
         })
         .catch(() => toast.error("Failed to load purchase"))
         .finally(() => setLoading(false));
@@ -229,11 +235,13 @@ export function NewPurchasePage({ editMode = false }: { editMode?: boolean }) {
       if (editMode && purchaseId) {
         await updatePurchase(purchaseId, payload);
         toast.success("Purchase updated successfully!");
+        navigate("/purchase/list");
       } else {
-        await createPurchase(payload);
+        const created = await createPurchase(payload);
         toast.success("Purchase created successfully!");
+        // Show receipt modal — user navigates after closing
+        setCreatedPurchase(created);
       }
-      navigate("/purchase/list");
     } catch (err: any) {
       toast.error(err?.response?.data?.error || "Failed to save purchase");
     } finally {
@@ -257,14 +265,13 @@ export function NewPurchasePage({ editMode = false }: { editMode?: boolean }) {
         payment_date: purchaseDate,
       });
 
-      // Update payments list
+      // Update local state immediately from the API response
       setExistingPayments(updated.payments ?? []);
+      setAmountPaid(updated.amount_paid ?? 0);
+      setPaymentStatus(updated.payment_status ?? "pending");
       setPaymentAmount(0);
       setPaymentNote("");
-
-      // Refresh purchase data to get updated payment status
-      const refreshed = await getPurchase(purchaseId);
-      toast.success(`Payment recorded! Status: ${refreshed.payment_status}`);
+      toast.success(`Payment of ₹${updated.amount_paid?.toLocaleString("en-IN")} recorded! Status: ${updated.payment_status}`);
 
     } catch (error) {
       toast.error("Failed to record payment");
@@ -278,7 +285,11 @@ export function NewPurchasePage({ editMode = false }: { editMode?: boolean }) {
     setDeletingPaymentId(paymentId);
     try {
       await deletePurchasePayment(purchaseId, paymentId);
-      setExistingPayments((prev) => prev.filter((p) => p.id !== paymentId));
+      // Re-fetch to get accurate totals
+      const refreshed = await getPurchase(purchaseId);
+      setExistingPayments(refreshed.payments ?? []);
+      setAmountPaid(refreshed.amount_paid ?? 0);
+      setPaymentStatus(refreshed.payment_status ?? "pending");
       toast.success("Payment removed");
     } catch {
       toast.error("Failed to remove payment");
@@ -769,11 +780,31 @@ export function NewPurchasePage({ editMode = false }: { editMode?: boolean }) {
             <div className="border-t border-slate-200 pt-3">
               <div className="flex items-center justify-between">
                 <span className="text-base font-bold text-slate-800">Grand Total</span>
-                <span className="text-xl font-bold text-[#1e6fa8]">
-                  {formatMoney(grandTotal)}
-                </span>
+                <span className="text-xl font-bold text-[#1e6fa8]">{formatMoney(grandTotal)}</span>
               </div>
             </div>
+
+            {/* Live payment info — edit mode only */}
+            {editMode && (
+              <div className="border-t border-dashed border-slate-200 pt-3 space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-500">Amount Paid</span>
+                  <span className="font-semibold text-emerald-600">{formatMoney(amountPaid)}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-500">Balance Due</span>
+                  <span className="font-semibold text-red-500">{formatMoney(Math.max(0, grandTotal - amountPaid))}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-500">Payment Status</span>
+                  <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold capitalize ${
+                    paymentStatus === "paid"    ? "bg-emerald-100 text-emerald-700" :
+                    paymentStatus === "partial" ? "bg-amber-100 text-amber-700" :
+                                                  "bg-red-100 text-red-700"
+                  }`}>{paymentStatus}</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -924,9 +955,21 @@ export function NewPurchasePage({ editMode = false }: { editMode?: boolean }) {
           Close
         </button>
       </div>
+
+      {/* ─── Purchase Receipt Modal (shown after successful create) ─── */}
+      {createdPurchase && (
+        <PurchaseReceiptModal
+          purchase={createdPurchase}
+          onClose={() => {
+            setCreatedPurchase(null);
+            navigate("/purchase/list");
+          }}
+        />
+      )}
     </div>
   );
 }
+
 
 // -------------------------------------------------------------------
 // Summary Row helper

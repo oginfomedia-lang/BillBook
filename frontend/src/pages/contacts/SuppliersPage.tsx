@@ -17,7 +17,9 @@ import { useTranslation } from "../../context/LanguageContext";
 import { useBranch } from "../../context/BranchContext";
 import { useAuth } from "../../context/AuthContext";
 import { Country, State, City } from "country-state-city";
-import type { Supplier } from "../../api/suppliers";
+import type { Supplier } from "../../types";
+import { validateEmail, validatePhone, formatPhone } from "../../hooks/useContactValidation";
+import { isValidGSTIN, GSTIN_ERROR_MESSAGE } from "../../utils/validators";
 
 type SelectOption = { label: string; value: string };
 
@@ -71,6 +73,19 @@ export function SuppliersPage() {
 
   const [form, setForm] = useState(defaultForm);
   const [editForm, setEditForm] = useState(defaultForm);
+
+  // Validation error states — create form
+  const [createEmailError, setCreateEmailError] = useState("");
+  const [createMobileError, setCreateMobileError] = useState("");
+  const [createPhoneError, setCreatePhoneError] = useState("");
+  const [createContactError, setCreateContactError] = useState("");
+  const [createGstinError, setCreateGstinError] = useState("");
+
+  // Validation error states — edit form
+  const [editEmailError, setEditEmailError] = useState("");
+  const [editMobileError, setEditMobileError] = useState("");
+  const [editPhoneError, setEditPhoneError] = useState("");
+  const [editGstinError, setEditGstinError] = useState("");
 
   // Countries
   const countryOptions: SelectOption[] = useMemo(
@@ -149,9 +164,28 @@ export function SuppliersPage() {
 
   const handleCreateSubmit = (e: FormEvent) => {
     e.preventDefault();
+
+    const emailV = validateEmail(form.email);
+    const mobileV = validatePhone(form.mobile);
+    const phoneV  = validatePhone(form.phone);
+    const gstinValid = isValidGSTIN(form.gst_number);
+    setCreateEmailError(emailV.error);
+    setCreateMobileError(mobileV.error);
+    setCreatePhoneError(phoneV.error);
+    setCreateGstinError(gstinValid ? "" : GSTIN_ERROR_MESSAGE);
+
+    if (!form.email.trim() && !form.mobile.trim() && !form.phone.trim()) {
+      setCreateContactError("Please provide either email or phone number");
+      return;
+    } else {
+      setCreateContactError("");
+    }
+    if (emailV.error || mobileV.error || phoneV.error || !gstinValid) return;
+
     createSupplier.mutate(buildPayload(form), {
       onSuccess: () => {
         setForm(defaultForm);
+        setCreateEmailError(""); setCreateMobileError(""); setCreatePhoneError(""); setCreateContactError(""); setCreateGstinError("");
         setShowForm(false);
       },
     });
@@ -185,9 +219,20 @@ export function SuppliersPage() {
   const handleEditSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!editingSupplier) return;
+
+    const emailV = validateEmail(editForm.email);
+    const mobileV = validatePhone(editForm.mobile);
+    const phoneV  = validatePhone(editForm.phone);
+    const gstinValid = isValidGSTIN(editForm.gst_number);
+    setEditEmailError(emailV.error);
+    setEditMobileError(mobileV.error);
+    setEditPhoneError(phoneV.error);
+    setEditGstinError(gstinValid ? "" : GSTIN_ERROR_MESSAGE);
+    if (emailV.error || mobileV.error || phoneV.error || !gstinValid) return;
+
     updateSupplier.mutate(
       { id: editingSupplier.id, payload: buildPayload(editForm) },
-      { onSuccess: () => setEditingSupplier(null) }
+      { onSuccess: () => { setEditingSupplier(null); setEditEmailError(""); setEditMobileError(""); setEditPhoneError(""); setEditGstinError(""); } }
     );
   };
 
@@ -230,39 +275,76 @@ export function SuppliersPage() {
           <div>
             <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t("Mobile")}</label>
             <input
-              placeholder={t("e.g. +91 98765 43210")}
+              id="create-phone"
+              placeholder="Format: +91-98765-43210"
               value={form.mobile}
-              onChange={(e) => setForm({ ...form, mobile: e.target.value })}
-              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
+              onChange={(e) => {
+                const fmt = formatPhone(e.target.value);
+                setForm({ ...form, mobile: fmt });
+                setCreateMobileError(validatePhone(fmt).error);
+                setCreateContactError("");
+              }}
+              className={`w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
+                createMobileError ? "border-red-400 focus:ring-red-400" : form.mobile && !createMobileError ? "border-green-400 focus:ring-green-400" : "border-slate-200 focus:ring-brand"
+              }`}
             />
+            <p className="mt-0.5 text-xs text-slate-400">Format: +91-98765-43210</p>
+            {createMobileError && <p className="mt-1 text-xs text-red-500">{createMobileError}</p>}
           </div>
           <div>
             <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t("Email")}</label>
             <input
-              type="email"
-              placeholder={t("e.g. supplier@example.com")}
+              id="create-email"
+              type="text"
+              placeholder="e.g. supplier@example.com"
               value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
+              onChange={(e) => {
+                const lc = e.target.value.toLowerCase();
+                setForm({ ...form, email: lc });
+                setCreateEmailError(validateEmail(lc).error);
+                setCreateContactError("");
+              }}
+              className={`w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
+                createEmailError ? "border-red-400 focus:ring-red-400" : form.email && !createEmailError ? "border-green-400 focus:ring-green-400" : "border-slate-200 focus:ring-brand"
+              }`}
             />
+            <p className="mt-0.5 text-xs text-slate-400">e.g. username@domain.com</p>
+            {createEmailError && <p id="create-email-error" className="mt-1 text-xs text-red-500">{createEmailError}</p>}
           </div>
           <div>
             <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t("Phone")}</label>
             <input
-              placeholder={t("e.g. 022 1234 5678")}
+              placeholder="Format: +91-98765-43210"
               value={form.phone}
-              onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
+              onChange={(e) => {
+                const fmt = formatPhone(e.target.value);
+                setForm({ ...form, phone: fmt });
+                setCreatePhoneError(validatePhone(fmt).error);
+                setCreateContactError("");
+              }}
+              className={`w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
+                createPhoneError ? "border-red-400 focus:ring-red-400" : form.phone && !createPhoneError ? "border-green-400 focus:ring-green-400" : "border-slate-200 focus:ring-brand"
+              }`}
             />
+            <p className="mt-0.5 text-xs text-slate-400">Format: +91-98765-43210</p>
+            {createPhoneError && <p id="create-phone-error" className="mt-1 text-xs text-red-500">{createPhoneError}</p>}
+            {createContactError && <p className="mt-1 text-xs text-red-500">{createContactError}</p>}
           </div>
           <div>
             <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t("GST Number")}</label>
             <input
               placeholder={t("e.g. 27AAAAA1111A1Z1")}
               value={form.gst_number}
-              onChange={(e) => setForm({ ...form, gst_number: e.target.value })}
-              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
+              onChange={(e) => {
+                const upper = e.target.value.toUpperCase();
+                setForm({ ...form, gst_number: upper });
+                setCreateGstinError(isValidGSTIN(upper) ? "" : GSTIN_ERROR_MESSAGE);
+              }}
+              className={`w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
+                createGstinError ? "border-red-400 focus:ring-red-400" : "border-slate-200 focus:ring-brand"
+              }`}
             />
+            {createGstinError && <p className="mt-1 text-xs text-red-500">{createGstinError}</p>}
           </div>
           <div>
             <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t("Tax Number")}</label>
@@ -362,14 +444,15 @@ export function SuppliersPage() {
           <div className="sm:col-span-3 flex justify-end gap-2">
             <button
               type="button"
-              onClick={() => setShowForm(false)}
+              onClick={() => { setShowForm(false); setCreateEmailError(""); setCreateMobileError(""); setCreatePhoneError(""); setCreateContactError(""); }}
               className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
             >
               {t("Cancel")}
             </button>
             <button
+              id="submit-btn"
               type="submit"
-              disabled={createSupplier.isPending}
+              disabled={createSupplier.isPending || !!(createEmailError || createMobileError || createPhoneError || createGstinError)}
               className="rounded-lg bg-brand px-5 py-2 text-sm font-semibold text-white hover:bg-brand-dark disabled:opacity-50"
             >
               {createSupplier.isPending ? t("Saving…") : t("Save Supplier")}
@@ -515,34 +598,70 @@ export function SuppliersPage() {
             <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t("Mobile")}</label>
             <input
               value={editForm.mobile}
-              onChange={(e) => setEditForm({ ...editForm, mobile: e.target.value })}
-              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
+              placeholder="Format: +91-98765-43210"
+              onChange={(e) => {
+                const fmt = formatPhone(e.target.value);
+                setEditForm({ ...editForm, mobile: fmt });
+                setEditMobileError(validatePhone(fmt).error);
+              }}
+              className={`w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
+                editMobileError ? "border-red-400 focus:ring-red-400" : editForm.mobile && !editMobileError ? "border-green-400 focus:ring-green-400" : "border-slate-200 focus:ring-brand"
+              }`}
             />
+            <p className="mt-0.5 text-xs text-slate-400">Format: +91-98765-43210</p>
+            {editMobileError && <p className="mt-1 text-xs text-red-500">{editMobileError}</p>}
           </div>
           <div>
             <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t("Email")}</label>
             <input
-              type="email"
+              id="edit-email"
+              type="text"
               value={editForm.email}
-              onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
+              placeholder="e.g. supplier@example.com"
+              onChange={(e) => {
+                const lc = e.target.value.toLowerCase();
+                setEditForm({ ...editForm, email: lc });
+                setEditEmailError(validateEmail(lc).error);
+              }}
+              className={`w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
+                editEmailError ? "border-red-400 focus:ring-red-400" : editForm.email && !editEmailError ? "border-green-400 focus:ring-green-400" : "border-slate-200 focus:ring-brand"
+              }`}
             />
+            <p className="mt-0.5 text-xs text-slate-400">e.g. username@domain.com</p>
+            {editEmailError && <p id="edit-email-error" className="mt-1 text-xs text-red-500">{editEmailError}</p>}
           </div>
           <div>
             <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t("Phone")}</label>
             <input
+              id="edit-phone"
               value={editForm.phone}
-              onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
+              placeholder="Format: +91-98765-43210"
+              onChange={(e) => {
+                const fmt = formatPhone(e.target.value);
+                setEditForm({ ...editForm, phone: fmt });
+                setEditPhoneError(validatePhone(fmt).error);
+              }}
+              className={`w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
+                editPhoneError ? "border-red-400 focus:ring-red-400" : editForm.phone && !editPhoneError ? "border-green-400 focus:ring-green-400" : "border-slate-200 focus:ring-brand"
+              }`}
             />
+            <p className="mt-0.5 text-xs text-slate-400">Format: +91-98765-43210</p>
+            {editPhoneError && <p id="edit-phone-error" className="mt-1 text-xs text-red-500">{editPhoneError}</p>}
           </div>
           <div>
             <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t("GST Number")}</label>
             <input
               value={editForm.gst_number}
-              onChange={(e) => setEditForm({ ...editForm, gst_number: e.target.value })}
-              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
+              onChange={(e) => {
+                const upper = e.target.value.toUpperCase();
+                setEditForm({ ...editForm, gst_number: upper });
+                setEditGstinError(isValidGSTIN(upper) ? "" : GSTIN_ERROR_MESSAGE);
+              }}
+              className={`w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
+                editGstinError ? "border-red-400 focus:ring-red-400" : "border-slate-200 focus:ring-brand"
+              }`}
             />
+            {editGstinError && <p className="mt-1 text-xs text-red-500">{editGstinError}</p>}
           </div>
           <div>
             <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t("Tax Number")}</label>
@@ -649,7 +768,7 @@ export function SuppliersPage() {
             </button>
             <button
               type="submit"
-              disabled={updateSupplier.isPending}
+              disabled={updateSupplier.isPending || !!editGstinError}
               className="rounded-lg bg-brand px-5 py-2 text-sm font-semibold text-white hover:bg-brand-dark disabled:opacity-50"
             >
               {updateSupplier.isPending ? t("Saving…") : t("Save Changes")}

@@ -9,6 +9,7 @@ from app.models.customer import Customer
 from app.models.supplier import Supplier
 from app.utils.decorators import require_auth, require_permission
 from app.branch_scope import BranchContext
+from app.utils.report_export import build_pdf_response, build_excel_response
 
 reports_bp = Blueprint("reports", __name__, url_prefix="/api/v1/reports")
 
@@ -806,4 +807,44 @@ def get_stock_transfers_report():
         },
         "items": items,
     })
+
+
+# Maps the ?type= query param to the existing view function that already
+# builds that report's data (with tenant/branch scoping + filters applied
+# via the current request context) — reused as-is, no query duplication.
+REPORT_HANDLERS = {
+    "sales": get_sales_report,
+    "purchases": get_purchases_report,
+    "expenses": get_expenses_report,
+    "profit_loss": get_profit_loss_report,
+    "stock": get_stock_report,
+    "sales_returns": get_sales_returns_report,
+    "purchase_returns": get_purchase_returns_report,
+    "customer_orders": get_customer_orders_report,
+    "supplier_items": get_supplier_items_report,
+    "sales_payments": get_sales_payments_report,
+    "purchase_payments": get_purchase_payments_report,
+    "stock_transfers": get_stock_transfers_report,
+}
+
+
+@reports_bp.route("/export", methods=["GET"])
+@require_auth
+@require_permission("reports.view")
+def export_report():
+    report_type = request.args.get("type")
+    fmt = request.args.get("format")
+
+    handler = REPORT_HANDLERS.get(report_type)
+    if not handler:
+        return jsonify({"error": f"Unknown report type: {report_type}"}), 400
+    if fmt not in ("pdf", "excel"):
+        return jsonify({"error": "format must be 'pdf' or 'excel'"}), 400
+
+    data = handler().get_json()
+    filters = {"start_date": request.args.get("start_date"), "end_date": request.args.get("end_date")}
+
+    if fmt == "pdf":
+        return build_pdf_response(report_type, data, filters)
+    return build_excel_response(report_type, data, filters)
 

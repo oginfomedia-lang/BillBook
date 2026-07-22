@@ -68,6 +68,15 @@ def create_supplier():
     except ValidationError as err:
         return jsonify({"error": "Validation failed", "details": err.messages}), 422
 
+    if data.get("mobile") and Supplier.query.filter(
+        Supplier.mobile == data.get("mobile"), Supplier.is_active.isnot(False)
+    ).first():
+        return jsonify({"error": "Validation failed", "details": {"mobile": "A supplier is already registered with this mobile number"}}), 422
+    if data.get("phone") and Supplier.query.filter(
+        Supplier.phone == data.get("phone"), Supplier.is_active.isnot(False)
+    ).first():
+        return jsonify({"error": "Validation failed", "details": {"phone": "A supplier is already registered with this phone number"}}), 422
+
     # ✅ Get branch_id properly
     branch_id = data.get('branch_id')
     if not branch_id:
@@ -97,6 +106,17 @@ def update_supplier(supplier_id):
         data = SupplierSchema(partial=True).load(request.get_json(force=True) or {})
     except ValidationError as err:
         return jsonify({"error": "Validation failed", "details": err.messages}), 422
+
+    if data.get("mobile") and data.get("mobile") != supplier.mobile:
+        if Supplier.query.filter(
+            Supplier.mobile == data.get("mobile"), Supplier.is_active.isnot(False)
+        ).first():
+            return jsonify({"error": "Validation failed", "details": {"mobile": "A supplier is already registered with this mobile number"}}), 422
+    if data.get("phone") and data.get("phone") != supplier.phone:
+        if Supplier.query.filter(
+            Supplier.phone == data.get("phone"), Supplier.is_active.isnot(False)
+        ).first():
+            return jsonify({"error": "Validation failed", "details": {"phone": "A supplier is already registered with this phone number"}}), 422
 
     for key, value in data.items():
         setattr(supplier, key, value)
@@ -134,6 +154,8 @@ def import_suppliers():
     reader = csv.DictReader(io.StringIO(content))
     imported = []
     errors = []
+    seen_mobiles = {}  # mobile -> row_number, catches duplicates within this file
+    seen_phones = {}  # phone -> row_number, catches duplicates within this file
 
     # ✅ Get branch_id once for all imports
     branch_id = BranchContext.get() or g.user.branch_id
@@ -145,6 +167,32 @@ def import_suppliers():
         except ValidationError as err:
             errors.append({"row": row_number, "errors": err.messages})
             continue
+
+        mobile = data.get("mobile")
+        if mobile:
+            if mobile in seen_mobiles:
+                errors.append({
+                    "row": row_number,
+                    "errors": {"mobile": f"Duplicate mobile number within this file (already used on row {seen_mobiles[mobile]})"},
+                })
+                continue
+            if Supplier.query.filter(Supplier.mobile == mobile, Supplier.is_active.isnot(False)).first():
+                errors.append({"row": row_number, "errors": {"mobile": "A supplier is already registered with this mobile number"}})
+                continue
+            seen_mobiles[mobile] = row_number
+
+        phone = data.get("phone")
+        if phone:
+            if phone in seen_phones:
+                errors.append({
+                    "row": row_number,
+                    "errors": {"phone": f"Duplicate phone number within this file (already used on row {seen_phones[phone]})"},
+                })
+                continue
+            if Supplier.query.filter(Supplier.phone == phone, Supplier.is_active.isnot(False)).first():
+                errors.append({"row": row_number, "errors": {"phone": "A supplier is already registered with this phone number"}})
+                continue
+            seen_phones[phone] = row_number
 
         # ✅ Remove branch_id from data if it exists
         if 'branch_id' in data:

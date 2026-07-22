@@ -17,7 +17,7 @@ class Item(db.Model):
     type = db.Column(db.String(20), default='item')  # 'item' or 'service'
     
     # Codes and Identifiers
-    sku = db.Column(db.String(100), nullable=True, index=True)
+    sku = db.Column(db.String(100), unique=True, nullable=True, index=True)
     hsn = db.Column(db.String(50), nullable=True)  # Harmonized System of Nomenclature
     sac = db.Column(db.String(50), nullable=True)  # Service Accounting Code
     barcode = db.Column(db.String(255), nullable=True, unique=True)

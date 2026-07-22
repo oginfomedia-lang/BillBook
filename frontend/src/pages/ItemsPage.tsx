@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Search, Trash2, Edit2, Download, Printer } from 'lucide-react';
-import { useItems, useDeleteItem } from '../hooks/useItems';
+import { useItems, useDeleteItem, useCategories } from '../hooks/useItems';
 import { useWarehouses } from '../hooks/useWarehouses';
 import { TableSkeleton } from '../components/ui/Skeletons';
 import { ExportToolbar, type ColumnDef } from '../components/ui/ExportToolbar';
@@ -34,6 +34,7 @@ export function ItemsPage() {
     const [status, setStatus] = useState<ItemStatus | ''>('');
     const [itemType, setItemType] = useState<ItemType | ''>('');
     const [warehouseId, setWarehouseId] = useState<number | ''>('');
+    const [categoryId, setCategoryId] = useState<number | ''>('');
     const [columns, setColumns] = useState<ColumnDef[]>(ITEM_COLUMNS);
 
     const { data, isLoading } = useItems({
@@ -42,10 +43,13 @@ export function ItemsPage() {
         status: status || undefined,
         type: itemType || undefined,
         warehouse_id: warehouseId || undefined,
+        category_id: categoryId || undefined,
     });
 
     const { data: warehouseData } = useWarehouses({ per_page: 100 });
     const warehouses = warehouseData?.items ?? [];
+
+    const { data: categories } = useCategories();
 
     const deleteItem = useDeleteItem();
     const items = data?.items ?? [];
@@ -61,6 +65,7 @@ export function ItemsPage() {
         setStatus('');
         setItemType('');
         setWarehouseId('');
+        setCategoryId('');
         setPage(1);
     };
 
@@ -90,7 +95,7 @@ export function ItemsPage() {
 
             {/* Filters */}
             <div className="space-y-3 rounded-lg border border-slate-200 bg-white p-4">
-                <div className="grid gap-3 sm:grid-cols-4 items-end">
+                <div className="grid gap-3 sm:grid-cols-5 items-end">
                     {/* Search */}
                     <div className="relative col-span-2">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
@@ -137,6 +142,25 @@ export function ItemsPage() {
                             <option value="">All Types</option>
                             <option value="item">Item</option>
                             <option value="service">Service</option>
+                        </select>
+                    </div>
+
+                    {/* Category Filter */}
+                    <div>
+                        <select
+                            value={categoryId}
+                            onChange={(e) => {
+                                setCategoryId(e.target.value ? Number(e.target.value) : '');
+                                setPage(1);
+                            }}
+                            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
+                        >
+                            <option value="">-All Categories-</option>
+                            {(categories ?? []).map((cat) => (
+                                <option key={cat.id} value={cat.id}>
+                                    {cat.name}
+                                </option>
+                            ))}
                         </select>
                     </div>
                 </div>

@@ -3,7 +3,7 @@ import os
 from flask import Flask, jsonify
 from flask_cors import CORS
 
-from config import config_by_name
+from config import config_by_name, assert_production_secrets_configured
 from app.extensions import db, migrate, jwt
 
 
@@ -11,6 +11,7 @@ def create_app(config_name: str | None = None) -> Flask:
     config_name = config_name or os.environ.get("FLASK_ENV", "development")
     flask_app = Flask(__name__)
     flask_app.config.from_object(config_by_name[config_name])
+    assert_production_secrets_configured(flask_app.config)
 
     # --- Extensions ---
     db.init_app(flask_app)

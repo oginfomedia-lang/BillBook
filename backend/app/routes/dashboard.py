@@ -125,7 +125,7 @@ def summary():
     # 2. COUNT CARDS
     # ──────────────────────────────────────────────────────────────────────────
     
-    customer_q = Customer.query
+    customer_q = Customer.query.filter(Customer.is_active.isnot(False))
     customer_q = _apply_branch_filter(customer_q, Customer, branch_id)
     customer_count = customer_q.count()
 

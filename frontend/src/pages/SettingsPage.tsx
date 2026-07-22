@@ -23,6 +23,7 @@ import toast from "react-hot-toast";
 import { apiClient } from "../api/client";
 import { useTranslation } from "../context/LanguageContext";
 import { formatMoney } from "../utils/format";
+import { isValidGSTIN, GSTIN_ERROR_MESSAGE } from "../utils/validators";
 
 type SettingPageType =
   | "store"
@@ -94,8 +95,8 @@ export function SettingsPage() {
       toast.success(t("Store profile updated successfully"));
       queryClient.invalidateQueries({ queryKey: ["settings", "store"] });
     },
-    onError: () => {
-      toast.error(t("Failed to update store profile"));
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.details?.gstin?.[0] || err?.response?.data?.error || t("Failed to update store profile"));
     },
   });
 
@@ -137,6 +138,7 @@ export function SettingsPage() {
     address: "",
     store_logo: "",
   });
+  const [storeGstinError, setStoreGstinError] = useState("");
 
   useEffect(() => {
     if (storeSettingsQuery.data) {
@@ -261,6 +263,10 @@ export function SettingsPage() {
   // ---------------------------------------------------------------------------
   const handleSaveStore = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isValidGSTIN(storeForm.gstin)) {
+      setStoreGstinError(GSTIN_ERROR_MESSAGE);
+      return;
+    }
     updateStoreMutation.mutate(storeForm);
   };
 
@@ -616,16 +622,26 @@ export function SettingsPage() {
                       </div>
 
                       {/* GST Number */}
-                      <div className="flex items-center gap-4">
-                        <label className="w-44 text-right text-sm text-slate-600 flex-shrink-0">
+                      <div className="flex items-start gap-4">
+                        <label className="w-44 pt-2 text-right text-sm text-slate-600 flex-shrink-0">
                           {t("GST Number")}
                         </label>
-                        <input
-                          type="text"
-                          value={storeForm.gstin}
-                          onChange={(e) => setStoreForm({ ...storeForm, gstin: e.target.value })}
-                          className="flex-1 rounded border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
-                        />
+                        <div className="flex-1">
+                          <input
+                            type="text"
+                            placeholder="e.g. 27ABCDE1234F1Z5"
+                            value={storeForm.gstin}
+                            onChange={(e) => {
+                              const upper = e.target.value.toUpperCase();
+                              setStoreForm({ ...storeForm, gstin: upper });
+                              setStoreGstinError(isValidGSTIN(upper) ? "" : GSTIN_ERROR_MESSAGE);
+                            }}
+                            className={`w-full rounded border px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
+                              storeGstinError ? "border-red-400 focus:ring-red-400" : "border-slate-200 focus:ring-brand"
+                            }`}
+                          />
+                          {storeGstinError && <p className="mt-1 text-xs text-red-500">{storeGstinError}</p>}
+                        </div>
                       </div>
 
                       {/* Tax Number */}
@@ -878,7 +894,7 @@ export function SettingsPage() {
                   <div className="flex items-center justify-center gap-4 border-t border-slate-100 bg-slate-50 px-6 py-4">
                     <button
                       type="submit"
-                      disabled={updateStoreMutation.isPending}
+                      disabled={updateStoreMutation.isPending || !!storeGstinError}
                       className="min-w-36 rounded-lg bg-emerald-500 px-8 py-2.5 text-sm font-bold text-white hover:bg-emerald-600 transition-colors disabled:opacity-50"
                     >
                       {updateStoreMutation.isPending ? t("Updating...") : t("Update")}

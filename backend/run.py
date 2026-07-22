@@ -26,4 +26,4 @@ def make_shell_context():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    app.run(debug=app.config.get("DEBUG", False), port=5000)

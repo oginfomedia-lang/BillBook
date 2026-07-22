@@ -3,6 +3,12 @@ from datetime import timedelta
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
+# Fallback values used only for local development convenience. If either of
+# these is still active when DEBUG is off, create_app() refuses to start —
+# see assert_production_secrets_configured() below.
+INSECURE_DEFAULT_SECRET_KEY = "dev-secret-change-me"
+INSECURE_DEFAULT_JWT_SECRET_KEY = "dev-jwt-secret-change-me-please-32chars"
+
 
 class Config:
     """
@@ -11,7 +17,7 @@ class Config:
     """
 
     # --- Core Flask ---
-    SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-change-me")
+    SECRET_KEY = os.environ.get("SECRET_KEY", INSECURE_DEFAULT_SECRET_KEY)
 
     # --- Database (MySQL via PyMySQL driver) ---
     DB_USER = os.environ.get("DB_USER", "billbook")
@@ -31,7 +37,7 @@ class Config:
     }
 
     # --- JWT ---
-    JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "dev-jwt-secret-change-me-please-32chars")
+    JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY", INSECURE_DEFAULT_JWT_SECRET_KEY)
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=30)
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
     JWT_TOKEN_LOCATION = ["headers"]  # frontend sends Authorization: Bearer <token>
@@ -58,3 +64,27 @@ config_by_name = {
     "production": ProductionConfig,
     "testing": TestingConfig,
 }
+
+
+def assert_production_secrets_configured(flask_config):
+    """
+    Refuses to run with the known, publicly-visible (committed to source
+    control) dev secrets whenever DEBUG is off. Without this, anyone who
+    reads this file can forge a valid JWT for any tenant (including
+    is_super_admin) against a real deployment that forgot to set
+    SECRET_KEY / JWT_SECRET_KEY.
+    """
+    if flask_config.get("DEBUG"):
+        return
+    insecure = []
+    if flask_config.get("SECRET_KEY") == INSECURE_DEFAULT_SECRET_KEY:
+        insecure.append("SECRET_KEY")
+    if flask_config.get("JWT_SECRET_KEY") == INSECURE_DEFAULT_JWT_SECRET_KEY:
+        insecure.append("JWT_SECRET_KEY")
+    if insecure:
+        raise RuntimeError(
+            "Refusing to start: "
+            + " and ".join(insecure)
+            + " must be set via environment variable(s) to a real secret before running with DEBUG off. "
+            "The default value(s) are public (committed in config.py) and allow forging valid auth tokens."
+        )

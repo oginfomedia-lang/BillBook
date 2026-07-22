@@ -27,7 +27,7 @@ export function useBranches(
 
 // ─── Single Branch ──────────────────────────────────────────────────────────
 export function useBranch(
-  id: number,
+  id: number | undefined,
   options?: Omit<UseQueryOptions<Branch>, "queryKey" | "queryFn">
 ) {
   return useQuery({

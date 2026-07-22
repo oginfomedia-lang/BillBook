@@ -107,7 +107,7 @@ export function InvoicesPage() {
               data?.items.map((inv) => (
                 <tr key={inv.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
                   <td className="px-4 py-3">
-                    <Link to={`/invoices/${inv.id}`} className="font-medium text-brand hover:underline">
+                    <Link to={`/sales/${inv.id}`} className="font-medium text-brand hover:underline">
                       {inv.invoice_number}
                     </Link>
                   </td>

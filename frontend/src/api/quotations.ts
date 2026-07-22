@@ -1,5 +1,5 @@
 import { apiClient } from "./client";
-import type { InvoiceItem, PaginatedResponse } from "../types";
+import type { Invoice, InvoiceItem, PaginatedResponse } from "../types";
 
 export type QuotationStatus = "draft" | "sent" | "accepted" | "declined";
 
@@ -11,6 +11,7 @@ export interface QuotationPayload {
   discount_type: "flat" | "percent";
   discount_value: number;
   notes?: string | null;
+  terms_conditions?: string | null;
   status: QuotationStatus;
   items: Omit<InvoiceItem, "id" | "line_subtotal" | "line_tax" | "line_total">[];
 }
@@ -27,7 +28,9 @@ export interface Quotation {
   discount_type: "flat" | "percent";
   discount_value: number;
   notes: string | null;
+  terms_conditions?: string | null;
   status: QuotationStatus;
+  converted_invoice_id?: number | null;
   subtotal: number;
   tax_total: number;
   discount_total: number;
@@ -60,4 +63,9 @@ export async function updateQuotation(id: number, payload: Partial<QuotationPayl
 
 export async function deleteQuotation(id: number) {
   await apiClient.delete(`/quotations/${id}`);
+}
+
+export async function convertQuotationToInvoice(id: number) {
+  const { data } = await apiClient.post<Invoice>(`/quotations/${id}/convert-to-invoice`);
+  return data;
 }

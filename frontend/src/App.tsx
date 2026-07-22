@@ -1,12 +1,14 @@
 // frontend/src/App.tsx
 
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "./context/AuthContext";
 import { LanguageProvider } from "./context/LanguageContext";
 import { BranchProvider } from "./context/BranchContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { PermissionRoute } from "./components/PermissionRoute";
+import { NotFoundPage } from "./components/NotFoundPage";
 import { DashboardLayout } from "./layouts/DashboardLayout";
 import { LoginPage } from "./pages/LoginPage";
 import { SignupPage } from "./pages/SignupPage";
@@ -72,6 +74,13 @@ const queryClient = new QueryClient({
   },
 });
 
+// Safety net: the real invoice detail route is /sales/:id (nested under
+// SalesLayout) — /invoices/:id was never a registered route and 404'd.
+function InvoiceDetailRedirect() {
+  const { id } = useParams();
+  return <Navigate to={`/sales/${id}`} replace />;
+}
+
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -81,7 +90,7 @@ export default function App() {
             <BranchProvider>
               <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
               <Routes>
-                {/* Public routes - no sidebar */}
+                {/* Public routes */}
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/signup" element={<SignupPage />} />
 
@@ -95,117 +104,120 @@ export default function App() {
                 >
                   <Route path="/dashboard" element={<DashboardPage />} />
 
-                  {/* Sales module */}
+                  {/* Sales */}
                   <Route path="/sales" element={<SalesLayout />}>
-                    <Route index element={<SalesListPage />} />
-                    <Route path="add" element={<AddSalePage />} />
-                    <Route path="pos" element={<POSPage />} />
-                    <Route path="returns" element={<SalesReturnsPage />} />
-                    <Route path=":id" element={<InvoiceDetailPage />} />
+                    <Route index element={<PermissionRoute permission="sales.view"><SalesListPage /></PermissionRoute>} />
+                    <Route path="add" element={<PermissionRoute permission="sales.create"><AddSalePage /></PermissionRoute>} />
+                    <Route path="pos" element={<PermissionRoute permission="sales.create"><POSPage /></PermissionRoute>} />
+                    <Route path="returns" element={<PermissionRoute permission="sales.view"><SalesReturnsPage /></PermissionRoute>} />
+                    <Route path=":id" element={<PermissionRoute permission="sales.view"><InvoiceDetailPage /></PermissionRoute>} />
                   </Route>
 
                   {/* POS shortcut */}
                   <Route path="/pos" element={<Navigate to="/sales/pos" replace />} />
 
                   {/* Invoices */}
-                  <Route path="/invoices" element={<InvoicesPage />} />
+                  <Route path="/invoices" element={<PermissionRoute permission="sales.view"><InvoicesPage /></PermissionRoute>} />
+                  <Route path="/invoices/:id" element={<InvoiceDetailRedirect />} />
 
                   {/* Quotations */}
-                  <Route path="/quotations" element={<QuotationsPage />} />
-                  <Route path="/quotations/new" element={<CreateQuotationPage />} />
-                  <Route path="/quotations/:id" element={<QuotationDetailPage />} />
+                  <Route path="/quotations" element={<PermissionRoute permission="sales.view"><QuotationsPage /></PermissionRoute>} />
+                  <Route path="/quotations/new" element={<PermissionRoute permission="sales.create"><CreateQuotationPage /></PermissionRoute>} />
+                  <Route path="/quotations/:id" element={<PermissionRoute permission="sales.view"><QuotationDetailPage /></PermissionRoute>} />
 
-                  {/* Contacts module */}
+                  {/* Contacts */}
                   <Route path="/contacts" element={<ContactsLayout />}>
                     <Route index element={<ContactsIndexRedirect />} />
-                    <Route path="customers" element={<CustomersPage />} />
-                    <Route path="suppliers" element={<SuppliersPage />} />
-                    <Route path="import/customers" element={<ImportCustomersPage />} />
-                    <Route path="import/suppliers" element={<ImportSuppliersPage />} />
+                    <Route path="customers" element={<PermissionRoute permission="customers.view"><CustomersPage /></PermissionRoute>} />
+                    <Route path="suppliers" element={<PermissionRoute permission="suppliers.view"><SuppliersPage /></PermissionRoute>} />
+                    <Route path="import/customers" element={<PermissionRoute permission="customers.create"><ImportCustomersPage /></PermissionRoute>} />
+                    <Route path="import/suppliers" element={<PermissionRoute permission="suppliers.create"><ImportSuppliersPage /></PermissionRoute>} />
                   </Route>
 
-                  {/* Branches module */}
-                  <Route path="/branches" element={<BranchesListPage />} />
-                  <Route path="/branches/new" element={<BranchFormPage />} />
-                  <Route path="/branches/:id/edit" element={<BranchFormPage />} />
+                  {/* Branches */}
+                  <Route path="/branches" element={<PermissionRoute permission="branches.view"><BranchesListPage /></PermissionRoute>} />
+                  <Route path="/branches/new" element={<PermissionRoute permission="branches.create"><BranchFormPage /></PermissionRoute>} />
+                  <Route path="/branches/:id/edit" element={<PermissionRoute permission="branches.edit"><BranchFormPage /></PermissionRoute>} />
 
-                  {/* Coupons – top-level */}
-                  <Route path="/coupons" element={<CouponsListPage />} />
-                  <Route path="/coupons/new" element={<CouponFormPage />} />
-                  <Route path="/coupons/:id/edit" element={<CouponFormPage />} />
+                  {/* Coupons */}
+                  <Route path="/coupons" element={<PermissionRoute permission="coupons.view"><CouponsListPage /></PermissionRoute>} />
+                  <Route path="/coupons/new" element={<PermissionRoute permission="coupons.create"><CouponFormPage /></PermissionRoute>} />
+                  <Route path="/coupons/:id/edit" element={<PermissionRoute permission="coupons.edit"><CouponFormPage /></PermissionRoute>} />
 
                   {/* Advance Payments */}
-                  <Route path="/advance" element={<AdvancePaymentsList />} />
+                  <Route path="/advance" element={<PermissionRoute permission="advance.view"><AdvancePaymentsList /></PermissionRoute>} />
 
-                  {/* Items Module */}
-                  <Route path="/items" element={<ItemsPage />} />
-                  <Route path="/items/new" element={<ItemFormPage />} />
-                  <Route path="/items/new-service" element={<ItemFormPage isService={true} />} />
-                  <Route path="/items/:itemId/edit" element={<ItemFormPage />} />
-                  <Route path="/items/categories" element={<CategoriesListPage />} />
-                  <Route path="/items/brands" element={<BrandsListPage />} />
-                  <Route path="/items/variants" element={<VariantsListPage />} />
-                  <Route path="/items/print-labels" element={<PrintLabelsPage />} />
-                  <Route path="/items/import" element={<ImportItemsPage />} />
-                  <Route path="/items/import-services" element={<ImportServicesPage />} />
+                  {/* Items */}
+                  <Route path="/items" element={<PermissionRoute permission="products.view"><ItemsPage /></PermissionRoute>} />
+                  <Route path="/items/new" element={<PermissionRoute permission="products.create"><ItemFormPage /></PermissionRoute>} />
+                  <Route path="/items/new-service" element={<PermissionRoute permission="products.create"><ItemFormPage isService={true} /></PermissionRoute>} />
+                  <Route path="/items/:itemId/edit" element={<PermissionRoute permission="products.edit"><ItemFormPage /></PermissionRoute>} />
+                  <Route path="/items/categories" element={<PermissionRoute permission="products.view"><CategoriesListPage /></PermissionRoute>} />
+                  <Route path="/items/brands" element={<PermissionRoute permission="products.view"><BrandsListPage /></PermissionRoute>} />
+                  <Route path="/items/variants" element={<PermissionRoute permission="products.view"><VariantsListPage /></PermissionRoute>} />
+                  <Route path="/items/print-labels" element={<PermissionRoute permission="products.view"><PrintLabelsPage /></PermissionRoute>} />
+                  <Route path="/items/import" element={<PermissionRoute permission="products.create"><ImportItemsPage /></PermissionRoute>} />
+                  <Route path="/items/import-services" element={<PermissionRoute permission="products.create"><ImportServicesPage /></PermissionRoute>} />
 
                   {/* Warehouses */}
-                  <Route path="/warehouses" element={<WarehousesPage />} />
+                  <Route path="/warehouses" element={<PermissionRoute permission="warehouses.view"><WarehousesPage /></PermissionRoute>} />
 
-                  {/* Accounts module */}
+                  {/* Accounts */}
                   <Route path="/accounts" element={<AccountsLayout />}>
                     <Route index element={<Navigate to="list" replace />} />
-                    <Route path="add" element={<AddAccountPage />} />
-                    <Route path="list" element={<AccountsListPage />} />
-                    <Route path=":id/edit" element={<AddAccountPage editMode={true} />} />
-                    <Route path="money-transfers" element={<MoneyTransferListPage />} />
-                    <Route path="deposits" element={<DepositListPage />} />
-                    <Route path="cash-transactions" element={<CashTransactionsPage />} />
+                    <Route path="add" element={<PermissionRoute permission="accounts.create"><AddAccountPage /></PermissionRoute>} />
+                    <Route path="list" element={<PermissionRoute permission="accounts.view"><AccountsListPage /></PermissionRoute>} />
+                    <Route path=":id/edit" element={<PermissionRoute permission="accounts.edit"><AddAccountPage editMode={true} /></PermissionRoute>} />
+                    <Route path="money-transfers" element={<PermissionRoute permission="accounts.view"><MoneyTransferListPage /></PermissionRoute>} />
+                    <Route path="deposits" element={<PermissionRoute permission="accounts.view"><DepositListPage /></PermissionRoute>} />
+                    <Route path="cash-transactions" element={<PermissionRoute permission="accounts.view"><CashTransactionsPage /></PermissionRoute>} />
                   </Route>
 
-                  {/* Purchase module */}
+                  {/* Purchases */}
                   <Route path="/purchase" element={<PurchaseLayout />}>
                     <Route index element={<Navigate to="list" replace />} />
-                    <Route path="list" element={<PurchaseListPage />} />
-                    <Route path="new" element={<NewPurchasePage />} />
-                    <Route path="returns" element={<PurchaseReturnsListPage />} />
-                    <Route path="returns/new" element={<NewPurchaseReturnPage />} />
-                    <Route path=":id/edit" element={<NewPurchasePage editMode={true} />} />
+                    <Route path="list" element={<PermissionRoute permission="purchases.view"><PurchaseListPage /></PermissionRoute>} />
+                    <Route path="new" element={<PermissionRoute permission="purchases.create"><NewPurchasePage /></PermissionRoute>} />
+                    <Route path="returns" element={<PermissionRoute permission="purchases.view"><PurchaseReturnsListPage /></PermissionRoute>} />
+                    <Route path="returns/new" element={<PermissionRoute permission="purchases.create"><NewPurchaseReturnPage /></PermissionRoute>} />
+                    <Route path=":id/edit" element={<PermissionRoute permission="purchases.edit"><NewPurchasePage editMode={true} /></PermissionRoute>} />
                   </Route>
 
-                  {/* Stock module */}
+                  {/* Stock */}
                   <Route path="/stock" element={<StockLayout />}>
                     <Route index element={<Navigate to="adjustments" replace />} />
-                    <Route path="adjustments" element={<StockAdjustmentListPage />} />
-                    <Route path="transfers" element={<StockTransferListPage />} />
+                    <Route path="adjustments" element={<PermissionRoute permission="stock.view"><StockAdjustmentListPage /></PermissionRoute>} />
+                    <Route path="transfers" element={<PermissionRoute permission="stock.view"><StockTransferListPage /></PermissionRoute>} />
                   </Route>
 
-                  {/* Expenses module */}
+                  {/* Expenses */}
                   <Route path="/expenses" element={<ExpensesLayout />}>
                     <Route index element={<Navigate to="list" replace />} />
-                    <Route path="list" element={<ExpensesListPage />} />
-                    <Route path="categories" element={<ExpenseCategoryListPage />} />
+                    <Route path="list" element={<PermissionRoute permission="expenses.view"><ExpensesListPage /></PermissionRoute>} />
+                    <Route path="categories" element={<PermissionRoute permission="expenses.view"><ExpenseCategoryListPage /></PermissionRoute>} />
                   </Route>
 
                   {/* Users */}
-                  <Route path="/users" element={<UsersPage />} />
+                  <Route path="/users" element={<PermissionRoute permission="users.view"><UsersPage /></PermissionRoute>} />
 
                   {/* Roles */}
-                  <Route path="/roles" element={<RolesPage />} />
+                  <Route path="/roles" element={<PermissionRoute permission="roles.view"><RolesPage /></PermissionRoute>} />
 
                   {/* Reports */}
-                  <Route path="/reports" element={<ReportsPage />} />
+                  <Route path="/reports" element={<PermissionRoute permission="reports.view"><ReportsPage /></PermissionRoute>} />
 
                   {/* Settings */}
                   <Route path="/settings" element={<SettingsPage />} />
 
-                  {/* Advance Payments */}
-                  <Route path="/advance" element={<AdvancePaymentsList />} />
+                  {/* 404 inside dashboard layout */}
+                  <Route path="*" element={<NotFoundPage />} />
                 </Route>
 
-                {/* Fallback routes */}
+                {/* Root redirect */}
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                <Route path="*" element={<Navigate to="/dashboard" replace />} />
+
+                {/* Public 404 for totally unknown paths */}
+                <Route path="*" element={<Navigate to="/login" replace />} />
               </Routes>
             </BranchProvider>
           </AuthProvider>
@@ -214,3 +226,4 @@ export default function App() {
     </QueryClientProvider>
   );
 }
+

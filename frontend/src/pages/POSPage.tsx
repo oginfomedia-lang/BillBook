@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Plus, Search, X, UserPlus } from "lucide-react";
+import { Plus, Search, X, UserPlus, PauseCircle, Layers, Banknote, Wallet } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
@@ -44,7 +44,7 @@ export function POSPage() {
       setCartItems([]);
       setAppliedCoupon(null);
       setCouponDiscount(0);
-      navigate(`/invoices/${invoice.id}`);
+      navigate(`/sales/${invoice.id}`);
     },
     onError: () => {
       toast.error(t("Could not complete the sale. Please check the cart and try again."));
@@ -71,7 +71,7 @@ export function POSPage() {
 
   const handleAddProduct = (product: Item) => {
     setCartItems((current) => {
-      const existingIndex = current.findIndex((item) => item.item_id === product.id);
+      const existingIndex = current.findIndex((item) => item.product_id === product.id);
       if (existingIndex >= 0) {
         return current.map((item, index) =>
           index === existingIndex ? { ...item, quantity: item.quantity + 1 } : item
@@ -80,7 +80,7 @@ export function POSPage() {
       return [
         ...current,
         {
-          item_id: product.id,
+          product_id: product.id,
           description: product.item_name,
           quantity: 1,
           unit_price: product.sales_price ?? product.unit_price ?? 0,
@@ -338,37 +338,41 @@ export function POSPage() {
           </div>
 
           {/* Checkout buttons */}
-          <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <button
               type="button"
               onClick={() => handleCheckout("draft")}
               disabled={createSale.isPending}
-              className="w-full rounded-lg bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex items-center justify-center gap-2 rounded-full border-2 border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
+              <PauseCircle size={16} />
               {createSale.isPending ? t("Saving…") : t("Hold")}
             </button>
             <button
               type="button"
               onClick={() => handleCheckout("pending")}
               disabled={createSale.isPending}
-              className="w-full rounded-lg bg-slate-100 px-4 py-3 text-sm font-semibold text-ink-900 hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex items-center justify-center gap-2 rounded-full border-2 border-blue-300 bg-white px-4 py-2.5 text-sm font-semibold text-blue-600 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
+              <Layers size={16} />
               {createSale.isPending ? t("Saving…") : t("Multiple")}
             </button>
             <button
               type="button"
               onClick={() => handleCheckout("paid")}
               disabled={createSale.isPending}
-              className="w-full rounded-lg bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex items-center justify-center gap-2 rounded-full border-2 border-emerald-300 bg-white px-4 py-2.5 text-sm font-semibold text-emerald-600 hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
+              <Banknote size={16} />
               {createSale.isPending ? t("Processing…") : t("Cash")}
             </button>
             <button
               type="button"
               onClick={() => handleCheckout("paid")}
               disabled={createSale.isPending}
-              className="w-full rounded-lg bg-violet-600 px-4 py-3 text-sm font-semibold text-white hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex items-center justify-center gap-2 rounded-full border-2 border-violet-300 bg-white px-4 py-2.5 text-sm font-semibold text-violet-600 hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
+              <Wallet size={16} />
               {createSale.isPending ? t("Processing…") : t("Pay All")}
             </button>
           </div>

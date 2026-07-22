@@ -3,6 +3,7 @@ import io
 from decimal import Decimal
 from flask import Blueprint, request, jsonify, g
 from marshmallow import ValidationError
+from sqlalchemy.exc import IntegrityError
 
 from app.extensions import db  # ✅ ADD THIS IMPORT
 from app.models import Item, Brand, Category, Unit, Tax, ItemGroup, Variant
@@ -89,6 +90,9 @@ def create_item():
     if data.get("barcode") and Item.query.filter_by(barcode=data.get("barcode")).first():
         return jsonify({"error": "Barcode already exists"}), 400
 
+    if data.get("sku") and Item.query.filter_by(sku=data.get("sku")).first():
+        return jsonify({"error": "SKU already exists"}), 400
+
     item = Item(tenant_id=TenantContext.get(), **data)
     
     # Calculate profit margin if prices are provided
@@ -119,6 +123,10 @@ def update_item(item_id):
     if validated_data.get("barcode") and validated_data.get("barcode") != item.barcode:
         if Item.query.filter_by(barcode=validated_data.get("barcode")).first():
             return jsonify({"error": "Barcode already exists"}), 400
+
+    if validated_data.get("sku") and validated_data.get("sku") != item.sku:
+        if Item.query.filter_by(sku=validated_data.get("sku")).first():
+            return jsonify({"error": "SKU already exists"}), 400
 
     # ✅ Update only the fields that are sent
     for key, value in validated_data.items():
@@ -169,6 +177,8 @@ def bulk_import_items():
     reader = csv.DictReader(io.StringIO(content))
     imported = []
     errors = []
+    seen_codes = {}  # item_code -> row_number, catches duplicates within this file (DB check alone misses these since nothing is flushed until commit)
+    seen_skus = {}  # sku -> row_number, same reasoning
 
     tenant_id = TenantContext.get()
 
@@ -214,9 +224,30 @@ def bulk_import_items():
             continue
 
         # Check unique constraint
-        if Item.query.filter_by(item_code=data.get("item_code")).first():
+        item_code = data.get("item_code")
+        if item_code in seen_codes:
+            errors.append({
+                "row": row_number,
+                "errors": {"item_code": f"Duplicate item code within this file (already used on row {seen_codes[item_code]})"},
+            })
+            continue
+        if Item.query.filter_by(item_code=item_code).first():
             errors.append({"row": row_number, "errors": {"item_code": "Item code already exists"}})
             continue
+        seen_codes[item_code] = row_number
+
+        sku = data.get("sku")
+        if sku:
+            if sku in seen_skus:
+                errors.append({
+                    "row": row_number,
+                    "errors": {"sku": f"Duplicate SKU within this file (already used on row {seen_skus[sku]})"},
+                })
+                continue
+            if Item.query.filter_by(sku=sku).first():
+                errors.append({"row": row_number, "errors": {"sku": "SKU already exists"}})
+                continue
+            seen_skus[sku] = row_number
 
         item = Item(tenant_id=tenant_id, **data)
         item.calculate_profit_margin()
@@ -226,7 +257,11 @@ def bulk_import_items():
         return jsonify({"error": "Import failed", "details": errors}), 422
 
     db.session.add_all(imported)
-    db.session.commit()
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({"error": "Import failed: one or more item codes, SKUs, or barcodes already exist"}), 422
     return jsonify({"message": "Items imported successfully", "imported_count": len(imported)}), 201
 
 

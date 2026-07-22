@@ -9,10 +9,12 @@ from sqlalchemy.exc import IntegrityError
 from app.extensions import db
 from app.models import Customer, Item
 from app.models.quotation import Quotation, QuotationItem, QuotationStatus
+from app.models.invoice import Invoice, InvoiceItem, InvoiceStatus
 from app.schemas import QuotationSchema
 from app.tenant_scope import TenantContext
 from app.branch_scope import BranchContext, apply_branch_scope
-from app.utils.decorators import require_auth
+from app.utils.decorators import require_auth, require_permission
+from app.routes.invoices import _generate_invoice_number, deduct_invoice_stock
 
 quotations_bp = Blueprint("quotations", __name__, url_prefix="/api/v1/quotations")
 
@@ -132,6 +134,16 @@ def create_quotation():
 @require_auth
 def update_quotation(quotation_id):
     quotation = Quotation.query.get_or_404(quotation_id)
+
+    if quotation.converted_invoice_id:
+        return (
+            jsonify({
+                "error": "This quotation has already been converted to an invoice and can no longer be edited.",
+                "invoice_id": quotation.converted_invoice_id,
+            }),
+            409,
+        )
+
     try:
         data = QuotationSchema(partial=True).load(request.get_json(force=True) or {})
     except ValidationError as err:
@@ -168,9 +180,93 @@ def update_quotation(quotation_id):
 @require_auth
 def delete_quotation(quotation_id):
     quotation = Quotation.query.get_or_404(quotation_id)
+
+    if quotation.converted_invoice_id:
+        return (
+            jsonify({
+                "error": "This quotation has already been converted to an invoice and can no longer be deleted.",
+                "invoice_id": quotation.converted_invoice_id,
+            }),
+            409,
+        )
+
     db.session.delete(quotation)
     db.session.commit()
     return "", 204
+
+
+@quotations_bp.route("/<int:quotation_id>/convert-to-invoice", methods=["POST"])
+@require_auth
+@require_permission("quotations.convert")
+def convert_quotation_to_invoice(quotation_id):
+    """
+    Turns an accepted quotation into a real invoice. One-way and
+    idempotent: converted_invoice_id is set on success, and a second
+    attempt is rejected rather than creating a duplicate invoice.
+
+    Locks the quotation row (SELECT ... FOR UPDATE) for the duration of
+    this check-then-set so two near-simultaneous conversions (double
+    click, two tabs) can't both pass the converted_invoice_id check
+    before either commits — the second request blocks until the first
+    commits, then correctly sees converted_invoice_id already set.
+    """
+    quotation = Quotation.query.filter_by(id=quotation_id).with_for_update().first()
+    if quotation is None:
+        return jsonify({"error": "Quotation not found"}), 404
+
+    if quotation.converted_invoice_id:
+        return (
+            jsonify({
+                "error": "Quotation has already been converted to an invoice",
+                "invoice_id": quotation.converted_invoice_id,
+            }),
+            409,
+        )
+
+    if quotation.status != QuotationStatus.ACCEPTED:
+        return jsonify({"error": "Only an accepted quotation can be converted to an invoice"}), 422
+
+    invoice = None
+    for attempt in range(5):
+        invoice_number = _generate_invoice_number()
+        invoice = Invoice(
+            tenant_id=TenantContext.get(),
+            invoice_number=invoice_number,
+            customer_id=quotation.customer_id,
+            issue_date=date.today(),
+            discount_type=quotation.discount_type,
+            discount_value=quotation.discount_value,
+            notes=quotation.notes,
+            status=InvoiceStatus.DRAFT,
+            branch_id=quotation.branch_id or BranchContext.get(),
+        )
+
+        for qi in quotation.items:
+            invoice.items.append(
+                InvoiceItem(
+                    item_id=qi.item_id,
+                    description=qi.description,
+                    quantity=qi.quantity,
+                    unit_price=qi.unit_price,
+                    tax_rate=qi.tax_rate,
+                )
+            )
+
+        invoice.recalculate_totals()
+        deduct_invoice_stock(invoice)  # no-op while status is draft
+        db.session.add(invoice)
+        try:
+            db.session.flush()
+            break
+        except IntegrityError:
+            db.session.rollback()
+            continue
+    else:
+        return jsonify({"error": "Unable to generate an invoice number. Please retry."}), 500
+
+    quotation.converted_invoice_id = invoice.id
+    db.session.commit()
+    return jsonify(invoice.to_dict()), 201
 
 
 # 🔽 ADD THIS - Get default terms endpoint 🔽

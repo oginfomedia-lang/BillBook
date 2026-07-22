@@ -45,6 +45,12 @@ class Invoice(TenantScopedMixin, db.Model):
     # never trusted from client input. See recalculate_totals().
     subtotal = db.Column(db.Numeric(12, 2), default=0)
     tax_total = db.Column(db.Numeric(12, 2), default=0)
+    # GST split of tax_total. Populated by recalculate_totals() based on
+    # whether the sale is intra-state (CGST+SGST) or inter-state (IGST) —
+    # see _is_interstate_sale(). tax_total always equals their sum.
+    cgst_total = db.Column(db.Numeric(12, 2), default=0)
+    sgst_total = db.Column(db.Numeric(12, 2), default=0)
+    igst_total = db.Column(db.Numeric(12, 2), default=0)
     discount_total = db.Column(db.Numeric(12, 2), default=0)
     grand_total = db.Column(db.Numeric(12, 2), default=0)
     amount_paid = db.Column(db.Numeric(12, 2), default=0)
@@ -69,6 +75,30 @@ class Invoice(TenantScopedMixin, db.Model):
         "InvoiceItem", back_populates="invoice", cascade="all, delete-orphan", lazy="joined"
     )
 
+    def _is_interstate_sale(self) -> bool:
+        """
+        GST place-of-supply check: a sale is inter-state (IGST) when the
+        customer's GSTIN state code (first 2 digits) differs from the
+        tenant's own GSTIN state code. If either party has no GSTIN on
+        file, we can't tell — default to intra-state (CGST+SGST), which
+        matches how unregistered/B2C sales are normally treated.
+        """
+        from app.models.tenant import Tenant
+        from app.models.customer import Customer
+
+        # Query directly by id rather than via self.customer — at the point
+        # this runs (recalculate_totals during create_invoice) the invoice
+        # may not be attached to the session yet, so the relationship isn't
+        # guaranteed to be loaded even though customer_id is already set.
+        tenant = db.session.get(Tenant, self.tenant_id)
+        customer = db.session.get(Customer, self.customer_id) if self.customer_id else None
+        tenant_gstin = (tenant.gstin or "").strip() if tenant else ""
+        customer_gstin = (customer.gstin or "").strip() if customer else ""
+
+        if len(tenant_gstin) >= 2 and len(customer_gstin) >= 2:
+            return tenant_gstin[:2] != customer_gstin[:2]
+        return False
+
     def recalculate_totals(self) -> None:
         """
         Authoritative server-side total calculation.
@@ -76,6 +106,11 @@ class Invoice(TenantScopedMixin, db.Model):
         """
         subtotal = Decimal("0")
         tax_total = Decimal("0")
+        cgst_total = Decimal("0")
+        sgst_total = Decimal("0")
+        igst_total = Decimal("0")
+
+        is_interstate = self._is_interstate_sale()
 
         for item in self.items:
             qty = Decimal(item.quantity or 0)
@@ -89,8 +124,23 @@ class Invoice(TenantScopedMixin, db.Model):
             item.line_tax = _money(line_tax)
             item.line_total = _money(line_subtotal + line_tax)
 
+            if is_interstate:
+                item.line_igst = item.line_tax
+                item.line_cgst = Decimal("0.00")
+                item.line_sgst = Decimal("0.00")
+            else:
+                half = _money(item.line_tax / 2)
+                item.line_cgst = half
+                # remainder (not just half again) so the two halves always
+                # sum back exactly to line_tax despite rounding
+                item.line_sgst = _money(item.line_tax - half)
+                item.line_igst = Decimal("0.00")
+
             subtotal += line_subtotal
             tax_total += line_tax
+            cgst_total += item.line_cgst
+            sgst_total += item.line_sgst
+            igst_total += item.line_igst
 
         # Manual discount
         if self.discount_type == "percent":
@@ -107,6 +157,9 @@ class Invoice(TenantScopedMixin, db.Model):
 
         self.subtotal = _money(subtotal)
         self.tax_total = _money(tax_total)
+        self.cgst_total = _money(cgst_total)
+        self.sgst_total = _money(sgst_total)
+        self.igst_total = _money(igst_total)
         self.discount_total = _money(total_discount)
         self.grand_total = _money(subtotal + tax_total - total_discount)
 
@@ -126,6 +179,9 @@ class Invoice(TenantScopedMixin, db.Model):
             "status": self.status.value if isinstance(self.status, InvoiceStatus) else self.status,
             "subtotal": float(self.subtotal or 0),
             "tax_total": float(self.tax_total or 0),
+            "cgst_total": float(self.cgst_total or 0),
+            "sgst_total": float(self.sgst_total or 0),
+            "igst_total": float(self.igst_total or 0),
             "discount_total": float(self.discount_total or 0),
             "grand_total": float(self.grand_total or 0),
             "amount_paid": float(self.amount_paid or 0),
@@ -163,6 +219,9 @@ class InvoiceItem(db.Model):
 
     line_subtotal = db.Column(db.Numeric(12, 2), default=0)
     line_tax = db.Column(db.Numeric(12, 2), default=0)
+    line_cgst = db.Column(db.Numeric(12, 2), default=0)
+    line_sgst = db.Column(db.Numeric(12, 2), default=0)
+    line_igst = db.Column(db.Numeric(12, 2), default=0)
     line_total = db.Column(db.Numeric(12, 2), default=0)
 
     invoice = db.relationship("Invoice", back_populates="items")
@@ -181,6 +240,9 @@ class InvoiceItem(db.Model):
             "tax_rate": float(self.tax_rate or 0),
             "line_subtotal": float(self.line_subtotal or 0),
             "line_tax": float(self.line_tax or 0),
+            "line_cgst": float(self.line_cgst or 0),
+            "line_sgst": float(self.line_sgst or 0),
+            "line_igst": float(self.line_igst or 0),
             "line_total": float(self.line_total or 0),
             "branch_id": self.branch_id,
         }

@@ -23,6 +23,7 @@ def list_customers():
     branch_id = request.args.get("branch_id", type=int)
 
     query = Customer.query
+    query = query.filter(Customer.is_active.isnot(False))
     
     # ✅ Apply branch filter
     if branch_id:
@@ -64,6 +65,11 @@ def create_customer():
         data = CustomerSchema().load(request.get_json(force=True) or {})
     except ValidationError as err:
         return jsonify({"error": "Validation failed", "details": err.messages}), 422
+
+    if data.get("phone") and Customer.query.filter(
+        Customer.phone == data.get("phone"), Customer.is_active.isnot(False)
+    ).first():
+        return jsonify({"error": "Validation failed", "details": {"phone": "A customer is already registered with this phone number"}}), 422
 
     # ✅ Get branch_id properly
     branch_id = data.get('branch_id')
@@ -109,6 +115,7 @@ def import_customers():
     reader = csv.DictReader(io.StringIO(content))
     imported = []
     errors = []
+    seen_phones = {}  # phone -> row_number, catches duplicates within this file
 
     # ✅ Get branch_id once for all imports
     branch_id = BranchContext.get()
@@ -123,6 +130,19 @@ def import_customers():
         except ValidationError as err:
             errors.append({"row": row_number, "errors": err.messages})
             continue
+
+        phone = data.get("phone")
+        if phone:
+            if phone in seen_phones:
+                errors.append({
+                    "row": row_number,
+                    "errors": {"phone": f"Duplicate phone number within this file (already used on row {seen_phones[phone]})"},
+                })
+                continue
+            if Customer.query.filter(Customer.phone == phone, Customer.is_active.isnot(False)).first():
+                errors.append({"row": row_number, "errors": {"phone": "A customer is already registered with this phone number"}})
+                continue
+            seen_phones[phone] = row_number
 
         # ✅ Remove branch_id from data if it exists
         if 'branch_id' in data:
@@ -150,6 +170,12 @@ def update_customer(customer_id):
         data = CustomerSchema(partial=True).load(request.get_json(force=True) or {})
     except ValidationError as err:
         return jsonify({"error": "Validation failed", "details": err.messages}), 422
+
+    if data.get("phone") and data.get("phone") != customer.phone:
+        if Customer.query.filter(
+            Customer.phone == data.get("phone"), Customer.is_active.isnot(False)
+        ).first():
+            return jsonify({"error": "Validation failed", "details": {"phone": "A customer is already registered with this phone number"}}), 422
 
     for key, value in data.items():
         setattr(customer, key, value)

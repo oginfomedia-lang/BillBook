@@ -314,13 +314,20 @@ def add_payment(purchase_id):
         payment_date=data.get("payment_date") or date.today(),
     )
     db.session.add(pmt)
+    db.session.flush()  # persist so the SUM query picks it up
 
-    # Recalculate amount_paid from all payments
-    db.session.flush()
-    total_paid = sum(float(p.amount) for p in purchase.payments)
-    purchase.amount_paid = total_paid
+    # Use a direct DB aggregate to avoid stale ORM relationship cache
+    total_paid = db.session.query(
+        func.coalesce(func.sum(PurchasePayment.amount), 0)
+    ).filter_by(purchase_id=purchase.id).scalar()
+
+    purchase.amount_paid = float(total_paid)
     purchase.update_payment_status()
     db.session.commit()
+
+    # Expire and reload so to_dict returns fresh data
+    db.session.expire(purchase)
+    purchase = Purchase.query.get(purchase_id)
     return jsonify(purchase.to_dict()), 201
 
 
@@ -331,9 +338,14 @@ def delete_payment(purchase_id, payment_id):
     purchase = Purchase.query.get_or_404(purchase_id)
     pmt = PurchasePayment.query.filter_by(id=payment_id, purchase_id=purchase_id).first_or_404()
     db.session.delete(pmt)
-    db.session.flush()
-    total_paid = sum(float(p.amount) for p in purchase.payments if p.id != payment_id)
-    purchase.amount_paid = total_paid
+    db.session.flush()  # remove from DB so the SUM query excludes it
+
+    # Use a direct DB aggregate to avoid stale ORM relationship cache
+    total_paid = db.session.query(
+        func.coalesce(func.sum(PurchasePayment.amount), 0)
+    ).filter_by(purchase_id=purchase.id).scalar()
+
+    purchase.amount_paid = float(total_paid)
     purchase.update_payment_status()
     db.session.commit()
     return "", 204

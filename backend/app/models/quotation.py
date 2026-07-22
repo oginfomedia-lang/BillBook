@@ -45,6 +45,14 @@ class Quotation(TenantScopedMixin, db.Model):
     
     status = db.Column(db.Enum(QuotationStatus), default=QuotationStatus.DRAFT)
 
+    # Set once this quotation has been turned into an invoice (see
+    # /quotations/<id>/convert-to-invoice). Presence of a value is the
+    # source of truth for "already converted" — the status enum above is
+    # left untouched to avoid an ALTER on the native MySQL ENUM column.
+    converted_invoice_id = db.Column(
+        db.Integer, db.ForeignKey("invoices.id", ondelete="SET NULL"), nullable=True
+    )
+
     subtotal = db.Column(db.Numeric(12, 2), default=0)
     tax_total = db.Column(db.Numeric(12, 2), default=0)
     discount_total = db.Column(db.Numeric(12, 2), default=0)
@@ -105,6 +113,7 @@ class Quotation(TenantScopedMixin, db.Model):
             "notes": self.notes,
             "terms_conditions": self.terms_conditions,  # 🔽 ADD THIS 🔽
             "status": self.status.value if isinstance(self.status, QuotationStatus) else self.status,
+            "converted_invoice_id": self.converted_invoice_id,
             "subtotal": float(self.subtotal or 0),
             "tax_total": float(self.tax_total or 0),
             "discount_total": float(self.discount_total or 0),

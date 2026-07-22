@@ -46,7 +46,7 @@ export function useUpdateQuotation() {
       queryClient.invalidateQueries({ queryKey: ["quotations"] });
       toast.success(`Quotation ${quotation.quotation_number} updated`);
     },
-    onError: () => toast.error("Couldn't save changes."),
+    onError: (err: any) => toast.error(err?.response?.data?.error || "Couldn't save changes."),
   });
 }
 
@@ -58,6 +58,22 @@ export function useDeleteQuotation() {
       queryClient.invalidateQueries({ queryKey: ["quotations"] });
       toast.success("Quotation deleted");
     },
-    onError: () => toast.error("Couldn't delete quotation."),
+    onError: (err: any) => toast.error(err?.response?.data?.error || "Couldn't delete quotation."),
+  });
+}
+
+export function useConvertQuotationToInvoice() {
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  return useMutation({
+    mutationFn: quotationsApi.convertQuotationToInvoice,
+    onSuccess: (invoice) => {
+      queryClient.invalidateQueries({ queryKey: ["quotations"] });
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
+      toast.success(`Invoice ${invoice.invoice_number} created from quotation`);
+      navigate(`/sales/${invoice.id}`);
+    },
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.error || "Couldn't convert quotation to invoice."),
   });
 }

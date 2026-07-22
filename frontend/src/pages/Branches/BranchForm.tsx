@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useBranch, useCreateBranch, useUpdateBranch } from "../../hooks/useBranches";
 import { useTranslation } from "../../context/LanguageContext";
 import toast from "react-hot-toast";
+import { validateEmail, validatePhone, formatPhone } from "../../hooks/useContactValidation";
 
 export function BranchFormPage() {
   const { t } = useTranslation();
@@ -22,6 +23,9 @@ export function BranchFormPage() {
     email: "",
     is_active: true,
   });
+
+  const [phoneError, setPhoneError] = useState("");
+  const [emailError, setEmailError] = useState("");
 
   useEffect(() => {
     if (isEdit && branchData) {
@@ -43,6 +47,12 @@ export function BranchFormPage() {
       return;
     }
 
+    const emailV = validateEmail(form.email);
+    const phoneV = validatePhone(form.phone);
+    setEmailError(emailV.error);
+    setPhoneError(phoneV.error);
+    if (emailV.error || phoneV.error) return;
+
     const payload = {
       name: form.name,
       code: form.code.toUpperCase(),
@@ -54,7 +64,7 @@ export function BranchFormPage() {
 
     if (isEdit && id) {
       updateBranch.mutate(
-        { id: Number(id), payload },
+        { id: Number(id), data: payload },
         { onSuccess: () => navigate("/branches") }
       );
     } else {
@@ -116,21 +126,39 @@ export function BranchFormPage() {
           <div>
             <label className="mb-1.5 block text-xs font-medium text-slate-500">{t("Phone")}</label>
             <input
+              id="phone"
               value={form.phone}
-              onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              placeholder={t("e.g. +91 98765 43210")}
-              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
+              placeholder="Format: +91-98765-43210"
+              onChange={(e) => {
+                const fmt = formatPhone(e.target.value);
+                setForm({ ...form, phone: fmt });
+                setPhoneError(validatePhone(fmt).error);
+              }}
+              className={`w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
+                phoneError ? "border-red-400 focus:ring-red-400" : form.phone && !phoneError ? "border-green-400 focus:ring-green-400" : "border-slate-200 focus:ring-brand"
+              }`}
             />
+            <p className="mt-0.5 text-xs text-slate-400">Format: +91-98765-43210</p>
+            {phoneError && <p id="phone-error" className="mt-1 text-xs text-red-500">{phoneError}</p>}
           </div>
           <div>
             <label className="mb-1.5 block text-xs font-medium text-slate-500">{t("Email")}</label>
             <input
-              type="email"
+              id="email"
+              type="text"
               value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              placeholder={t("e.g. branch@company.com")}
-              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
+              placeholder="e.g. branch@company.com"
+              onChange={(e) => {
+                const lc = e.target.value.toLowerCase();
+                setForm({ ...form, email: lc });
+                setEmailError(validateEmail(lc).error);
+              }}
+              className={`w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
+                emailError ? "border-red-400 focus:ring-red-400" : form.email && !emailError ? "border-green-400 focus:ring-green-400" : "border-slate-200 focus:ring-brand"
+              }`}
             />
+            <p className="mt-0.5 text-xs text-slate-400">e.g. username@domain.com</p>
+            {emailError && <p id="email-error" className="mt-1 text-xs text-red-500">{emailError}</p>}
           </div>
         </div>
 

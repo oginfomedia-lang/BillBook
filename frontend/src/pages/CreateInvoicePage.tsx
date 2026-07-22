@@ -4,7 +4,7 @@ import { useItems } from "../hooks/useItems";
 import { useCreateInvoice } from "../hooks/useInvoices";
 import { InvoiceItemsEditor } from "../components/invoices/InvoiceItemsEditor";
 import { InvoiceTotals } from "../components/invoices/InvoiceTotals";
-import type { InvoiceItem, InvoiceStatus } from "../types";
+import type { InvoiceItem, InvoiceStatus, Product } from "../types";
 import { CouponInput } from "./Coupons/CouponInput";
 import { useTranslation } from "../context/LanguageContext";
 import { useBranch } from "../context/BranchContext";
@@ -66,6 +66,20 @@ export function CreateInvoicePage() {
 
   const canSubmit = customerId !== "" && items.some((item) => item.description.trim().length > 0);
 
+  const mappedProducts: Product[] = (itemsData?.items ?? []).map((item) => ({
+    id: item.id,
+    name: item.item_name,
+    sku: item.item_code,
+    description: item.description,
+    unit_price: item.unit_price,
+    tax_rate: item.tax?.tax_value ?? 0,
+    stock_quantity: item.opening_stock,
+    unit: item.unit?.name ?? "pcs",
+    is_active: item.is_active,
+    branch_id: item.branch_id,
+    branch: item.branch,
+  }));
+
   return (
     <div className="space-y-6">
       <div>
@@ -113,7 +127,7 @@ export function CreateInvoicePage() {
 
           <InvoiceItemsEditor
             items={items}
-            products={itemsData?.items ?? []}
+            products={mappedProducts}
             onChange={setItems}
             onProductSearch={setProductSearch}
           />

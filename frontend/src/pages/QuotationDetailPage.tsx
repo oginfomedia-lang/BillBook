@@ -1,9 +1,19 @@
 import { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { Printer, ArrowLeft, Trash2, Calendar, FileText, ChevronDown, ChevronUp } from "lucide-react";
-import { useQuotation, useDeleteQuotation } from "../hooks/useQuotations";
+import { Printer, ArrowLeft, Trash2, Calendar, FileText, ChevronDown, ChevronUp, FileOutput } from "lucide-react";
+import { useQuotation, useDeleteQuotation, useConvertQuotationToInvoice, useUpdateQuotation } from "../hooks/useQuotations";
+import type { QuotationStatus } from "../api/quotations";
 import { formatMoney, formatDate } from "../utils/format";
 import { Modal } from "../components/ui/Modal";
+
+const STATUS_OPTIONS: QuotationStatus[] = ["draft", "sent", "accepted", "declined"];
+
+const STATUS_STYLES: Record<string, string> = {
+  draft: "bg-slate-100 text-slate-600",
+  sent: "bg-blue-100 text-blue-700",
+  accepted: "bg-emerald-100 text-emerald-700",
+  declined: "bg-danger-light text-danger",
+};
 
 export function QuotationDetailPage() {
   const { id } = useParams();
@@ -12,12 +22,17 @@ export function QuotationDetailPage() {
 
   const { data: quotation, isLoading } = useQuotation(quotationId);
   const deleteQuotation = useDeleteQuotation();
+  const convertToInvoice = useConvertQuotationToInvoice();
+  const updateQuotation = useUpdateQuotation();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showTerms, setShowTerms] = useState(true);
+  const [showStatusDropdown, setShowStatusDropdown] = useState(false);
 
   if (isLoading || !quotation) {
     return <div className="h-96 animate-pulse rounded-xl bg-slate-100" />;
   }
+
+  const isConverted = !!quotation.converted_invoice_id;
 
   const handleDelete = () => {
     if (!quotationId) return;
@@ -29,6 +44,14 @@ export function QuotationDetailPage() {
     });
   };
 
+  const handleStatusChange = (status: QuotationStatus) => {
+    if (!quotationId) return;
+    updateQuotation.mutate(
+      { id: quotationId, payload: { status } },
+      { onSuccess: () => setShowStatusDropdown(false) }
+    );
+  };
+
   return (
     <div className="space-y-4 max-w-4xl mx-auto">
       <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
@@ -36,18 +59,62 @@ export function QuotationDetailPage() {
           <ArrowLeft size={16} /> Back to quotations
         </Link>
         <div className="flex flex-wrap items-center gap-2">
+          {!isConverted && (
+            <div className="relative">
+              <button
+                onClick={() => setShowStatusDropdown((v) => !v)}
+                disabled={updateQuotation.isPending}
+                className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 shadow-sm disabled:opacity-60"
+              >
+                <span>Change Status</span>
+                <ChevronDown size={14} />
+              </button>
+              {showStatusDropdown && (
+                <div className="absolute left-0 mt-1.5 w-36 rounded-lg border border-slate-100 bg-white p-1 shadow-lg z-20">
+                  {STATUS_OPTIONS.map((st) => (
+                    <button
+                      key={st}
+                      onClick={() => handleStatusChange(st)}
+                      disabled={st === quotation.status}
+                      className="w-full rounded-md px-3 py-1.5 text-left text-xs font-semibold capitalize text-slate-700 hover:bg-slate-50 hover:text-ink-900 disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent"
+                    >
+                      {st}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+          {isConverted ? (
+            <Link
+              to={`/sales/${quotation.converted_invoice_id}`}
+              className="flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors shadow-sm"
+            >
+              <FileOutput size={15} /> View Invoice
+            </Link>
+          ) : quotation.status === "accepted" ? (
+            <button
+              onClick={() => quotationId && convertToInvoice.mutate(quotationId)}
+              disabled={convertToInvoice.isPending}
+              className="flex items-center gap-1.5 rounded-lg bg-brand px-3 py-2 text-sm font-semibold text-white hover:bg-brand-dark transition-colors shadow-sm disabled:opacity-60"
+            >
+              <FileOutput size={15} /> {convertToInvoice.isPending ? "Converting…" : "Convert to Invoice"}
+            </button>
+          ) : null}
           <button
             onClick={() => window.print()}
             className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 shadow-sm"
           >
             <Printer size={15} /> Print
           </button>
-          <button
-            onClick={() => setShowDeleteConfirm(true)}
-            className="flex items-center gap-1.5 rounded-lg border border-danger-light bg-danger-light/50 px-3 py-2 text-sm font-semibold text-danger hover:bg-danger-light transition-colors shadow-sm"
-          >
-            <Trash2 size={15} /> Delete
-          </button>
+          {!isConverted && (
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              className="flex items-center gap-1.5 rounded-lg border border-danger-light bg-danger-light/50 px-3 py-2 text-sm font-semibold text-danger hover:bg-danger-light transition-colors shadow-sm"
+            >
+              <Trash2 size={15} /> Delete
+            </button>
+          )}
         </div>
       </div>
 
@@ -60,7 +127,16 @@ export function QuotationDetailPage() {
               </div>
               <span className="text-sm font-bold tracking-tight text-ink-900">Quotation</span>
             </div>
-            <h1 className="text-2xl font-extrabold text-ink-900 tracking-tight pt-1">#{quotation.quotation_number}</h1>
+            <div className="flex items-center gap-2 pt-1">
+              <h1 className="text-2xl font-extrabold text-ink-900 tracking-tight">#{quotation.quotation_number}</h1>
+              <span
+                className={`rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${
+                  quotation.converted_invoice_id ? "bg-emerald-100 text-emerald-700" : STATUS_STYLES[quotation.status] ?? "bg-slate-100 text-slate-600"
+                }`}
+              >
+                {quotation.converted_invoice_id ? "Converted" : quotation.status}
+              </span>
+            </div>
           </div>
           <div className="text-sm text-slate-500 sm:text-right space-y-1">
             <div className="flex items-center gap-1.5 sm:justify-end">

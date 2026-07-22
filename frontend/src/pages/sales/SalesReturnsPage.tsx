@@ -1,9 +1,17 @@
 import { useState } from "react";
 import { useInvoices } from "../../hooks/useInvoices";
 import { TableSkeleton } from "../../components/ui/Skeletons";
+import { ExportToolbar, type ColumnDef } from "../../components/ui/ExportToolbar";
 import { formatMoney, formatDate } from "../../utils/format";
 import { useTranslation } from "../../context/LanguageContext";
 import { useBranch } from "../../context/BranchContext";
+
+const RETURNS_COLUMNS: ColumnDef[] = [
+  { key: "invoice_number", label: "Invoice", visible: true },
+  { key: "customer", label: "Customer", visible: true },
+  { key: "grand_total", label: "Amount", visible: true },
+  { key: "issue_date", label: "Date", visible: true },
+];
 
 export function SalesReturnsPage() {
   const { t } = useTranslation();
@@ -11,6 +19,7 @@ export function SalesReturnsPage() {
 
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const [columns, setColumns] = useState<ColumnDef[]>(RETURNS_COLUMNS);
   const { data, isLoading } = useInvoices({
     page,
     search,
@@ -34,6 +43,22 @@ export function SalesReturnsPage() {
           }}
           placeholder={t("Search returns…")}
           className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-3 pr-3 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
+        />
+      </div>
+
+      {/* Export toolbar */}
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-slate-400">{data?.total ?? 0} {t("records")}</span>
+        <ExportToolbar
+          data={(data?.items ?? []).map((invoice) => ({
+            invoice_number: invoice.invoice_number,
+            customer: invoice.customer?.name ?? "",
+            grand_total: invoice.grand_total,
+            issue_date: formatDate(invoice.issue_date),
+          }))}
+          columns={columns}
+          onColumnsChange={setColumns}
+          filename="sales-returns"
         />
       </div>
 

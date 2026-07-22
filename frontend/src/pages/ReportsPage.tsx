@@ -1,8 +1,11 @@
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 import {
   FileText,
+  FileType,
+  FileSpreadsheet,
   TrendingUp,
   TrendingDown,
   ShoppingBag,
@@ -264,58 +267,61 @@ export function ReportsPage() {
     document.body.removeChild(link);
   };
 
-  const exportTabCSV = () => {
-    if (activeTab === "sales" && salesReportQuery.data) {
-      const headers = ["Invoice Number", "Customer Name", "Issue Date", "Subtotal", "Tax", "Discount", "Grand Total", "Amount Paid", "Status"];
-      const rows = salesReportQuery.data.items.map((item: any) => [
-        item.invoice_number,
-        item.customer?.name || "",
-        item.issue_date,
-        item.subtotal,
-        item.tax_total,
-        item.discount_total,
-        item.grand_total,
-        item.amount_paid,
-        item.status,
-      ]);
-      handleExportCSV("Sales_Report", headers, rows);
-    } else if (activeTab === "purchases" && purchasesReportQuery.data) {
-      const headers = ["Purchase Number", "Supplier Name", "Purchase Date", "Grand Total", "Amount Paid", "Status"];
-      const rows = purchasesReportQuery.data.items.map((item: any) => [
-        item.purchase_number,
-        item.supplier?.name || "",
-        item.purchase_date,
-        item.grand_total,
-        item.amount_paid,
-        item.status,
-      ]);
-      handleExportCSV("Purchase_Report", headers, rows);
-    } else if (activeTab === "expenses" && expensesReportQuery.data) {
-      const headers = ["Expense Date", "Category", "Amount", "Reference", "Note"];
-      const rows = expensesReportQuery.data.items.map((item: any) => [
-        item.expense_date,
-        item.category?.name || "",
-        item.amount,
-        item.reference_no || "",
-        item.notes || "",
-      ]);
-      handleExportCSV("Expense_Report", headers, rows);
-    } else if (activeTab === "stock" && stockReportQuery.data) {
-      const headers = ["Item Name", "SKU", "Stock Quantity", "Unit Price", "Stock Value", "Unit"];
-      const rows = stockReportQuery.data.items.map((item: any) => [
-        item.name,
-        item.sku,
-        item.stock_quantity,
-        item.unit_price,
-        item.value,
-        item.unit,
-      ]);
-      handleExportCSV("Stock_Report", headers, rows);
-    }
-  };
-
   const handlePrint = () => {
     window.print();
+  };
+
+  // Mirrors the extra filter each tab's useQuery layers on top of getParams(),
+  // so the exported file matches exactly what's on screen.
+  const getExportParams = () => {
+    const params = getParams();
+    switch (activeTab) {
+      case "sales":
+      case "sales_returns":
+      case "customer_orders":
+      case "sales_payments":
+        if (customerId !== "all") params.customer_id = customerId;
+        if (activeTab === "sales" && invoiceStatus !== "all") params.status = invoiceStatus;
+        break;
+      case "purchases":
+      case "purchase_returns":
+      case "supplier_items":
+      case "purchase_payments":
+        if (supplierId !== "all") params.supplier_id = supplierId;
+        break;
+      case "expenses":
+        if (expenseCategoryId !== "all") params.category_id = expenseCategoryId;
+        break;
+      case "stock":
+        return selectedBranch !== "all" ? { branch_id: selectedBranch } : {};
+      default:
+        break;
+    }
+    return params;
+  };
+
+  const [isExporting, setIsExporting] = useState<"pdf" | "excel" | null>(null);
+
+  const handleExportFile = async (format: "pdf" | "excel") => {
+    setIsExporting(format);
+    try {
+      const response = await apiClient.get("/reports/export", {
+        params: { ...getExportParams(), type: activeTab, format },
+        responseType: "blob",
+      });
+      const blobUrl = URL.createObjectURL(response.data as Blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = `${activeTab}_report.${format === "pdf" ? "pdf" : "xlsx"}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      toast.error(t("Couldn't export the report. Please try again."));
+    } finally {
+      setIsExporting(null);
+    }
   };
 
   const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8", "#82ca9d"];
@@ -329,15 +335,22 @@ export function ReportsPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          {activeTab !== "profit_loss" && (
-            <button
-              onClick={exportTabCSV}
-              className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-            >
-              <Download size={14} />
-              {t("Export CSV")}
-            </button>
-          )}
+          <button
+            onClick={() => handleExportFile("pdf")}
+            disabled={isExporting !== null}
+            className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+          >
+            <FileType size={14} />
+            {isExporting === "pdf" ? t("Exporting…") : t("Export PDF")}
+          </button>
+          <button
+            onClick={() => handleExportFile("excel")}
+            disabled={isExporting !== null}
+            className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+          >
+            <FileSpreadsheet size={14} />
+            {isExporting === "excel" ? t("Exporting…") : t("Export Excel")}
+          </button>
           <button
             onClick={handlePrint}
             className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"

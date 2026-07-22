@@ -211,10 +211,28 @@ export function InvoiceDetailPage() {
             <span>{t("Subtotal")}</span>
             <span className="figures font-medium">{formatMoney(invoice.subtotal)}</span>
           </div>
-          <div className="flex justify-between text-slate-500">
-            <span>{t("Tax")}</span>
-            <span className="figures font-medium">{formatMoney(invoice.tax_total)}</span>
-          </div>
+          {invoice.igst_total > 0 ? (
+            <div className="flex justify-between text-slate-500">
+              <span>{t("IGST")}</span>
+              <span className="figures font-medium">{formatMoney(invoice.igst_total)}</span>
+            </div>
+          ) : invoice.cgst_total > 0 || invoice.sgst_total > 0 ? (
+            <>
+              <div className="flex justify-between text-slate-500">
+                <span>{t("CGST")}</span>
+                <span className="figures font-medium">{formatMoney(invoice.cgst_total)}</span>
+              </div>
+              <div className="flex justify-between text-slate-500">
+                <span>{t("SGST")}</span>
+                <span className="figures font-medium">{formatMoney(invoice.sgst_total)}</span>
+              </div>
+            </>
+          ) : (
+            <div className="flex justify-between text-slate-500">
+              <span>{t("Tax")}</span>
+              <span className="figures font-medium">{formatMoney(invoice.tax_total)}</span>
+            </div>
+          )}
           {invoice.discount_total > 0 && (
             <div className="flex justify-between text-emerald-600 font-medium">
               <span>{t("Discount")}</span>

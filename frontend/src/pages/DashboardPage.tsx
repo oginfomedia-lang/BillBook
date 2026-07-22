@@ -135,7 +135,7 @@ export function DashboardPage() {
               count={counts.customers}
               icon={Users}
               iconBg="bg-blue-100 text-blue-600"
-              to={hasPermission("customers.view") ? "/customers" : undefined}
+              to={hasPermission("customers.view") ? "/contacts/customers" : undefined}
             />
             <CountCard
               label={t("Products")}

@@ -24,3 +24,15 @@
     border-radius: 9999px;
   }
 }
+
+/* Browsers strip background-color/background-image by default when printing
+   (to save ink) unless told otherwise. Anything rendered via a background
+   (like the barcode bars on the Print Labels page) would otherwise vanish
+   on the printed page/PDF while still looking correct on screen. */
+@media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+}

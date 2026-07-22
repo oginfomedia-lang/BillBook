@@ -13,11 +13,13 @@ import {
   Trash2,
   Eye,
   Edit,
+  Printer,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import {
   listPurchases,
   getPurchaseStats,
+  getPurchase,
   deletePurchase,
   type Purchase,
   type PurchaseStats,
@@ -25,6 +27,7 @@ import {
 import { listWarehouses, type Warehouse } from "../../api/warehouses";
 import { formatMoney, formatDate } from "../../utils/format";
 import { ExportToolbar, type ColumnDef } from "../../components/ui/ExportToolbar";
+import { PurchaseReceiptModal } from "../../components/PurchaseReceiptModal";
 
 // -------------------------------------------------------------------
 // Stat Card
@@ -102,6 +105,8 @@ export function PurchaseListPage() {
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [printingPurchase, setPrintingPurchase] = useState<Purchase | null>(null);
+  const [loadingReceiptId, setLoadingReceiptId] = useState<number | null>(null);
 
   const PER_PAGE = 10;
   const [columns, setColumns] = useState<ColumnDef[]>([
@@ -154,6 +159,18 @@ export function PurchaseListPage() {
       toast.error("Could not delete purchase");
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const handlePrintReceipt = async (id: number) => {
+    setLoadingReceiptId(id);
+    try {
+      const full = await getPurchase(id);
+      setPrintingPurchase(full);
+    } catch {
+      toast.error("Could not load purchase receipt");
+    } finally {
+      setLoadingReceiptId(null);
     }
   };
 
@@ -331,8 +348,9 @@ export function PurchaseListPage() {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1">
                       <button
-                        onClick={() => navigate(`/purchase/${p.id}`)}
-                        className="flex items-center gap-1 rounded-lg bg-[#1e6fa8] px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-[#1a5f90] transition-colors"
+                        onClick={() => handlePrintReceipt(p.id)}
+                        disabled={loadingReceiptId === p.id}
+                        className="flex items-center gap-1 rounded-lg bg-[#1e6fa8] px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-[#1a5f90] transition-colors disabled:opacity-50"
                         title="View"
                       >
                         <Eye size={13} />
@@ -343,6 +361,14 @@ export function PurchaseListPage() {
                         title="Edit"
                       >
                         <Edit size={13} />
+                      </button>
+                      <button
+                        onClick={() => handlePrintReceipt(p.id)}
+                        disabled={loadingReceiptId === p.id}
+                        className="flex items-center gap-1 rounded-lg bg-emerald-500 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-600 transition-colors disabled:opacity-50"
+                        title="Print Receipt"
+                      >
+                        <Printer size={13} />
                       </button>
                       <button
                         onClick={() => handleDelete(p.id)}
@@ -401,6 +427,13 @@ export function PurchaseListPage() {
           </button>
         </div>
       </div>
+      {/* Receipt Modal for reprinting existing purchases */}
+      {printingPurchase && (
+        <PurchaseReceiptModal
+          purchase={printingPurchase}
+          onClose={() => setPrintingPurchase(null)}
+        />
+      )}
     </div>
   );
 }

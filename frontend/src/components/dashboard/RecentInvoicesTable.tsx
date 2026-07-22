@@ -61,7 +61,7 @@ export function RecentInvoicesTable({ invoices, isLoading }: RecentInvoicesTable
               </td>
               <td className="px-4 py-2.5">
                 <Link
-                  to={`/invoices/${inv.id}`}
+                  to={`/sales/${inv.id}`}
                   className="font-medium text-brand hover:underline"
                 >
                   {inv.invoice_number}
