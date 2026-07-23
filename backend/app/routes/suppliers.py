@@ -40,7 +40,7 @@ def list_suppliers():
             )
         )
 
-    pagination = query.order_by(Supplier.name.asc()).paginate(page=page, per_page=per_page, error_out=False)
+    pagination = query.order_by(Supplier.created_at.desc()).paginate(page=page, per_page=per_page, error_out=False)
     return jsonify(
         {
             "items": [s.to_dict() for s in pagination.items],

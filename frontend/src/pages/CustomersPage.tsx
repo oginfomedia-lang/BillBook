@@ -17,7 +17,7 @@ const CUSTOMER_COLUMNS: ColumnDef[] = [
   { key: "phone", label: "Phone", visible: true },
   { key: "gstin", label: "GSTIN", visible: true },
   { key: "billing_address", label: "Address", visible: true },
-  { key: "opening_balance", label: "Balance", visible: true },
+  { key: "balance", label: "Balance", visible: true },
 ];
 
 export function CustomersPage() {
@@ -161,9 +161,8 @@ export function CustomersPage() {
                 setCreateEmailError(validateEmail(lc).error);
                 setCreateContactError("");
               }}
-              className={`w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
-                createEmailError ? "border-red-400 focus:ring-red-400" : form.email && !createEmailError ? "border-green-400 focus:ring-green-400" : "border-slate-200 focus:ring-brand"
-              }`}
+              className={`w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-1 ${createEmailError ? "border-red-400 focus:ring-red-400" : form.email && !createEmailError ? "border-green-400 focus:ring-green-400" : "border-slate-200 focus:ring-brand"
+                }`}
             />
             <p className="mt-0.5 text-xs text-slate-400">e.g. username@domain.com</p>
             {createEmailError && <p id="create-email-error" className="mt-1 text-xs text-red-500">{createEmailError}</p>}
@@ -180,9 +179,8 @@ export function CustomersPage() {
                 setCreatePhoneError(validatePhone(formatted).error);
                 setCreateContactError("");
               }}
-              className={`w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
-                createPhoneError ? "border-red-400 focus:ring-red-400" : form.phone && !createPhoneError ? "border-green-400 focus:ring-green-400" : "border-slate-200 focus:ring-brand"
-              }`}
+              className={`w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-1 ${createPhoneError ? "border-red-400 focus:ring-red-400" : form.phone && !createPhoneError ? "border-green-400 focus:ring-green-400" : "border-slate-200 focus:ring-brand"
+                }`}
             />
             <p className="mt-0.5 text-xs text-slate-400">Format: +91-98765-43210</p>
             {createPhoneError && <p id="create-phone-error" className="mt-1 text-xs text-red-500">{createPhoneError}</p>}
@@ -198,9 +196,8 @@ export function CustomersPage() {
                 setForm({ ...form, gstin: upper });
                 setCreateGstinError(isValidGSTIN(upper) ? "" : GSTIN_ERROR_MESSAGE);
               }}
-              className={`w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
-                createGstinError ? "border-red-400 focus:ring-red-400" : "border-slate-200 focus:ring-brand"
-              }`}
+              className={`w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-1 ${createGstinError ? "border-red-400 focus:ring-red-400" : "border-slate-200 focus:ring-brand"
+                }`}
             />
             {createGstinError && <p className="mt-1 text-xs text-red-500">{createGstinError}</p>}
           </div>
@@ -256,7 +253,7 @@ export function CustomersPage() {
             phone: c.phone ?? "",
             gstin: c.gstin ?? "",
             billing_address: c.billing_address ?? "",
-            opening_balance: c.opening_balance ?? 0,
+            balance: c.balance ?? 0,
           }))}
           columns={columns}
           onColumnsChange={setColumns}
@@ -373,9 +370,8 @@ export function CustomersPage() {
                 setEditForm({ ...editForm, email: lc });
                 setEditEmailError(validateEmail(lc).error);
               }}
-              className={`w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
-                editEmailError ? "border-red-400 focus:ring-red-400" : editForm.email && !editEmailError ? "border-green-400 focus:ring-green-400" : "border-slate-200 focus:ring-brand"
-              }`}
+              className={`w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-1 ${editEmailError ? "border-red-400 focus:ring-red-400" : editForm.email && !editEmailError ? "border-green-400 focus:ring-green-400" : "border-slate-200 focus:ring-brand"
+                }`}
             />
             <p className="mt-0.5 text-xs text-slate-400">e.g. username@domain.com</p>
             {editEmailError && <p id="edit-email-error" className="mt-1 text-xs text-red-500">{editEmailError}</p>}
@@ -391,9 +387,8 @@ export function CustomersPage() {
                 setEditForm({ ...editForm, phone: formatted });
                 setEditPhoneError(validatePhone(formatted).error);
               }}
-              className={`w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
-                editPhoneError ? "border-red-400 focus:ring-red-400" : editForm.phone && !editPhoneError ? "border-green-400 focus:ring-green-400" : "border-slate-200 focus:ring-brand"
-              }`}
+              className={`w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-1 ${editPhoneError ? "border-red-400 focus:ring-red-400" : editForm.phone && !editPhoneError ? "border-green-400 focus:ring-green-400" : "border-slate-200 focus:ring-brand"
+                }`}
             />
             <p className="mt-0.5 text-xs text-slate-400">Format: +91-98765-43210</p>
             {editPhoneError && <p id="edit-phone-error" className="mt-1 text-xs text-red-500">{editPhoneError}</p>}
@@ -407,9 +402,8 @@ export function CustomersPage() {
                 setEditForm({ ...editForm, gstin: upper });
                 setEditGstinError(isValidGSTIN(upper) ? "" : GSTIN_ERROR_MESSAGE);
               }}
-              className={`w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
-                editGstinError ? "border-red-400 focus:ring-red-400" : "border-slate-200 focus:ring-brand"
-              }`}
+              className={`w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-1 ${editGstinError ? "border-red-400 focus:ring-red-400" : "border-slate-200 focus:ring-brand"
+                }`}
             />
             {editGstinError && <p className="mt-1 text-xs text-red-500">{editGstinError}</p>}
           </div>

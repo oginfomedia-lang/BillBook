@@ -40,7 +40,7 @@ def list_customers():
             )
         )
 
-    pagination = query.order_by(Customer.name.asc()).paginate(page=page, per_page=per_page, error_out=False)
+    pagination = query.order_by(Customer.created_at.desc()).paginate(page=page, per_page=per_page, error_out=False)
     return jsonify(
         {
             "items": [c.to_dict() for c in pagination.items],

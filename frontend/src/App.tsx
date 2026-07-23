@@ -149,8 +149,8 @@ export default function App() {
 
                   {/* Items */}
                   <Route path="/items" element={<PermissionRoute permission="products.view"><ItemsPage /></PermissionRoute>} />
-                  <Route path="/items/new" element={<PermissionRoute permission="products.create"><ItemFormPage /></PermissionRoute>} />
-                  <Route path="/items/new-service" element={<PermissionRoute permission="products.create"><ItemFormPage isService={true} /></PermissionRoute>} />
+                  <Route path="/items/new" element={<PermissionRoute permission="products.create"><ItemFormPage key="new-item" /></PermissionRoute>} />
+                  <Route path="/items/new-service" element={<PermissionRoute permission="products.create"><ItemFormPage key="new-service" isService={true} /></PermissionRoute>} />
                   <Route path="/items/:itemId/edit" element={<PermissionRoute permission="products.edit"><ItemFormPage /></PermissionRoute>} />
                   <Route path="/items/categories" element={<PermissionRoute permission="products.view"><CategoriesListPage /></PermissionRoute>} />
                   <Route path="/items/brands" element={<PermissionRoute permission="products.view"><BrandsListPage /></PermissionRoute>} />

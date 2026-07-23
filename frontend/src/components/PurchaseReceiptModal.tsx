@@ -47,24 +47,10 @@ const PAYMENT_PRINTS: Record<string, string> = {
   pending: "background:#fef3c7;color:#b45309;border:1px solid #fde68a",
 };
 
-export function PurchaseReceiptModal({ purchase, onClose }: Props) {
-  const printRef = useRef<HTMLDivElement>(null);
+const RECEIPT_STYLES = `
+            .receipt{max-width:800px;margin:0 auto;border:1px solid #e2e8f0;border-radius:16px;padding:32px;box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);font-family:'Segoe UI',Arial,sans-serif;font-size:13px;color:#1e293b;background:#fff}
+            .receipt *{box-sizing:border-box}
 
-  const handlePrint = () => {
-    const content = printRef.current?.innerHTML ?? "";
-    const win = window.open("", "_blank", "width=900,height=700");
-    if (!win) return;
-    win.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8"/>
-          <title>Purchase Receipt – ${purchase.purchase_code}</title>
-          <style>
-            *{margin:0;padding:0;box-sizing:border-box}
-            body{font-family:'Segoe UI',Arial,sans-serif;font-size:13px;color:#1e293b;background:#fff;padding:24px}
-            .receipt{max-width:800px;margin:0 auto;border:1px solid #e2e8f0;border-radius:16px;padding:32px;box-shadow:0 4px 6px -1px rgba(0,0,0,0.05)}
-            
             /* Header Section */
             .header-sec{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px}
             .logo-wrap{display:flex;align-items:center;gap:12px}
@@ -121,7 +107,25 @@ export function PurchaseReceiptModal({ purchase, onClose }: Props) {
             .sign-wrap{text-align:center;width:180px}
             .sign-img{font-family:'Dancing Script','Brush Script MT',cursive;font-size:20px;color:#1e293b;margin-bottom:4px;font-style:italic}
             .sign-line{border-top:1px dotted #94a3b8;margin-top:4px;padding-top:4px;font-size:10px;font-weight:700;text-transform:uppercase;color:#64748b;letter-spacing:0.05em}
+`;
 
+export function PurchaseReceiptModal({ purchase, onClose }: Props) {
+  const printRef = useRef<HTMLDivElement>(null);
+
+  const handlePrint = () => {
+    const content = printRef.current?.innerHTML ?? "";
+    const win = window.open("", "_blank", "width=900,height=700");
+    if (!win) return;
+    win.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8"/>
+          <title>Purchase Receipt – ${purchase.purchase_code}</title>
+          <style>
+            *{margin:0;padding:0;box-sizing:border-box}
+            body{font-family:'Segoe UI',Arial,sans-serif;font-size:13px;color:#1e293b;background:#fff;padding:24px}
+            ${RECEIPT_STYLES}
             @media print{
               body{padding:0}
               .receipt{border:0;box-shadow:none;padding:0}
@@ -166,9 +170,8 @@ export function PurchaseReceiptModal({ purchase, onClose }: Props) {
 
         {/* ── Scrollable Receipt Template ─────────────────────── */}
         <div className="flex-1 overflow-y-auto p-8 bg-slate-100/40">
-          <div className="max-w-[800px] mx-auto bg-white border border-slate-200/80 rounded-2xl p-8 sm:p-10 shadow-sm">
-            
-            <div ref={printRef} className="receipt">
+          <style>{RECEIPT_STYLES}</style>
+          <div ref={printRef} className="receipt">
               {/* Header */}
               <div className="header-sec">
                 <div className="logo-wrap">
@@ -376,9 +379,7 @@ export function PurchaseReceiptModal({ purchase, onClose }: Props) {
                 </div>
               </div>
             </div>
-            
           </div>
-        </div>
 
       </div>
     </div>

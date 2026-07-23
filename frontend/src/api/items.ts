@@ -159,7 +159,16 @@ export const deleteItem = async (id: number): Promise<{ message: string }> => {
 };
 
 // Bulk import items from CSV
-export const bulkImportItems = async (file: File): Promise<{ message: string; imported_count: number; errors: string[] }> => {
+export interface BulkImportResult {
+    message: string;
+    items_created: number;
+    items_failed: number;
+    brands_created: number;
+    categories_created: number;
+    errors: { row: number; errors: Record<string, any> }[];
+}
+
+export const bulkImportItems = async (file: File): Promise<BulkImportResult> => {
     const formData = new FormData();
     formData.append('file', file);
 

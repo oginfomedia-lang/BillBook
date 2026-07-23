@@ -48,11 +48,19 @@ export function ImportServicesPage() {
 
         try {
             const res = await importServices.mutateAsync(file);
-            toast.success(`Successfully imported ${res.imported_count} services!`);
-            navigate('/items');
+            const parts = [`${res.items_created} service(s) created`];
+            if (res.brands_created) parts.push(`${res.brands_created} new brand(s) added`);
+            if (res.categories_created) parts.push(`${res.categories_created} new categor${res.categories_created === 1 ? 'y' : 'ies'} added`);
+            if (res.items_failed) parts.push(`${res.items_failed} row(s) skipped`);
+            toast.success(parts.join(', '));
+            if (res.errors && res.errors.length > 0) {
+                setImportErrors(res.errors);
+            } else {
+                navigate('/items');
+            }
         } catch (err: any) {
             console.error(err);
-            const backendDetails = err?.response?.data?.details || [];
+            const backendDetails = err?.response?.data?.errors || err?.response?.data?.details || [];
             setImportErrors(backendDetails);
             toast.error(err?.response?.data?.error || 'Failed to import CSV.');
         }

@@ -175,28 +175,61 @@ def bulk_import_items():
         return jsonify({"error": "Unable to read uploaded file"}), 400
 
     reader = csv.DictReader(io.StringIO(content))
+    rows = [
+        {key.strip(): (value.strip() if isinstance(value, str) else value) for key, value in row.items()}
+        for row in reader
+    ]
+    if not rows:
+        return jsonify({"error": "CSV file has no data rows"}), 400
+
+    tenant_id = TenantContext.get()
+
+    # --- Collect every unique Brand/Category name referenced anywhere in the file ---
+    brand_names = {row["brand"] for row in rows if row.get("brand")}
+    category_names = {row["category"] for row in rows if row.get("category")}
+
+    # --- Look up the ones that already exist ---
+    brand_map = {b.name: b.id for b in Brand.query.filter(Brand.name.in_(brand_names)).all()} if brand_names else {}
+    category_map = (
+        {c.name: c.id for c in Category.query.filter(Category.name.in_(category_names)).all()} if category_names else {}
+    )
+
+    # --- Auto-create whichever names weren't found, so every row can resolve an ID ---
+    brands_created = 0
+    for name in brand_names - brand_map.keys():
+        brand = Brand(tenant_id=tenant_id, name=name, status="active")
+        db.session.add(brand)
+        db.session.flush()  # assigns brand.id without committing yet
+        brand_map[name] = brand.id
+        brands_created += 1
+
+    categories_created = 0
+    for name in category_names - category_map.keys():
+        category = Category(tenant_id=tenant_id, name=name, status="active")
+        db.session.add(category)
+        db.session.flush()
+        category_map[name] = category.id
+        categories_created += 1
+
     imported = []
     errors = []
     seen_codes = {}  # item_code -> row_number, catches duplicates within this file (DB check alone misses these since nothing is flushed until commit)
     seen_skus = {}  # sku -> row_number, same reasoning
 
-    tenant_id = TenantContext.get()
-
-    for row_number, row in enumerate(reader, start=2):
-        cleaned = {key.strip(): (value.strip() if isinstance(value, str) else value) for key, value in row.items()}
-        
-        # Simple lookup for related names to IDs
-        if cleaned.get("category"):
-            cat = Category.query.filter_by(name=cleaned.get("category")).first()
-            if cat:
-                cleaned["category_id"] = cat.id
-        if cleaned.get("brand"):
-            brand = Brand.query.filter_by(name=cleaned.get("brand")).first()
-            if brand:
-                cleaned["brand_id"] = brand.id
-        if cleaned.get("unit"):
+    for row_number, cleaned in enumerate(rows, start=2):
+        # Map the resolved Brand/Category IDs onto this row (existing or just auto-created above),
+        # then drop the raw name columns — CreateItemSchema only knows about *_id fields and
+        # rejects anything else as an "Unknown field" (marshmallow's default unknown=RAISE).
+        category_name = cleaned.pop("category", None)
+        if category_name:
+            cleaned["category_id"] = category_map.get(category_name)
+        brand_name = cleaned.pop("brand", None)
+        if brand_name:
+            cleaned["brand_id"] = brand_map.get(brand_name)
+        unit_name = cleaned.pop("unit", None)
+        if unit_name:
             unit = Unit.query.filter(
-                db.or_(Unit.name == cleaned.get("unit"), Unit.short_name == cleaned.get("unit"))
+                db.or_(Unit.name == unit_name, Unit.short_name == unit_name)
             ).first()
             if unit:
                 cleaned["unit_id"] = unit.id
@@ -253,8 +286,18 @@ def bulk_import_items():
         item.calculate_profit_margin()
         imported.append(item)
 
-    if errors:
-        return jsonify({"error": "Import failed", "details": errors}), 422
+    if not imported:
+        # Nothing to save — roll back so the auto-created Brands/Categories above
+        # don't get silently committed behind a response that says "failed".
+        db.session.rollback()
+        return jsonify({
+            "error": "Import failed: no items were created",
+            "items_created": 0,
+            "items_failed": len(errors),
+            "brands_created": 0,
+            "categories_created": 0,
+            "errors": errors,
+        }), 422
 
     db.session.add_all(imported)
     try:
@@ -262,7 +305,15 @@ def bulk_import_items():
     except IntegrityError:
         db.session.rollback()
         return jsonify({"error": "Import failed: one or more item codes, SKUs, or barcodes already exist"}), 422
-    return jsonify({"message": "Items imported successfully", "imported_count": len(imported)}), 201
+
+    return jsonify({
+        "message": "Import completed",
+        "items_created": len(imported),
+        "items_failed": len(errors),
+        "brands_created": brands_created,
+        "categories_created": categories_created,
+        "errors": errors,
+    }), 201
 
 
 # -----------------------------------------------------------------------------

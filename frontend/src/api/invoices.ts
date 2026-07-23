@@ -41,7 +41,8 @@ export async function deleteInvoice(id: number) {
   await apiClient.delete(`/invoices/${id}`);
 }
 
-export async function recordPayment(id: number, amount: number) {
-  const { data } = await apiClient.post<Invoice>(`/invoices/${id}/record-payment`, { amount });
+export async function recordPayment(id: number, amount: number, paymentMode?: string) {
+  const { data } = await apiClient.post<Invoice>(`/invoices/${id}/record-payment`, { amount, payment_mode: paymentMode, });
+
   return data;
 }

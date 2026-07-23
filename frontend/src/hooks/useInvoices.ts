@@ -69,8 +69,8 @@ export function useDeleteInvoice() {
 export function useRecordPayment() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, amount }: { id: number; amount: number }) =>
-      invoicesApi.recordPayment(id, amount),
+    mutationFn: ({ id, amount, payment_mode }: { id: number; amount: number; payment_mode?: string }) =>
+      invoicesApi.recordPayment(id, amount, payment_mode),
     onSuccess: (invoice) => {
       queryClient.invalidateQueries({ queryKey: ["invoices"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });

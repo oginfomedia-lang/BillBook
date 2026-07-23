@@ -1,14 +1,20 @@
 from datetime import datetime
 from decimal import Decimal
 from app.extensions import db
+from app.tenant_scope import TenantScopedMixin
 
 
-class Item(db.Model):
+class Item(TenantScopedMixin, db.Model):
     """Item/Product Model for BillBook"""
     __tablename__ = 'items'
+    __table_args__ = (
+        db.UniqueConstraint("tenant_id", "item_code", name="uq_item_tenant_item_code"),
+        db.UniqueConstraint("tenant_id", "sku", name="uq_item_tenant_sku"),
+        db.UniqueConstraint("tenant_id", "barcode", name="uq_item_tenant_barcode"),
+    )
 
     id = db.Column(db.Integer, primary_key=True)
-    item_code = db.Column(db.String(50), unique=True, nullable=False, index=True)
+    item_code = db.Column(db.String(50), nullable=False, index=True)
     item_name = db.Column(db.String(255), nullable=False, index=True)
     item_group_id = db.Column(db.Integer, db.ForeignKey('item_groups.id'), nullable=True)
     category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=True)
@@ -17,10 +23,10 @@ class Item(db.Model):
     type = db.Column(db.String(20), default='item')  # 'item' or 'service'
     
     # Codes and Identifiers
-    sku = db.Column(db.String(100), unique=True, nullable=True, index=True)
+    sku = db.Column(db.String(100), nullable=True, index=True)
     hsn = db.Column(db.String(50), nullable=True)  # Harmonized System of Nomenclature
     sac = db.Column(db.String(50), nullable=True)  # Service Accounting Code
-    barcode = db.Column(db.String(255), nullable=True, unique=True)
+    barcode = db.Column(db.String(255), nullable=True)
     
     # Description and Image
     description = db.Column(db.Text, nullable=True)
@@ -61,7 +67,6 @@ class Item(db.Model):
     # Timestamps and Tenant
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    tenant_id = db.Column(db.Integer, db.ForeignKey('tenants.id'), nullable=False, index=True)
 
     @property
     def name(self):

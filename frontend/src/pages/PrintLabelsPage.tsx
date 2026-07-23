@@ -69,7 +69,10 @@ export function PrintLabelsPage() {
                             min="1"
                             max="100"
                             value={quantity}
-                            onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                            onChange={(e) => {
+                                const parsed = parseInt(e.target.value, 10);
+                                setQuantity(Number.isNaN(parsed) ? 1 : Math.min(100, Math.max(1, parsed)));
+                            }}
                             className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
                         />
                     </div>

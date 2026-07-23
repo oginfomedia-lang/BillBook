@@ -23,13 +23,38 @@ interface ExportToolbarProps {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
+// Leading characters spreadsheet apps (Excel/LibreOffice/Sheets) treat as
+// "this cell is a formula". Any user-controlled string (customer/item names,
+// notes, etc.) starting with one of these would otherwise be written as a
+// LIVE formula and execute when the exported file is opened — classic
+// CSV/formula injection (data exfiltration via HYPERLINK, etc.). Same fix
+// already applied on the backend's report export (app/utils/report_export.py).
+const FORMULA_TRIGGER_CHARS = ["=", "+", "-", "@", "\t", "\r"];
+
+function sanitizeForSpreadsheet(value: any): string {
+  const v = String(value ?? "");
+  return FORMULA_TRIGGER_CHARS.some((c) => v.startsWith(c)) ? `'${v}` : v;
+}
+
+// Escapes a value for safe interpolation into an HTML string. Without this,
+// any field containing markup (e.g. a customer named "<script>...</script>")
+// would execute as real script/HTML in the PDF export's document.write().
+function escapeHtml(value: any): string {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function rowsToCSV(data: Record<string, any>[], visibleKeys: string[]): string {
   if (!data.length) return "";
   const header = visibleKeys.join(",");
   const rows = data.map((row) =>
     visibleKeys
       .map((k) => {
-        const v = String(row[k] ?? "");
+        const v = sanitizeForSpreadsheet(row[k]);
         return v.includes(",") || v.includes('"') || v.includes("\n")
           ? `"${v.replace(/"/g, '""')}"`
           : v;
@@ -125,7 +150,7 @@ export function ExportToolbar({
     // Simple TSV that Excel opens directly
     const tsv = [
       visibleKeys.join("\t"),
-      ...data.map((row) => visibleKeys.map((k) => row[k] ?? "").join("\t")),
+      ...data.map((row) => visibleKeys.map((k) => sanitizeForSpreadsheet(row[k])).join("\t")),
     ].join("\n");
     downloadFile(
       "\uFEFF" + tsv,
@@ -143,16 +168,17 @@ export function ExportToolbar({
           `<tr>${visibleKeys
             .map(
               (k) =>
-                `<td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;font-size:12px;">${row[k] ?? ""}</td>`
+                `<td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;font-size:12px;">${escapeHtml(row[k])}</td>`
             )
             .join("")}</tr>`
       )
       .join("");
 
+    const safeFilename = escapeHtml(filename);
     const html = `
       <html>
         <head>
-          <title>${filename}</title>
+          <title>${safeFilename}</title>
           <style>
             body { font-family: sans-serif; color: #1e293b; margin: 24px; }
             h1 { font-size: 18px; margin-bottom: 16px; color: #0f172a; }
@@ -162,10 +188,10 @@ export function ExportToolbar({
           </style>
         </head>
         <body>
-          <h1>${filename}</h1>
+          <h1>${safeFilename}</h1>
           <table>
             <thead><tr>${visibleKeys
-              .map((k) => `<th>${columns?.find((c) => c.key === k)?.label ?? k}</th>`)
+              .map((k) => `<th>${escapeHtml(columns?.find((c) => c.key === k)?.label ?? k)}</th>`)
               .join("")}</tr></thead>
             <tbody>${rows}</tbody>
           </table>
