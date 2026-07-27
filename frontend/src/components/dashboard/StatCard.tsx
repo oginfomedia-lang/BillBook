@@ -10,15 +10,15 @@ interface StatCardProps {
   tone?: Tone;
 }
 
-const TONE_STYLES: Record<Tone, { card: string; icon: string }> = {
-  purple:  { card: "bg-gradient-to-br from-violet-600 to-purple-500 text-white",  icon: "bg-white/20 text-white" },
-  red:     { card: "bg-gradient-to-br from-red-600 to-rose-400 text-white",        icon: "bg-white/20 text-white" },
-  green:   { card: "bg-gradient-to-br from-emerald-600 to-teal-400 text-white",    icon: "bg-white/20 text-white" },
-  navy:    { card: "bg-gradient-to-br from-slate-800 to-blue-700 text-white",      icon: "bg-white/20 text-white" },
-  brand:   { card: "bg-white border border-slate-200",                             icon: "bg-brand-light text-brand-dark" },
-  warn:    { card: "bg-white border border-slate-200",                             icon: "bg-warn-light text-warn" },
-  success: { card: "bg-white border border-slate-200",                             icon: "bg-success-light text-success" },
-  ink:     { card: "bg-white border border-slate-200",                             icon: "bg-slate-100 text-ink-700" },
+const TONE_STYLES: Record<Tone, { card: string; icon: string; shadow: string }> = {
+  purple:  { card: "bg-gradient-to-br from-violet-600 to-purple-500 text-white",  icon: "bg-white/20 text-white", shadow: "shadow-lg shadow-violet-500/20" },
+  red:     { card: "bg-gradient-to-br from-red-600 to-rose-400 text-white",        icon: "bg-white/20 text-white", shadow: "shadow-lg shadow-rose-500/20" },
+  green:   { card: "bg-gradient-to-br from-emerald-600 to-teal-400 text-white",    icon: "bg-white/20 text-white", shadow: "shadow-lg shadow-emerald-500/20" },
+  navy:    { card: "bg-gradient-to-br from-slate-800 to-blue-700 text-white",      icon: "bg-white/20 text-white", shadow: "shadow-lg shadow-blue-900/20" },
+  brand:   { card: "bg-white border border-slate-200/80",                          icon: "bg-brand-light text-brand-dark", shadow: "shadow-sm" },
+  warn:    { card: "bg-white border border-slate-200/80",                          icon: "bg-warn-light text-warn", shadow: "shadow-sm" },
+  success: { card: "bg-white border border-slate-200/80",                         icon: "bg-success-light text-success", shadow: "shadow-sm" },
+  ink:     { card: "bg-white border border-slate-200/80",                         icon: "bg-slate-100 text-ink-700", shadow: "shadow-sm" },
 };
 
 export function StatCard({ label, value, sublabel, icon: Icon, tone = "ink" }: StatCardProps) {
@@ -27,7 +27,7 @@ export function StatCard({ label, value, sublabel, icon: Icon, tone = "ink" }: S
 
   return (
     <div
-      className={`rounded-xl p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md ${styles.card}`}
+      className={`rounded-2xl p-5 transition-all hover:-translate-y-0.5 hover:shadow-xl ${styles.card} ${styles.shadow}`}
     >
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">

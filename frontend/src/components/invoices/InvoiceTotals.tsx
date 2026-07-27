@@ -43,7 +43,7 @@ export function InvoiceTotals({
   const grandTotal = subtotal + taxTotal - totalDiscount;
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5">
+    <div className="rounded-2xl border border-slate-200/80 bg-white p-5">
       <div className="space-y-3">
         <div className="flex items-center justify-between text-sm">
           <span className="text-slate-500">{t("Subtotal")}</span>

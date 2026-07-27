@@ -45,6 +45,20 @@ class Config:
     # --- CORS ---
     FRONTEND_ORIGIN = os.environ.get("FRONTEND_ORIGIN", "http://localhost:5173")
 
+    # --- Mail (used for forgot-password reset links) ---
+    MAIL_SERVER = os.environ.get("MAIL_SERVER", "")
+    MAIL_PORT = int(os.environ.get("MAIL_PORT", "587"))
+    MAIL_USE_TLS = os.environ.get("MAIL_USE_TLS", "true").lower() == "true"
+    MAIL_USE_SSL = os.environ.get("MAIL_USE_SSL", "false").lower() == "true"
+    MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "")
+    MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", "")
+    MAIL_DEFAULT_SENDER = os.environ.get("MAIL_DEFAULT_SENDER", MAIL_USERNAME)
+
+    # How long a password reset link stays valid.
+    PASSWORD_RESET_TOKEN_EXPIRES_MINUTES = int(
+        os.environ.get("PASSWORD_RESET_TOKEN_EXPIRES_MINUTES", "30")
+    )
+
 
 class DevelopmentConfig(Config):
     DEBUG = True

@@ -92,7 +92,7 @@ export function UsersPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-ink-900">{t("Users")}</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-ink-900">{t("Users")}</h1>
           <p className="text-sm text-slate-500">{data?.total ?? 0} {t("total")}</p>
         </div>
         {hasPermission("users.create") && (
@@ -118,7 +118,7 @@ export function UsersPage() {
       </div>
 
       {/* Users Table */}
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="overflow-x-auto rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)]">
         <table className="w-full min-w-[780px] text-sm">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">

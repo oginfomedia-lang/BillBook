@@ -77,7 +77,7 @@ export function ImportServicesPage() {
                     <ArrowLeft size={18} />
                 </button>
                 <div>
-                    <h1 className="text-2xl font-semibold text-ink-900">Import Services</h1>
+                    <h1 className="text-2xl font-bold tracking-tight text-ink-900">Import Services</h1>
                     <p className="text-sm text-slate-500">Bulk create services from a CSV file</p>
                 </div>
             </div>
@@ -85,7 +85,7 @@ export function ImportServicesPage() {
             <div className="grid gap-6 md:grid-cols-3">
                 {/* Drag and drop upload */}
                 <div className="md:col-span-2 space-y-4">
-                    <form onSubmit={handleSubmit} className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+                    <form onSubmit={handleSubmit} className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm space-y-4">
                         <div
                             onDragOver={handleDragOver}
                             onDragLeave={handleDragLeave}
@@ -169,7 +169,7 @@ export function ImportServicesPage() {
                 </div>
 
                 {/* CSV Instructions */}
-                <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-4 h-fit">
+                <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm space-y-4 h-fit">
                     <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">CSV Guide & Format</h3>
                     <p className="text-xs text-slate-500 leading-relaxed">
                         To successfully upload and import your services, your CSV sheet must include the following headers:

@@ -66,7 +66,7 @@ export function CategoriesListPage() {
             {/* Header */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h1 className="text-2xl font-semibold text-ink-900">Categories List</h1>
+                    <h1 className="text-2xl font-bold tracking-tight text-ink-900">Categories List</h1>
                     <p className="text-sm text-slate-500">{filteredCategories.length} categories found</p>
                 </div>
                 <button

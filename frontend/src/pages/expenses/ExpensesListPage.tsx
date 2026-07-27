@@ -159,7 +159,7 @@ export function ExpensesListPage() {
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-ink-900 flex items-center gap-2">
+          <h1 className="text-2xl font-bold tracking-tight text-ink-900 flex items-center gap-2">
             <TrendingDown size={22} className="text-rose-500" />
             Expenses List
           </h1>
@@ -215,7 +215,7 @@ export function ExpensesListPage() {
             <button type="button" onClick={() => doExport("pdf")} className="px-2.5 py-1 hover:bg-slate-50 rounded border-l border-slate-100">PDF</button>
             <button type="button" onClick={() => doExport("print")} className="px-2.5 py-1 hover:bg-slate-50 rounded border-l border-slate-100">Print</button>
             <button type="button" onClick={() => doExport("csv")} className="px-2.5 py-1 hover:bg-slate-50 rounded border-l border-slate-100">CSV</button>
-            <button type="button" onClick={() => alert("Column visibility feature coming soon!")} className="px-2.5 py-1 hover:bg-slate-50 rounded border-l border-slate-100">Columns</button>
+            <button type="button" onClick={() => toast("Column visibility is coming soon!", { icon: "🛠️" })} className="px-2.5 py-1 hover:bg-slate-50 rounded border-l border-slate-100">Columns</button>
           </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
@@ -233,7 +233,7 @@ export function ExpensesListPage() {
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="overflow-x-auto rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)]">
         <table className="w-full min-w-[900px] text-sm">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">

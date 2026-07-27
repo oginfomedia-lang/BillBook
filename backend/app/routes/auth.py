@@ -1,11 +1,16 @@
-from flask import Blueprint, request, jsonify
+import hashlib
+import secrets
+from datetime import datetime, timedelta
+
+from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt
 from marshmallow import ValidationError
 
 from app.extensions import db
-from app.models import Tenant, User, Role, seed_default_roles, all_permission_keys, Branch
+from app.models import Tenant, User, Role, seed_default_roles, all_permission_keys, Branch, PasswordResetToken
 from app.schemas import SignupSchema, LoginSchema
 from app.tenant_scope import TenantContext
+from app.utils.mailer import send_email
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/v1/auth")
 
@@ -144,6 +149,91 @@ def login():
         ],
         **tokens
     }), 200
+
+
+def _hash_token(raw_token: str) -> str:
+    return hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
+
+
+@auth_bp.route("/forgot-password", methods=["POST"])
+def forgot_password():
+    data = request.get_json(force=True) or {}
+    email = (data.get("email") or "").strip()
+
+    # Always the same response, regardless of whether the email matched --
+    # otherwise this endpoint could be used to discover which emails have
+    # an account.
+    generic_response = jsonify(
+        {"message": "If an account exists for that email, a reset link has been sent."}
+    )
+
+    if not email:
+        return generic_response, 200
+
+    # email is unique per-tenant, not globally, so this can legitimately
+    # match more than one account -- each gets its own token + email.
+    matched_users = User.query.filter_by(email=email, is_active=True).all()
+
+    for user in matched_users:
+        raw_token = secrets.token_urlsafe(32)
+        expires_minutes = current_app.config["PASSWORD_RESET_TOKEN_EXPIRES_MINUTES"]
+
+        db.session.add(
+            PasswordResetToken(
+                user_id=user.id,
+                token_hash=_hash_token(raw_token),
+                expires_at=datetime.utcnow() + timedelta(minutes=expires_minutes),
+            )
+        )
+        db.session.commit()
+
+        reset_link = f"{current_app.config['FRONTEND_ORIGIN']}/reset-password?token={raw_token}"
+        send_email(
+            to=user.email,
+            subject="Reset your BillBook password",
+            html_body=f"""
+                <p>Hi {user.name},</p>
+                <p>We received a request to reset your BillBook password. This link expires in
+                {expires_minutes} minutes.</p>
+                <p><a href="{reset_link}">Reset your password</a></p>
+                <p>If you didn't request this, you can safely ignore this email -- your password
+                won't change.</p>
+            """,
+        )
+
+    return generic_response, 200
+
+
+@auth_bp.route("/reset-password", methods=["POST"])
+def reset_password():
+    data = request.get_json(force=True) or {}
+    raw_token = data.get("token", "")
+    new_password = data.get("new_password", "")
+
+    if not raw_token or not new_password:
+        return jsonify({"error": "Token and new password are required"}), 422
+    if len(new_password) < 8:
+        return jsonify({"error": "New password must be at least 8 characters"}), 422
+
+    reset_token = (
+        PasswordResetToken.query
+        .filter_by(token_hash=_hash_token(raw_token))
+        .order_by(PasswordResetToken.id.desc())
+        .first()
+    )
+
+    if not reset_token or not reset_token.is_valid:
+        return jsonify({"error": "This reset link is invalid or has expired"}), 422
+
+    user = reset_token.user
+    if not user or not user.is_active:
+        return jsonify({"error": "This reset link is invalid or has expired"}), 422
+
+    user.set_password(new_password)
+    reset_token.used_at = datetime.utcnow()
+    db.session.commit()
+
+    return jsonify({"message": "Password updated successfully"}), 200
 
 
 @auth_bp.route("/refresh", methods=["POST"])

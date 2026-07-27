@@ -49,7 +49,7 @@ export function RolesPage() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-ink-900">{t("Roles")}</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-ink-900">{t("Roles")}</h1>
           <p className="text-sm text-slate-500">{t("Define what each role can see and do.")}</p>
         </div>
         {hasPermission("roles.create") && (
@@ -70,7 +70,7 @@ export function RolesPage() {
           ))
         ) : (
           roles?.map((role) => (
-            <div key={role.id} className="rounded-xl border border-slate-200 bg-white p-5">
+            <div key={role.id} className="rounded-2xl border border-slate-200/80 bg-white p-5">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-2">
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-light text-brand-dark">

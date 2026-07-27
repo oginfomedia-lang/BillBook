@@ -349,7 +349,7 @@ export function NewPurchasePage({ editMode = false }: { editMode?: boolean }) {
       </div>
 
       {/* ─── Header Form ─── */}
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           {/* Warehouse */}
           <div className="space-y-1.5">
@@ -477,7 +477,7 @@ export function NewPurchasePage({ editMode = false }: { editMode?: boolean }) {
       </div>
 
       {/* ─── Item Search Bar ─── */}
-      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
             <Search
@@ -665,7 +665,7 @@ export function NewPurchasePage({ editMode = false }: { editMode?: boolean }) {
       </div>
 
       {/* ─── Footer Section ─── */}
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
           {/* Left: totals inputs */}
           <div className="space-y-4">
@@ -810,7 +810,7 @@ export function NewPurchasePage({ editMode = false }: { editMode?: boolean }) {
       </div>
 
       {/* ─── Previous Payments ─── */}
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
         <h3 className="mb-4 text-sm font-bold text-slate-700">Previous Payments Information :</h3>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[600px] text-sm">
@@ -861,7 +861,7 @@ export function NewPurchasePage({ editMode = false }: { editMode?: boolean }) {
       </div>
 
       {/* ─── Make Payment ─── */}
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
         <h3 className="mb-4 text-sm font-bold text-slate-700">Make Payment :</h3>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div className="space-y-1.5">

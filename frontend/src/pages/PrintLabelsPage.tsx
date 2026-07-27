@@ -24,7 +24,7 @@ export function PrintLabelsPage() {
             {/* Header */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between print:hidden">
                 <div>
-                    <h1 className="text-2xl font-semibold text-ink-900">Print Labels</h1>
+                    <h1 className="text-2xl font-bold tracking-tight text-ink-900">Print Labels</h1>
                     <p className="text-sm text-slate-500">Generate and print barcodes for your products</p>
                 </div>
                 <button
@@ -39,7 +39,7 @@ export function PrintLabelsPage() {
             {/* Config & Preview Container */}
             <div className="grid gap-6 md:grid-cols-3 print:block">
                 {/* Configuration Panel */}
-                <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-4 print:hidden">
+                <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm space-y-4 print:hidden">
                     <h2 className="text-base font-bold text-slate-800 border-b border-slate-100 pb-2">Label Settings</h2>
                     
                     <div>
@@ -113,7 +113,7 @@ export function PrintLabelsPage() {
                 </div>
 
                 {/* Print Sheet Preview */}
-                <div className="md:col-span-2 rounded-xl border border-slate-200 bg-white p-6 shadow-sm print:border-0 print:p-0">
+                <div className="md:col-span-2 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm print:border-0 print:p-0">
                     <h2 className="text-base font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2 print:hidden">
                         Label Preview Sheet
                     </h2>

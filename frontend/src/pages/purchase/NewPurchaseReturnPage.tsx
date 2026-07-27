@@ -205,7 +205,7 @@ export function NewPurchaseReturnPage() {
             </div>
 
             {/* Purchase Search */}
-            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
                 <div className="flex gap-4">
                     <div className="flex-1 relative">
                         <label className="block text-sm font-semibold text-slate-700 mb-1">
@@ -341,7 +341,7 @@ export function NewPurchaseReturnPage() {
             </div>
 
             {/* Items Table */}
-            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="text-sm font-semibold text-slate-700">Items to Return</h3>
                     <span className="text-xs text-slate-400">
@@ -467,7 +467,7 @@ export function NewPurchaseReturnPage() {
             </div>
 
             {/* Notes */}
-            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
                 <label className="block text-sm font-semibold text-slate-700 mb-2">Notes</label>
                 <textarea
                     value={notes}

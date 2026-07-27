@@ -246,7 +246,7 @@ export function SuppliersPage() {
     <div className="space-y-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-ink-900">{t("Suppliers")}</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-ink-900">{t("Suppliers")}</h1>
           <p className="text-sm text-slate-500">{data?.total ?? 0} {t("total")}</p>
         </div>
         {canCreateSupplier && (
@@ -261,7 +261,7 @@ export function SuppliersPage() {
 
       {/* ── Create Form ──────────────────────────────────────────────── */}
       {showForm && (
-        <form onSubmit={handleCreateSubmit} className="grid grid-cols-1 gap-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:grid-cols-3">
+        <form onSubmit={handleCreateSubmit} className="grid grid-cols-1 gap-4 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm sm:grid-cols-3">
           <div>
             <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t("Supplier Name")}</label>
             <input
@@ -493,7 +493,7 @@ export function SuppliersPage() {
       </div>
 
       {/* ── Table ────────────────────────────────────────────────────── */}
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="overflow-x-auto rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)]">
         <table className="w-full min-w-[760px] text-sm">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-medium text-slate-500">

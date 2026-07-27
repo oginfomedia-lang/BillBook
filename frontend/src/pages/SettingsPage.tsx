@@ -517,7 +517,7 @@ export function SettingsPage() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-4 items-start">
         {/* Settings Navigation Menu */}
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm space-y-1">
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm space-y-1">
           {Object.entries(PAGES).map(([key, page]) => {
             const Icon = page.icon;
             const isActive = activePage === key;
@@ -541,7 +541,7 @@ export function SettingsPage() {
         <div className="lg:col-span-3">
           {/* ── STORE PROFILE PAGE ─────────────────────────────────── */}
           {activePage === "store" && (
-            <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+            <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] overflow-hidden">
               {storeSettingsQuery.isLoading ? (
                 <div className="py-12 text-center text-sm text-slate-400">
                   <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-brand border-t-transparent mb-2" />
@@ -914,7 +914,7 @@ export function SettingsPage() {
 
           {/* ── SITE SETTINGS PAGE ─────────────────────────────────── */}
           {activePage === "site" && (
-            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
               {generalSettingsQuery.isLoading ? (
                 <div className="py-12 text-center text-sm text-slate-400">
                   <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-brand border-t-transparent" />
@@ -978,7 +978,7 @@ export function SettingsPage() {
 
           {/* ── SMS/WHATSAPP GATEWAY PAGE ──────────────────────────── */}
           {activePage === "sms" && (
-            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
               {generalSettingsQuery.isLoading ? (
                 <div className="py-12 text-center text-sm text-slate-400" />
               ) : (
@@ -1045,7 +1045,7 @@ export function SettingsPage() {
 
           {/* ── SMTP EMAIL SETTINGS PAGE ────────────────────────────── */}
           {activePage === "smtp" && (
-            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
               {generalSettingsQuery.isLoading ? (
                 <div className="py-12 text-center text-sm text-slate-400" />
               ) : (
@@ -1140,7 +1140,7 @@ export function SettingsPage() {
                 </button>
               </div>
 
-              <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+              <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] overflow-hidden">
                 <table className="w-full text-sm">
                   <thead className="bg-slate-50 border-b border-slate-100">
                     <tr>
@@ -1188,7 +1188,7 @@ export function SettingsPage() {
               {/* Tax Add/Edit Modal */}
               {taxModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-                  <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-xl space-y-4">
+                  <div className="w-full max-w-md rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xl space-y-4">
                     <h3 className="text-base font-bold text-slate-800">{currentTax ? t("Edit Tax") : t("Add Tax")}</h3>
                     <form onSubmit={handleSaveTax} className="space-y-4">
                       <div>
@@ -1259,7 +1259,7 @@ export function SettingsPage() {
                 </button>
               </div>
 
-              <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+              <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] overflow-hidden">
                 <table className="w-full text-sm">
                   <thead className="bg-slate-50 border-b border-slate-100">
                     <tr>
@@ -1307,7 +1307,7 @@ export function SettingsPage() {
               {/* Unit Modal */}
               {unitModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-                  <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-xl space-y-4">
+                  <div className="w-full max-w-md rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xl space-y-4">
                     <h3 className="text-base font-bold text-slate-800">{currentUnit ? t("Edit Unit") : t("Add Unit")}</h3>
                     <form onSubmit={handleSaveUnit} className="space-y-4">
                       <div>
@@ -1367,7 +1367,7 @@ export function SettingsPage() {
 
           {/* ── PAYMENT TYPES PAGE ────────────────────────────────── */}
           {activePage === "payment_types" && (
-            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm space-y-4">
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -1408,7 +1408,7 @@ export function SettingsPage() {
           {/* ── CURRENCIES PAGE ────────────────────────────────────── */}
           {activePage === "currencies" && (
             <div className="space-y-4">
-              <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+              <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm space-y-4">
                 <h3 className="text-sm font-bold text-slate-800 mb-2">{t("Add New Currency")}</h3>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
                   <div>
@@ -1463,7 +1463,7 @@ export function SettingsPage() {
                 </div>
               </div>
 
-              <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+              <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] overflow-hidden">
                 <table className="w-full text-sm">
                   <thead className="bg-slate-50 border-b border-slate-100">
                     <tr>
@@ -1516,7 +1516,7 @@ export function SettingsPage() {
 
           {/* ── CHANGE PASSWORD PAGE ───────────────────────────────── */}
           {activePage === "change_password" && (
-            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
               <form onSubmit={handleSavePassword} className="space-y-4 max-w-md">
                 <div>
                   <label className="block text-xs font-semibold text-slate-500 mb-1">{t("Current Password")} *</label>
@@ -1564,7 +1564,7 @@ export function SettingsPage() {
 
           {/* ── DATABASE BACKUP PAGE ────────────────────────────────── */}
           {activePage === "backup" && (
-            <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm text-center space-y-6">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-8 shadow-sm text-center space-y-6">
               <div className="inline-block rounded-full bg-brand/10 p-5 text-brand">
                 <Download size={40} />
               </div>

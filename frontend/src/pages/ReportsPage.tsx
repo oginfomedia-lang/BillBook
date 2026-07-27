@@ -330,7 +330,7 @@ export function ReportsPage() {
     <div className="space-y-6 print:space-y-4 print:p-0">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between print:hidden">
         <div>
-          <h1 className="text-2xl font-semibold text-ink-900">{t(REPORT_LABELS[activeTab])}</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-ink-900">{t(REPORT_LABELS[activeTab])}</h1>
           <p className="text-sm text-slate-500">{t("Gain deep financial and operational insights.")}</p>
         </div>
 
@@ -363,7 +363,7 @@ export function ReportsPage() {
 
 
       {/* Filters Bar */}
-      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm print:hidden">
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm print:hidden">
         <div className="flex items-center gap-2 mb-3 border-b border-slate-100 pb-2">
           <Filter size={14} className="text-slate-400" />
           <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{t("Filters")}</span>
@@ -531,7 +531,7 @@ export function ReportsPage() {
               { label: "Tax Collected", val: salesReportQuery.data.summary.total_tax, tone: "text-slate-700" },
               { label: "Discount Given", val: salesReportQuery.data.summary.total_discount, tone: "text-purple-600" },
             ].map((kpi) => (
-              <div key={kpi.label} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div key={kpi.label} className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t(kpi.label)}</p>
                 <p className={`mt-2 text-lg font-bold ${kpi.tone}`}>{formatMoney(kpi.val)}</p>
               </div>
@@ -540,7 +540,7 @@ export function ReportsPage() {
 
           {/* Chart */}
           {salesReportQuery.data.chart_data.length > 0 && (
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm print:hidden">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm print:hidden">
               <h3 className="text-sm font-semibold text-slate-800 mb-4">{t("Sales Trend")}</h3>
               <div className="h-64 w-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -557,7 +557,7 @@ export function ReportsPage() {
           )}
 
           {/* Detailed list table */}
-          <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+          <div className="rounded-2xl border border-slate-200/80 bg-white overflow-hidden shadow-sm">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
@@ -628,7 +628,7 @@ export function ReportsPage() {
               { label: "Total Paid", val: purchasesReportQuery.data.summary.total_paid, tone: "text-green-600" },
               { label: "Total Due", val: purchasesReportQuery.data.summary.total_due, tone: "text-red-500" },
             ].map((kpi) => (
-              <div key={kpi.label} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div key={kpi.label} className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t(kpi.label)}</p>
                 <p className={`mt-2 text-lg font-bold ${kpi.tone}`}>{formatMoney(kpi.val)}</p>
               </div>
@@ -636,7 +636,7 @@ export function ReportsPage() {
           </div>
 
           {/* Purchases table */}
-          <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+          <div className="rounded-2xl border border-slate-200/80 bg-white overflow-hidden shadow-sm">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
@@ -694,11 +694,11 @@ export function ReportsPage() {
         <div className="space-y-6">
           {/* KPI summaries */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("Total Expenses")}</p>
               <p className="mt-2 text-lg font-bold text-red-500">{formatMoney(expensesReportQuery.data.summary.total_expenses)}</p>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("Transaction Count")}</p>
               <p className="mt-2 text-lg font-bold text-ink-900">{expensesReportQuery.data.summary.count}</p>
             </div>
@@ -707,7 +707,7 @@ export function ReportsPage() {
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             {/* Pie Chart of category expenses */}
             {expensesReportQuery.data.categories.length > 0 && (
-              <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-1 print:hidden">
+              <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm lg:col-span-1 print:hidden">
                 <h3 className="text-sm font-semibold text-slate-800 mb-4">{t("Expenses by Category")}</h3>
                 <div className="h-64 w-full">
                   <ResponsiveContainer width="100%" height="100%">
@@ -733,7 +733,7 @@ export function ReportsPage() {
             )}
 
             {/* Expenses list */}
-            <div className={`rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm ${expensesReportQuery.data.categories.length > 0 ? "lg:col-span-2" : "lg:col-span-3"}`}>
+            <div className={`rounded-2xl border border-slate-200/80 bg-white overflow-hidden shadow-sm ${expensesReportQuery.data.categories.length > 0 ? "lg:col-span-2" : "lg:col-span-3"}`}>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
@@ -775,7 +775,7 @@ export function ReportsPage() {
       {activeTab === "profit_loss" && profitLossReportQuery.data && (
         <div className="space-y-6">
           {/* Net Profit Header Bar */}
-          <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="flex items-center justify-between rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
             <span className="text-sm font-bold text-slate-800">{t("Net Profit")}</span>
             <span className={`text-base font-bold px-3 py-1 rounded-md ${
               profitLossReportQuery.data.net_profit >= 0 ? "text-green-600 bg-green-50" : "text-red-500 bg-red-50"
@@ -787,7 +787,7 @@ export function ReportsPage() {
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             
             {/* LEFT COLUMN: Purchases & Returns */}
-            <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+            <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] overflow-hidden">
               <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-3">
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{t("Acquisitions & Cost")}</span>
                 <button
@@ -885,7 +885,7 @@ export function ReportsPage() {
             </div>
 
             {/* RIGHT COLUMN: Expenses, Sales & Returns */}
-            <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+            <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] overflow-hidden">
               <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-3">
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{t("Revenue & Expense")}</span>
                 <button
@@ -1011,22 +1011,22 @@ export function ReportsPage() {
         <div className="space-y-6">
           {/* KPI summaries */}
           <div className="grid grid-cols-3 gap-4">
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("Total Items Listed")}</p>
               <p className="mt-2 text-lg font-bold text-brand">{stockReportQuery.data.summary.total_items}</p>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("Total Stock Value")}</p>
               <p className="mt-2 text-lg font-bold text-green-600">{formatMoney(stockReportQuery.data.summary.total_value)}</p>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("Low Stock Warnings")}</p>
               <p className="mt-2 text-lg font-bold text-red-500">{stockReportQuery.data.summary.low_stock_count}</p>
             </div>
           </div>
 
           {/* Stock inventory list */}
-          <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+          <div className="rounded-2xl border border-slate-200/80 bg-white overflow-hidden shadow-sm">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
@@ -1109,16 +1109,16 @@ export function ReportsPage() {
       {activeTab === "sales_returns" && salesReturnsQuery.data && (
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
               <p className="text-xs text-slate-500 mb-1">{t("Total Returns")}</p>
               <p className="text-xl font-bold text-ink-900">{salesReturnsQuery.data.summary.total_returns}</p>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
               <p className="text-xs text-slate-500 mb-1">{t("Total Return Amount")}</p>
               <p className="text-xl font-bold text-red-500">{formatMoney(salesReturnsQuery.data.summary.total_amount)}</p>
             </div>
           </div>
-          <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+          <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] overflow-hidden">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 border-b border-slate-100">
                 <tr>
@@ -1155,16 +1155,16 @@ export function ReportsPage() {
       {activeTab === "purchase_returns" && purchaseReturnsQuery.data && (
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
               <p className="text-xs text-slate-500 mb-1">{t("Total Returns")}</p>
               <p className="text-xl font-bold text-ink-900">{purchaseReturnsQuery.data.summary.total_returns}</p>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
               <p className="text-xs text-slate-500 mb-1">{t("Total Return Amount")}</p>
               <p className="text-xl font-bold text-red-500">{formatMoney(purchaseReturnsQuery.data.summary.total_amount)}</p>
             </div>
           </div>
-          <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+          <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] overflow-hidden">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 border-b border-slate-100">
                 <tr>
@@ -1201,24 +1201,24 @@ export function ReportsPage() {
       {activeTab === "customer_orders" && customerOrdersQuery.data && (
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
               <p className="text-xs text-slate-500 mb-1">{t("Total Customers")}</p>
               <p className="text-xl font-bold text-ink-900">{customerOrdersQuery.data.summary.total_customers}</p>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
               <p className="text-xs text-slate-500 mb-1">{t("Total Billed")}</p>
               <p className="text-xl font-bold text-green-600">{formatMoney(customerOrdersQuery.data.summary.total_billed)}</p>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
               <p className="text-xs text-slate-500 mb-1">{t("Total Collected")}</p>
               <p className="text-xl font-bold text-brand">{formatMoney(customerOrdersQuery.data.summary.total_paid)}</p>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
               <p className="text-xs text-slate-500 mb-1">{t("Total Due")}</p>
               <p className="text-xl font-bold text-red-500">{formatMoney(customerOrdersQuery.data.summary.total_due)}</p>
             </div>
           </div>
-          <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+          <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] overflow-hidden">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 border-b border-slate-100">
                 <tr>
@@ -1253,24 +1253,24 @@ export function ReportsPage() {
       {activeTab === "supplier_items" && supplierItemsQuery.data && (
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
               <p className="text-xs text-slate-500 mb-1">{t("Total Suppliers")}</p>
               <p className="text-xl font-bold text-ink-900">{supplierItemsQuery.data.summary.total_suppliers}</p>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
               <p className="text-xs text-slate-500 mb-1">{t("Total Purchased")}</p>
               <p className="text-xl font-bold text-ink-900">{formatMoney(supplierItemsQuery.data.summary.total_purchase)}</p>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
               <p className="text-xs text-slate-500 mb-1">{t("Total Paid")}</p>
               <p className="text-xl font-bold text-green-600">{formatMoney(supplierItemsQuery.data.summary.total_paid)}</p>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
               <p className="text-xs text-slate-500 mb-1">{t("Total Due")}</p>
               <p className="text-xl font-bold text-red-500">{formatMoney(supplierItemsQuery.data.summary.total_due)}</p>
             </div>
           </div>
-          <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+          <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] overflow-hidden">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 border-b border-slate-100">
                 <tr>
@@ -1305,20 +1305,20 @@ export function ReportsPage() {
       {activeTab === "sales_payments" && salesPaymentsQuery.data && (
         <div className="space-y-4">
           <div className="grid grid-cols-3 gap-4">
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
               <p className="text-xs text-slate-500 mb-1">{t("Total Invoices")}</p>
               <p className="text-xl font-bold text-ink-900">{salesPaymentsQuery.data.summary.total_invoices}</p>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
               <p className="text-xs text-slate-500 mb-1">{t("Total Collected")}</p>
               <p className="text-xl font-bold text-green-600">{formatMoney(salesPaymentsQuery.data.summary.total_collected)}</p>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
               <p className="text-xs text-slate-500 mb-1">{t("Outstanding Due")}</p>
               <p className="text-xl font-bold text-red-500">{formatMoney(salesPaymentsQuery.data.summary.total_due)}</p>
             </div>
           </div>
-          <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+          <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] overflow-hidden">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 border-b border-slate-100">
                 <tr>
@@ -1355,20 +1355,20 @@ export function ReportsPage() {
       {activeTab === "purchase_payments" && purchasePaymentsQuery.data && (
         <div className="space-y-4">
           <div className="grid grid-cols-3 gap-4">
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
               <p className="text-xs text-slate-500 mb-1">{t("Total Purchases")}</p>
               <p className="text-xl font-bold text-ink-900">{purchasePaymentsQuery.data.summary.total_purchases}</p>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
               <p className="text-xs text-slate-500 mb-1">{t("Total Paid")}</p>
               <p className="text-xl font-bold text-green-600">{formatMoney(purchasePaymentsQuery.data.summary.total_paid)}</p>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
               <p className="text-xs text-slate-500 mb-1">{t("Outstanding Due")}</p>
               <p className="text-xl font-bold text-red-500">{formatMoney(purchasePaymentsQuery.data.summary.total_due)}</p>
             </div>
           </div>
-          <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+          <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] overflow-hidden">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 border-b border-slate-100">
                 <tr>
@@ -1411,20 +1411,20 @@ export function ReportsPage() {
       {activeTab === "stock_transfers" && stockTransfersQuery.data && (
         <div className="space-y-4">
           <div className="grid grid-cols-3 gap-4">
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
               <p className="text-xs text-slate-500 mb-1">{t("Total Transfers")}</p>
               <p className="text-xl font-bold text-ink-900">{stockTransfersQuery.data.summary.total_transfers}</p>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
               <p className="text-xs text-slate-500 mb-1">{t("Total Items Moved")}</p>
               <p className="text-xl font-bold text-brand">{stockTransfersQuery.data.summary.total_items_moved}</p>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
               <p className="text-xs text-slate-500 mb-1">{t("Total Quantity")}</p>
               <p className="text-xl font-bold text-ink-900">{stockTransfersQuery.data.summary.total_quantity}</p>
             </div>
           </div>
-          <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+          <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] overflow-hidden">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 border-b border-slate-100">
                 <tr>

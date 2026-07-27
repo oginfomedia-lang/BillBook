@@ -73,13 +73,13 @@ export function CreateQuotationPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-ink-900">New Quotation</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-ink-900">New Quotation</h1>
         <p className="text-sm text-slate-500">Create a quotation for a customer and send it for approval.</p>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
-          <div className="grid grid-cols-1 gap-4 rounded-xl border border-slate-200 bg-white p-5 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 rounded-2xl border border-slate-200/80 bg-white p-5 sm:grid-cols-2">
             <div>
               <label className="mb-1.5 block text-xs font-medium text-slate-500">Customer</label>
               <select
@@ -139,7 +139,7 @@ export function CreateQuotationPage() {
             onProductSearch={setProductSearch}
           />
 
-          <div className="rounded-xl border border-slate-200 bg-white p-5">
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-5">
             <label className="mb-1.5 block text-xs font-medium text-slate-500">Notes</label>
             <textarea
               value={notes}
@@ -151,7 +151,7 @@ export function CreateQuotationPage() {
           </div>
 
           {/* Terms & Conditions Section */}
-          <div className="rounded-xl border border-slate-200 bg-white p-5">
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-5">
             <TermsEditor
               value={termsConditions}
               onChange={setTermsConditions}

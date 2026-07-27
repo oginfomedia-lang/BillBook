@@ -25,10 +25,12 @@ from .stock_adjustment import StockAdjustment, StockAdjustmentItem
 from .stock_transfer import StockTransfer, StockTransferItem
 from .expense import Expense, ExpenseCategory
 from .tenant_setting import TenantSetting
+from .password_reset_token import PasswordResetToken
 
 
 __all__ = [
     "TenantSetting",
+    "PasswordResetToken",
     "Tenant",
     "Role",
     "PERMISSION_CATALOG",

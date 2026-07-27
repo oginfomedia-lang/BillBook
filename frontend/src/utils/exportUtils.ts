@@ -1,5 +1,7 @@
 // src/utils/exportUtils.ts
 
+import toast from "react-hot-toast";
+
 export type ExportFormat = "copy" | "csv" | "excel" | "pdf" | "print";
 
 export function handleExport(
@@ -9,7 +11,7 @@ export function handleExport(
   filename: string = "export"
 ) {
   if (data.length === 0) {
-    alert("No data to export");
+    toast.error("No data to export");
     return;
   }
 
@@ -26,8 +28,8 @@ export function handleExport(
   if (format === "copy") {
     const text = [headers.join("\t"), ...rows.map((r) => r.join("\t"))].join("\n");
     navigator.clipboard.writeText(text)
-      .then(() => alert("Copied to clipboard!"))
-      .catch(() => alert("Failed to copy to clipboard"));
+      .then(() => toast.success("Copied to clipboard!"))
+      .catch(() => toast.error("Failed to copy to clipboard"));
     return;
   }
 
@@ -50,7 +52,7 @@ export function handleExport(
 
   if (format === "print" || format === "pdf") {
     if (format === "pdf") {
-      alert("Please select 'Save as PDF' in the print dialog.");
+      toast("Select 'Save as PDF' in the print dialog.", { icon: "🖨️" });
     }
     window.print();
     return;

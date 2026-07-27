@@ -66,7 +66,7 @@ export function VariantsListPage() {
             {/* Header */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h1 className="text-2xl font-semibold text-ink-900">Variants List</h1>
+                    <h1 className="text-2xl font-bold tracking-tight text-ink-900">Variants List</h1>
                     <p className="text-sm text-slate-500">{filteredVariants.length} variants found</p>
                 </div>
                 <button

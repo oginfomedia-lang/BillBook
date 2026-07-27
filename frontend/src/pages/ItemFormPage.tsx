@@ -240,7 +240,7 @@ export function ItemFormPage({ isService: routeIsService = false }: ItemFormPage
                 <div className="grid gap-6 md:grid-cols-3">
                     {/* Basic Info (Col Span 2) */}
                     <div className="md:col-span-2 space-y-6">
-                        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+                        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
                             <h2 className="text-base font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">
                                 Basic Details
                             </h2>
@@ -424,7 +424,7 @@ export function ItemFormPage({ isService: routeIsService = false }: ItemFormPage
                         </div>
 
                         {/* Pricing Details */}
-                        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+                        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
                             <h2 className="text-base font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">
                                 Pricing & Tax Setup
                             </h2>
@@ -573,7 +573,7 @@ export function ItemFormPage({ isService: routeIsService = false }: ItemFormPage
                     {/* Stock & Side settings (Col Span 1) */}
                     <div className="space-y-6">
                         {form.type === 'item' && (
-                            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+                            <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
                                 <h2 className="text-base font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">
                                     Inventory Settings
                                 </h2>
@@ -625,7 +625,7 @@ export function ItemFormPage({ isService: routeIsService = false }: ItemFormPage
                             </div>
                         )}
 
-                        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+                        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
                             <h2 className="text-base font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">
                                 Additional Options
                             </h2>

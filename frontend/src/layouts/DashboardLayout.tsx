@@ -359,13 +359,13 @@ export function DashboardLayout() {
 
       {/* ── Sidebar ────────────────────────────────────────────────────── */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-ink-900 transition-transform duration-200 lg:static lg:translate-x-0 print:hidden ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-ink-900 shadow-xl shadow-black/20 transition-transform duration-200 lg:static lg:translate-x-0 print:hidden ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
           }`}
       >
         {/* Logo */}
         <div className="flex h-16 items-center justify-between px-5 border-b border-white/10">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand shadow-lg shadow-brand/30">
               <Receipt size={17} className="text-white" />
             </div>
             <span className="text-lg font-bold tracking-tight text-white">BillBook</span>
@@ -395,9 +395,11 @@ export function DashboardLayout() {
                   <div key={item.label} className="flex flex-col">
                     <button
                       onClick={() => toggleMenu(item.label)}
-                      className="group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-400 hover:bg-white/5 hover:text-white transition-all focus:outline-none"
+                      className={`group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all focus:outline-none ${
+                        isOpen ? "text-white" : "text-slate-400 hover:bg-white/5 hover:text-white"
+                      }`}
                     >
-                      <Icon size={17} className="text-slate-500 group-hover:text-slate-300" />
+                      <Icon size={17} className={isOpen ? "text-brand-light" : "text-slate-500 group-hover:text-slate-300"} />
                       <span className="flex-1 text-left">{t(item.label)}</span>
                       <ChevronDown
                         size={14}
@@ -415,7 +417,7 @@ export function DashboardLayout() {
                             onClick={() => setSidebarOpen(false)}
                             className={({ isActive }) =>
                               `block rounded-lg py-2 px-3 text-xs font-medium transition-all ${isActive
-                                ? "bg-brand/20 text-brand-light font-semibold"
+                                ? "bg-brand/20 text-brand-light font-semibold shadow-inner ring-1 ring-brand/20"
                                 : "text-slate-400 hover:text-white hover:bg-white/5"
                               }`
                             }
@@ -436,7 +438,7 @@ export function DashboardLayout() {
                   onClick={() => setSidebarOpen(false)}
                   className={({ isActive }) =>
                     `group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${isActive
-                      ? "bg-brand/20 text-brand-light border-l-2 border-brand"
+                      ? "bg-gradient-to-r from-brand/25 to-brand/5 text-brand-light shadow-inner ring-1 ring-brand/20"
                       : "text-slate-400 hover:bg-white/5 hover:text-white"
                     }`
                   }
@@ -459,7 +461,7 @@ export function DashboardLayout() {
 
         {/* User footer */}
         <div className="border-t border-white/10 p-4">
-          <div className="mb-3 flex items-center gap-3 rounded-lg bg-white/5 px-3 py-2.5">
+          <div className="mb-3 flex items-center gap-3 rounded-lg bg-white/5 px-3 py-2.5 ring-1 ring-white/5 transition-colors hover:bg-white/[0.08]">
             {user?.avatar ? (
               <img
                 src={user.avatar}
@@ -467,7 +469,7 @@ export function DashboardLayout() {
                 alt="User profile"
               />
             ) : (
-              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-brand text-xs font-bold text-white shadow-inner">
+              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand to-brand-dark text-xs font-bold text-white shadow-inner">
                 {initials}
               </div>
             )}
@@ -489,7 +491,7 @@ export function DashboardLayout() {
       {/* ── Main content ────────────────────────────────────────────────── */}
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Header */}
-        <header className="flex h-16 flex-shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 lg:px-6 print:hidden">
+        <header className="flex h-16 flex-shrink-0 items-center justify-between border-b border-slate-200/80 bg-white/95 px-4 shadow-sm backdrop-blur-sm lg:px-6 print:hidden">
           {/* Mobile hamburger */}
           <button
             className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-ink-900 lg:hidden"
@@ -606,7 +608,7 @@ export function DashboardLayout() {
             <BranchSelector />
 
             {/* Role badge */}
-            <span className="hidden rounded-full bg-brand-light px-3 py-1 text-xs font-semibold text-brand-dark sm:inline">
+            <span className="hidden rounded-full bg-brand-light px-3 py-1 text-xs font-semibold text-brand-dark ring-1 ring-brand/10 sm:inline">
               {user?.is_super_admin ? t("Super Admin") : t(user?.role_name || "User")}
             </span>
 
@@ -618,7 +620,7 @@ export function DashboardLayout() {
                   setLangDropdownOpen(false);
                   setNotificationsDropdownOpen(false);
                 }}
-                className="flex items-center gap-2 focus:outline-none"
+                className="flex items-center gap-2 rounded-full transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/30"
               >
                 {user?.avatar ? (
                   <img
@@ -627,7 +629,7 @@ export function DashboardLayout() {
                     alt="User profile"
                   />
                 ) : (
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand text-xs font-bold text-white shadow-sm">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-brand to-brand-dark text-xs font-bold text-white shadow-sm">
                     {initials}
                   </div>
                 )}

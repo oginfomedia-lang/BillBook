@@ -12,6 +12,7 @@ import { NotFoundPage } from "./components/NotFoundPage";
 import { DashboardLayout } from "./layouts/DashboardLayout";
 import { LoginPage } from "./pages/LoginPage";
 import { SignupPage } from "./pages/SignupPage";
+import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { POSPage } from "./pages/POSPage";
 import { SalesLayout } from "./pages/sales/SalesLayout";
@@ -93,6 +94,7 @@ export default function App() {
                 {/* Public routes */}
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/signup" element={<SignupPage />} />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
 
                 {/* Protected routes WITH sidebar */}
                 <Route

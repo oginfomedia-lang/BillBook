@@ -274,7 +274,7 @@ export function ExportToolbar({
           {showColumns && (
             <div
               ref={panelRef}
-              className="absolute right-0 top-9 z-50 w-56 rounded-xl border border-slate-200 bg-white shadow-xl"
+              className="absolute right-0 top-9 z-50 w-56 rounded-2xl border border-slate-200/80 bg-white shadow-xl"
             >
               <div className="flex items-center justify-between border-b border-slate-100 px-4 py-2.5">
                 <span className="text-xs font-semibold text-slate-700">Toggle Columns</span>

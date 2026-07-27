@@ -38,7 +38,7 @@ function StatCard({
   value: string | number;
 }) {
   return (
-    <div className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="flex items-center gap-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
       <div className={`flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl ${iconBg}`}>
         <Icon size={26} className="text-white" />
       </div>
@@ -221,7 +221,7 @@ export function PurchaseReturnsListPage() {
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="overflow-x-auto rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)]">
         <table className="w-full min-w-[900px] text-sm">
           <thead>
             <tr className="bg-[#1e6fa8] text-left text-xs font-semibold text-white">

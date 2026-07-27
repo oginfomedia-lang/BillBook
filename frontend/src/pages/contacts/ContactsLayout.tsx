@@ -17,7 +17,7 @@ export function ContactsLayout() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-ink-900">{t("Contacts")}</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-ink-900">{t("Contacts")}</h1>
         <p className="text-sm text-slate-500">{t("Manage your customers, suppliers, and import contact lists from one place.")}</p>
       </div>
 

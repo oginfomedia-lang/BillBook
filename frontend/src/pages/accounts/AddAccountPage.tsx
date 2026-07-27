@@ -150,7 +150,7 @@ export function AddAccountPage({ editMode = false }: Props) {
       )}
 
       {/* Form Card */}
-      <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-8 shadow-sm">
         <div className="grid grid-cols-1 gap-x-10 gap-y-5 md:grid-cols-2">
           {/* Left column */}
           <div className="space-y-5">

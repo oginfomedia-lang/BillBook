@@ -84,7 +84,7 @@ export function WarehousesPage() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-ink-900">Warehouses</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-ink-900">Warehouses</h1>
           <p className="text-sm text-slate-500">{data?.total ?? 0} total warehouses</p>
         </div>
         <button
@@ -150,7 +150,7 @@ export function WarehousesPage() {
         </form>
       </Modal>
 
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+      <div className="overflow-x-auto rounded-2xl border border-slate-200/80 bg-white">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-medium text-slate-500">

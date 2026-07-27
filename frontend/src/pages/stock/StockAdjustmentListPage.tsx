@@ -203,7 +203,7 @@ export function StockAdjustmentListPage() {
       {/* ── Header ── */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-ink-900 flex items-center gap-2">
+          <h1 className="text-2xl font-bold tracking-tight text-ink-900 flex items-center gap-2">
             <ClipboardList size={22} className="text-brand" />
             Stock Adjustment List
           </h1>
@@ -245,7 +245,7 @@ export function StockAdjustmentListPage() {
       </div>
 
       {/* ── Table ── */}
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="overflow-x-auto rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)]">
         <table className="w-full min-w-[700px] text-sm">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">

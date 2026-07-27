@@ -65,6 +65,16 @@ export async function changePassword(payload: ChangePasswordPayload): Promise<{ 
   return data;
 }
 
+export async function forgotPassword(email: string): Promise<{ message: string }> {
+  const { data } = await apiClient.post("/auth/forgot-password", { email });
+  return data;
+}
+
+export async function resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
+  const { data } = await apiClient.post("/auth/reset-password", { token, new_password: newPassword });
+  return data;
+}
+
 export function logout(): void {
   tokenStorage.clear();
   localStorage.removeItem("billbook_branch_id");

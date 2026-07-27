@@ -79,7 +79,7 @@ export function BranchFormPage() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-ink-900">
+        <h1 className="text-2xl font-bold tracking-tight text-ink-900">
           {isEdit ? t("Edit Branch") : t("New Branch")}
         </h1>
         <p className="text-sm text-slate-500">
@@ -87,7 +87,7 @@ export function BranchFormPage() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-5">
+      <form onSubmit={handleSubmit} className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm space-y-5">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className="mb-1.5 block text-xs font-medium text-slate-500">{t("Branch Name")} *</label>

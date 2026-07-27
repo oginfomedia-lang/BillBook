@@ -133,7 +133,7 @@ export function InvoiceDetailPage() {
       </div>
 
       {/* ── Printable Invoice ───────────────────────────────────── */}
-      <div className="rounded-xl border border-slate-200 bg-white p-6 sm:p-10 shadow-sm print:rounded-none print:border-0 print:shadow-none print:p-0">
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-6 sm:p-10 shadow-sm print:rounded-none print:border-0 print:shadow-none print:p-0">
         <div className="flex flex-col justify-between gap-4 border-b border-slate-100 pb-6 sm:flex-row sm:items-start">
           <div className="space-y-1">
             <div className="flex items-center gap-2.5">

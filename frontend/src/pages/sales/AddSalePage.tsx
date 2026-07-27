@@ -425,7 +425,7 @@ export function AddSalePage() {
 
         <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
           {/* Customer and Dates */}
-          <div className="grid grid-cols-1 gap-4 rounded-xl border border-slate-200 bg-white p-5 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 rounded-2xl border border-slate-200/80 bg-white p-5 sm:grid-cols-2">
             <div>
               <label className="mb-1.5 block text-xs font-medium text-slate-500">Customer</label>
               <select
@@ -484,7 +484,7 @@ export function AddSalePage() {
           </div>
 
           {/* Products Section */}
-          <div className="rounded-xl border border-slate-200 bg-white p-5">
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-5">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -702,7 +702,7 @@ export function AddSalePage() {
           </div>
 
           {/* Coupon */}
-          <div className="rounded-xl border border-slate-200 bg-white p-5">
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-5">
             <label className="mb-1.5 block text-xs font-medium text-slate-500">Coupon</label>
             <div className="flex gap-2">
               <div className="relative flex-1">
@@ -749,7 +749,7 @@ export function AddSalePage() {
           </div>
 
           {/* Notes */}
-          <div className="rounded-xl border border-slate-200 bg-white p-5">
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-5">
             <label className="mb-1.5 block text-xs font-medium text-slate-500">Notes</label>
             <textarea
               value={formData.notes}
@@ -770,7 +770,7 @@ export function AddSalePage() {
       {/* Right Sidebar */}
       <div className="space-y-4">
         {/* Summary */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-3">
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 space-y-3">
           <div className="flex justify-between text-sm">
             <span className="text-slate-600">Subtotal</span>
             <span className="font-medium text-ink-900">{formatMoney(totals.subtotal)}</span>

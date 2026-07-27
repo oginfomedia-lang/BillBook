@@ -2,10 +2,23 @@
 
 import { useState, useEffect, type FormEvent, type KeyboardEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Receipt, X, CheckCircle2, Eye, EyeOff } from "lucide-react";
+import {
+  Receipt,
+  X,
+  CheckCircle2,
+  Eye,
+  EyeOff,
+  Mail,
+  Lock,
+  ArrowRight,
+  Zap,
+  Boxes,
+  BarChart3,
+} from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
 import { useTranslation } from "../context/LanguageContext";
+import * as authApi from "../api/auth";
 
 // Mock Database definition
 const MOCK_DB: Record<string, { password: string; status: "active" | "locked" | "error" }> = {
@@ -13,6 +26,12 @@ const MOCK_DB: Record<string, { password: string; status: "active" | "locked" | 
   "locked@test.com": { password: "password123", status: "locked" },
   "error@test.com": { password: "password123", status: "error" },
 };
+
+const FEATURE_HIGHLIGHTS = [
+  { icon: Zap, text: "Create GST-ready invoices in seconds" },
+  { icon: Boxes, text: "Track stock across every branch & warehouse" },
+  { icon: BarChart3, text: "Real-time sales, purchase & profit reports" },
+];
 
 export function LoginPage() {
   const { t } = useTranslation();
@@ -55,7 +74,6 @@ export function LoginPage() {
   // Session check on load
   useEffect(() => {
     if (user) {
-      alert("Already logged in! Redirecting to dashboard...");
       navigate("/dashboard");
     }
   }, [user, navigate]);
@@ -101,14 +119,7 @@ export function LoginPage() {
   };
 
   const handleForgotClick = () => {
-    alert("Redirecting to forgot password page...");
     setForgotOpen(true);
-  };
-
-  const handleSignupClick = (e: FormEvent) => {
-    e.preventDefault();
-    alert("Redirecting to workspace setup...");
-    navigate("/signup");
   };
 
   // Real-time error clearing when user types
@@ -226,7 +237,7 @@ export function LoginPage() {
     } catch (err: any) {
       const errStatus = err?.response?.status || err?.status || 500;
       const responseMsg = err?.response?.data?.error || err?.response?.data?.message || err?.message || "";
-      
+
       let displayMsg = "Something went wrong. Please try again later.";
 
       if (errStatus === 404 || responseMsg.toLowerCase().includes("not found") || responseMsg.toLowerCase().includes("no account")) {
@@ -263,9 +274,18 @@ export function LoginPage() {
     e.preventDefault();
     if (!forgotEmail.trim()) return;
     setForgotSending(true);
-    await new Promise((r) => setTimeout(r, 1200)); // simulate API call
-    setForgotSending(false);
-    setForgotSent(true);
+    try {
+      await authApi.forgotPassword(forgotEmail.trim());
+      setForgotSent(true);
+    } catch {
+      // Backend always returns a generic success response for this endpoint
+      // (so it can't be used to enumerate accounts) -- a thrown error here
+      // means the request itself failed (network/server issue), not "email
+      // not found".
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setForgotSending(false);
+    }
   };
 
   const closeForgot = () => {
@@ -275,122 +295,188 @@ export function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-canvas px-4">
-      <div className="w-full max-w-sm">
-        <div className="mb-8 flex flex-col items-center">
-          <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-brand text-white">
-            <Receipt size={22} />
+    <div className="flex min-h-screen bg-canvas">
+      {/* ── Left brand panel (desktop only) ─────────────────────────────── */}
+      <div className="relative hidden w-[46%] flex-col justify-between overflow-hidden bg-ink-900 px-12 py-12 text-white lg:flex xl:w-[42%]">
+        {/* Decorative gradient blobs */}
+        <div className="pointer-events-none absolute -left-24 -top-24 h-80 w-80 rounded-full bg-brand/30 blur-3xl" />
+        <div className="pointer-events-none absolute bottom-0 right-0 h-96 w-96 translate-x-1/3 translate-y-1/3 rounded-full bg-brand-dark/40 blur-3xl" />
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.04]"
+          style={{
+            backgroundImage:
+              "linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)",
+            backgroundSize: "36px 36px",
+          }}
+        />
+
+        <div className="relative z-10 flex items-center gap-2.5">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand">
+            <Receipt size={18} className="text-white" />
           </div>
-          <h1 className="text-xl font-semibold text-ink-900">{t("Welcome back")}</h1>
-          <p className="text-sm text-slate-500">{t("Sign in to your BillBook workspace")}</p>
+          <span className="text-lg font-bold tracking-tight">BillBook</span>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          {/* Email input field */}
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-slate-500">{t("Email")}</label>
-            <input
-              type="text"
-              disabled={isSubmitting || isLocked}
-              value={email}
-              onChange={(e) => handleEmailChange(e.target.value)}
-              placeholder="Enter your email"
-              className={`w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-1 transition-all ${
-                emailTouched
-                  ? emailError
-                    ? "border-red-500 focus:border-red-500 focus:ring-red-200 bg-red-50/20"
-                    : "border-green-500 focus:border-green-500 focus:ring-green-200 bg-green-50/10"
-                  : "border-slate-200 focus:ring-brand"
-              }`}
-            />
-            {emailTouched && emailError && (
-              <p className="mt-1 text-xs text-red-500 font-medium">{emailError}</p>
-            )}
-          </div>
-
-          {/* Password input field */}
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-slate-500">{t("Password")}</label>
-            <div className="relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                disabled={isSubmitting || isLocked}
-                value={password}
-                onChange={(e) => handlePasswordChange(e.target.value)}
-                onKeyDown={handleKeyDown}
-                onKeyUp={handleKeyDown}
-                placeholder="Enter your password"
-                className={`w-full rounded-md border pl-3 pr-10 py-2 text-sm focus:outline-none focus:ring-1 transition-all ${
-                  passwordTouched
-                    ? passwordError
-                      ? "border-red-500 focus:border-red-500 focus:ring-red-200 bg-red-50/20"
-                      : "border-green-500 focus:border-green-500 focus:ring-green-200 bg-green-50/10"
-                    : "border-slate-200 focus:ring-brand"
-                }`}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
-              >
-                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
-            </div>
-            {capsLockOn && (
-              <p className="mt-1 text-xs text-amber-600 font-semibold">⚠️ Caps Lock is on</p>
-            )}
-            {passwordTouched && passwordError && (
-              <p className="mt-1 text-xs text-red-500 font-medium">{passwordError}</p>
-            )}
-          </div>
-
-          {/* Rate limiting countdown banner */}
-          {isLocked && (
-            <div className="rounded-lg bg-red-50 p-2.5 text-center text-xs font-semibold text-red-700 border border-red-100">
-              Too many failed attempts. Locked for {formatTime(timeLeft)}
-            </div>
-          )}
-
-          {/* Sign in button */}
-          <button
-            type="submit"
-            disabled={isSubmitting || isLocked}
-            className="w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-dark disabled:opacity-50 transition-all flex items-center justify-center gap-2"
-          >
-            {isSubmitting ? t("Signing in…") : t("Sign in")}
-          </button>
-
-          {/* Forgot password link */}
-          <p className="text-center">
-            <button
-              type="button"
-              onClick={handleForgotClick}
-              className="text-xs font-medium text-brand hover:underline"
-            >
-              {t("Forgot password?")}
-            </button>
+        <div className="relative z-10 max-w-md">
+          <h2 className="text-3xl font-extrabold leading-tight tracking-tight xl:text-4xl">
+            Run your business,{" "}
+            <span className="bg-gradient-to-r from-brand-light to-emerald-300 bg-clip-text text-transparent">
+              beautifully.
+            </span>
+          </h2>
+          <p className="mt-4 text-sm leading-relaxed text-slate-300">
+            One workspace for billing, inventory, and reporting — built for teams who want speed
+            without spreadsheets.
           </p>
-        </form>
 
-        {/* New business? Set up your workspace link */}
-        <p className="mt-4 text-center text-sm text-slate-500">
-          {t("New business?")}{" "}
-          <a
-            href="/signup"
-            onClick={handleSignupClick}
-            className="font-medium text-brand hover:underline"
-          >
-            {t("Set up your workspace")}
-          </a>
+          <ul className="mt-8 space-y-4">
+            {FEATURE_HIGHLIGHTS.map(({ icon: Icon, text }) => (
+              <li key={text} className="flex items-center gap-3">
+                <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white/10">
+                  <Icon size={16} className="text-brand-light" />
+                </span>
+                <span className="text-sm text-slate-200">{text}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <p className="relative z-10 text-xs text-slate-500">
+          © {new Date().getFullYear()} BillBook. Business made simple.
         </p>
+      </div>
+
+      {/* ── Right form panel ─────────────────────────────────────────────── */}
+      <div className="flex flex-1 items-center justify-center px-4 py-10 sm:px-6">
+        <div className="w-full max-w-sm">
+          {/* Mobile-only logo (hidden on desktop since the brand panel covers it) */}
+          <div className="mb-8 flex flex-col items-center lg:hidden">
+            <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-brand text-white shadow-sm">
+              <Receipt size={22} />
+            </div>
+            <span className="text-lg font-bold tracking-tight text-ink-900">BillBook</span>
+          </div>
+
+          <div className="mb-7">
+            <h1 className="text-2xl font-bold tracking-tight text-ink-900">{t("Welcome back")}</h1>
+            <p className="mt-1 text-sm text-slate-500">{t("Sign in to your BillBook workspace")}</p>
+          </div>
+
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-4 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_32px_-12px_rgba(15,23,42,0.12)] sm:p-7"
+          >
+            {/* Email input field */}
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-slate-600">{t("Email")}</label>
+              <div className="relative">
+                <Mail size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  disabled={isSubmitting || isLocked}
+                  value={email}
+                  onChange={(e) => handleEmailChange(e.target.value)}
+                  placeholder="Enter your email"
+                  className={`w-full rounded-lg border py-2.5 pl-9 pr-3 text-sm transition-all focus:outline-none focus:ring-2 ${
+                    emailTouched
+                      ? emailError
+                        ? "border-red-300 bg-red-50/40 focus:border-red-400 focus:ring-red-100"
+                        : "border-emerald-300 bg-emerald-50/20 focus:border-emerald-400 focus:ring-emerald-100"
+                      : "border-slate-200 focus:border-brand focus:ring-brand/15"
+                  }`}
+                />
+              </div>
+              {emailTouched && emailError && (
+                <p className="mt-1.5 text-xs font-medium text-red-500">{emailError}</p>
+              )}
+            </div>
+
+            {/* Password input field */}
+            <div>
+              <div className="mb-1.5 flex items-center justify-between">
+                <label className="text-xs font-semibold text-slate-600">{t("Password")}</label>
+                <button
+                  type="button"
+                  onClick={handleForgotClick}
+                  className="text-xs font-semibold text-brand hover:text-brand-dark hover:underline"
+                >
+                  {t("Forgot password?")}
+                </button>
+              </div>
+              <div className="relative">
+                <Lock size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  disabled={isSubmitting || isLocked}
+                  value={password}
+                  onChange={(e) => handlePasswordChange(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  onKeyUp={handleKeyDown}
+                  placeholder="Enter your password"
+                  className={`w-full rounded-lg border py-2.5 pl-9 pr-10 text-sm transition-all focus:outline-none focus:ring-2 ${
+                    passwordTouched
+                      ? passwordError
+                        ? "border-red-300 bg-red-50/40 focus:border-red-400 focus:ring-red-100"
+                        : "border-emerald-300 bg-emerald-50/20 focus:border-emerald-400 focus:ring-emerald-100"
+                      : "border-slate-200 focus:border-brand focus:ring-brand/15"
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+              {capsLockOn && (
+                <p className="mt-1.5 text-xs font-semibold text-amber-600">⚠ Caps Lock is on</p>
+              )}
+              {passwordTouched && passwordError && (
+                <p className="mt-1.5 text-xs font-medium text-red-500">{passwordError}</p>
+              )}
+            </div>
+
+            {/* Rate limiting countdown banner */}
+            {isLocked && (
+              <div className="rounded-lg border border-red-100 bg-red-50 p-2.5 text-center text-xs font-semibold text-red-700">
+                Too many failed attempts. Locked for {formatTime(timeLeft)}
+              </div>
+            )}
+
+            {/* Sign in button */}
+            <button
+              type="submit"
+              disabled={isSubmitting || isLocked}
+              className="group flex w-full items-center justify-center gap-2 rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-brand-dark hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isSubmitting ? (
+                t("Signing in…")
+              ) : (
+                <>
+                  {t("Sign in")}
+                  <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
+                </>
+              )}
+            </button>
+          </form>
+
+          {/* New business? Set up your workspace link */}
+          <p className="mt-5 text-center text-sm text-slate-500">
+            {t("New business?")}{" "}
+            <Link to="/signup" className="font-semibold text-brand hover:text-brand-dark hover:underline">
+              {t("Set up your workspace")}
+            </Link>
+          </p>
+        </div>
       </div>
 
       {/* Forgot Password Modal */}
       {forgotOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-6 shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-900/60 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-base font-semibold text-ink-900">
+              <h2 className="text-base font-bold text-ink-900">
                 {forgotSent ? t("Email sent!") : t("Forgot password?")}
               </h2>
               <button onClick={closeForgot} className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-ink-900 transition-colors">
@@ -400,7 +486,9 @@ export function LoginPage() {
 
             {forgotSent ? (
               <div className="flex flex-col items-center py-4 text-center">
-                <CheckCircle2 size={44} className="mb-3 text-green-500" />
+                <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100">
+                  <CheckCircle2 size={28} className="text-emerald-600" />
+                </div>
                 <p className="text-sm text-slate-600">
                   We sent a reset link to{" "}
                   <span className="font-semibold text-ink-900">{forgotEmail}</span>.
@@ -415,10 +503,13 @@ export function LoginPage() {
               <form onSubmit={handleForgotSubmit} className="space-y-4">
                 <p className="text-sm text-slate-500">{t("Enter your email and we'll send you a reset link.")}</p>
                 <div>
-                  <label className="mb-1.5 block text-xs font-medium text-slate-500">{t("Email address")}</label>
-                  <input type="email" required value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)}
-                    placeholder="you@company.com"
-                    className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand" />
+                  <label className="mb-1.5 block text-xs font-semibold text-slate-600">{t("Email address")}</label>
+                  <div className="relative">
+                    <Mail size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input type="email" required value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)}
+                      placeholder="you@company.com"
+                      className="w-full rounded-lg border border-slate-200 py-2.5 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:border-brand focus:ring-brand/15" />
+                  </div>
                 </div>
                 <div className="flex gap-2">
                   <button type="button" onClick={closeForgot}

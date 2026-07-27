@@ -4,7 +4,7 @@ from flask import Flask, jsonify
 from flask_cors import CORS
 
 from config import config_by_name, assert_production_secrets_configured
-from app.extensions import db, migrate, jwt
+from app.extensions import db, migrate, jwt, mail
 
 
 def create_app(config_name: str | None = None) -> Flask:
@@ -17,6 +17,7 @@ def create_app(config_name: str | None = None) -> Flask:
     db.init_app(flask_app)
     migrate.init_app(flask_app, db)
     jwt.init_app(flask_app)
+    mail.init_app(flask_app)
 
     # ✅ CORS Configuration
     allowed_origins = [

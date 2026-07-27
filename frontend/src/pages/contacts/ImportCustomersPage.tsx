@@ -45,7 +45,7 @@ export function ImportCustomersPage() {
           </div>
 
           {file && (
-            <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+            <div className="rounded-2xl border border-slate-200/80 bg-white px-4 py-3 text-sm text-slate-700">
               {t("Selected file")}: <span className="font-medium">{file.name}</span>
             </div>
           )}

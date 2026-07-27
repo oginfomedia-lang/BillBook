@@ -188,7 +188,7 @@ export function CashTransactionsPage() {
       </div>
 
       {/* Filter bar */}
-      <div className="rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
+      <div className="rounded-2xl border border-slate-200/80 bg-white px-5 py-4 shadow-sm">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <label className="mb-1 block text-xs font-semibold text-slate-600">From Date</label>
@@ -227,7 +227,7 @@ export function CashTransactionsPage() {
       </div>
 
       {/* Table card */}
-      <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+      <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
           <div className="flex items-center gap-1.5">
             <ExportBtn label="Copy" color="bg-slate-500" onClick={() => doExport("copy")} />
@@ -235,7 +235,7 @@ export function CashTransactionsPage() {
             <ExportBtn label="PDF" color="bg-red-500" onClick={() => doExport("pdf")} />
             <ExportBtn label="Print" color="bg-slate-600" onClick={() => doExport("print")} />
             <ExportBtn label="CSV" color="bg-amber-500" onClick={() => doExport("csv")} />
-            <ExportBtn label="Columns" color="bg-[#1e6fa8]" onClick={() => alert("Column selector coming soon!")} />
+            <ExportBtn label="Columns" color="bg-[#1e6fa8]" onClick={() => toast("Column selector is coming soon!", { icon: "🛠️" })} />
           </div>
           <div className="flex items-center gap-2">
             <label className="text-xs text-slate-500">Search:</label>

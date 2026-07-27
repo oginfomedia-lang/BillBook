@@ -74,7 +74,7 @@ export function ItemsPage() {
             {/* Header */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h1 className="text-2xl font-semibold text-ink-900">Items List</h1>
+                    <h1 className="text-2xl font-bold tracking-tight text-ink-900">Items List</h1>
                     <p className="text-sm text-slate-500">{data?.total ?? 0} total items / services</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -94,7 +94,7 @@ export function ItemsPage() {
             </div>
 
             {/* Filters */}
-            <div className="space-y-3 rounded-lg border border-slate-200 bg-white p-4">
+            <div className="space-y-3 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
                 <div className="grid gap-3 sm:grid-cols-5 items-end">
                     {/* Search */}
                     <div className="relative col-span-2">

@@ -37,7 +37,9 @@ function Section({
   className?: string;
 }) {
   return (
-    <div className={`overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm ${className}`}>
+    <div
+      className={`overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] ${className}`}
+    >
       <div className="border-b border-slate-100 px-5 py-3.5">
         <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500">{title}</h2>
       </div>
@@ -74,8 +76,8 @@ export function DashboardPage() {
       {/* ── Page header ──────────────────────────────────────────────── */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-ink-900">{t("Dashboard")}</h1>
-          <p className="text-sm text-slate-500">{t("Overview of your business performance")}</p>
+          <h1 className="text-2xl font-bold tracking-tight text-ink-900">{t("Dashboard")}</h1>
+          <p className="mt-0.5 text-sm text-slate-500">{t("Overview of your business performance")}</p>
         </div>
         <PeriodFilter value={period} onChange={setPeriod} />
       </div>

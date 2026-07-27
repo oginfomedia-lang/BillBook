@@ -165,7 +165,7 @@ export function POSPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-ink-900">{t("POS")}</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-ink-900">{t("POS")}</h1>
           <p className="text-sm text-slate-500">{t("Create a point-of-sale sale quickly with product cards and cart totals.")}</p>
         </div>
         <button
@@ -179,7 +179,7 @@ export function POSPage() {
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.7fr_1fr]">
         <div className="space-y-6">
           {/* Product search & customer select */}
-          <div className="rounded-xl border border-slate-200 bg-white p-4">
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-4">
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="sm:col-span-2">
                 <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -214,7 +214,7 @@ export function POSPage() {
           </div>
 
           {/* Cart */}
-          <div className="rounded-xl border border-slate-200 bg-white p-4">
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-4">
             <div className="flex items-center justify-between gap-3">
               <h2 className="text-lg font-semibold text-ink-900">{t("Cart")}</h2>
               <span className="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-600">
@@ -379,7 +379,7 @@ export function POSPage() {
         </div>
 
         <div className="space-y-6">
-          <div className="rounded-xl border border-slate-200 bg-white p-4">
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-4">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-lg font-semibold text-ink-900">{t("Total")}</h2>
@@ -406,7 +406,7 @@ export function POSPage() {
           </div>
 
           {/* Coupon Input */}
-          <div className="rounded-xl border border-slate-200 bg-white p-4">
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-4">
             <label className="mb-1.5 block text-xs font-medium text-slate-500">{t("Coupon")}</label>
             <CouponInput
               customerId={selectedCustomerId || null}
@@ -417,7 +417,7 @@ export function POSPage() {
             />
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-white p-4">
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-4">
             <h2 className="text-lg font-semibold text-ink-900">{t("Products")}</h2>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               {(productsLoading

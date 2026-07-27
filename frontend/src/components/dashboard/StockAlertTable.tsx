@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { Search, Copy, Download, Printer, Columns2 } from "lucide-react";
+import toast from "react-hot-toast";
 import type { StockAlertItem } from "../../types";
 import { useTranslation } from "../../context/LanguageContext";
 
@@ -17,7 +18,7 @@ function copyToClipboard(rows: StockAlertItem[]) {
     .map((r, i) => `${i + 1}\t${r.name}\t${r.sku || "-"}\t${r.stock_quantity}\t${r.unit}`)
     .join("\n");
   navigator.clipboard.writeText(`${header}\n${body}`).then(() =>
-    alert("Table copied to clipboard!")
+    toast.success("Table copied to clipboard!")
   );
 }
 

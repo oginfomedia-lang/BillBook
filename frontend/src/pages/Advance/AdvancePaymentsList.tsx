@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Plus, Search, Copy, Download, Printer, Columns2 } from "lucide-react";
+import toast from "react-hot-toast";
 import { useAdvancePayments, useCreateAdvancePayment, useUpdateAdvancePayment, useDeleteAdvancePayment } from "../../hooks/useAdvancePayments";
 import { useCustomers } from "../../hooks/useCustomers";
 import { TableSkeleton } from "../../components/ui/Skeletons";
@@ -16,7 +17,7 @@ function copyToClipboard(rows: AdvancePayment[]) {
   const body = rows.map(r =>
     `${r.advance_number},${formatDate(r.payment_date)},${r.customer?.name || ""},${r.amount},${r.payment_type},${r.status}`
   ).join("\n");
-  navigator.clipboard.writeText(`${header}\n${body}`).then(() => alert("Copied to clipboard!"));
+  navigator.clipboard.writeText(`${header}\n${body}`).then(() => toast.success("Copied to clipboard!"));
 }
 
 function downloadCSV(rows: AdvancePayment[], filename: string) {
@@ -92,7 +93,7 @@ export function AdvancePaymentsList() {
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-ink-900">{t("Advance Payments List")}</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-ink-900">{t("Advance Payments List")}</h1>
           <p className="text-sm text-slate-500">{t("Track advance payments received from customers.")}</p>
         </div>
         <button
@@ -105,7 +106,7 @@ export function AdvancePaymentsList() {
       </div>
 
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white p-2 shadow-sm">
+      <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200/80 bg-white p-2 shadow-sm">
         <div className="flex items-center gap-1.5 text-xs text-slate-500 mr-auto">
           <span>{t("Show")}</span>
           <select
@@ -165,7 +166,7 @@ export function AdvancePaymentsList() {
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="overflow-x-auto rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)]">
         <table className="w-full min-w-[760px] text-sm">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-medium text-slate-500">
