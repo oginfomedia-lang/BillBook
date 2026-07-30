@@ -6,6 +6,7 @@ from app.models import User, Role
 from app.schemas import UserCreateSchema, UserUpdateSchema
 from app.tenant_scope import TenantContext
 from app.utils.decorators import require_auth, require_permission
+from app.utils.plan_limits import check_user_limit
 
 users_bp = Blueprint("users", __name__, url_prefix="/api/v1/users")
 
@@ -53,6 +54,10 @@ def create_user():
         data = UserCreateSchema().load(request.get_json(force=True) or {})
     except ValidationError as err:
         return jsonify({"error": "Validation failed", "details": err.messages}), 422
+
+        allowed, limit_error = check_user_limit()
+    if not allowed:
+        return jsonify({"error": limit_error}), 409
 
     tenant_id = TenantContext.get()
 

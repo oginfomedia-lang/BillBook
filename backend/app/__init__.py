@@ -32,7 +32,7 @@ def create_app(config_name: str | None = None) -> Flask:
         resources={r"/api/*": {"origins": allowed_origins}},
         supports_credentials=True,
         allow_headers=["Content-Type", "Authorization", "Accept", "X-Branch-Id"],
-        expose_headers=["Content-Type", "Authorization", "X-Branch-Id"],
+        expose_headers=["Content-Type", "Authorization", "X-Branch-Id", "Content-Disposition"],
         methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
         max_age=86400,
     )
@@ -67,6 +67,8 @@ def create_app(config_name: str | None = None) -> Flask:
     from app.routes.expenses import expenses_bp
     from app.routes.reports import reports_bp
     from app.routes.settings import settings_bp
+    from app.routes.billing import billing_bp
+
 
     # Register with url_prefix to ensure consistency
     flask_app.register_blueprint(auth_bp, url_prefix='/api/v1/auth')
@@ -92,6 +94,7 @@ def create_app(config_name: str | None = None) -> Flask:
     flask_app.register_blueprint(expenses_bp, url_prefix='/api/v1/expenses')
     flask_app.register_blueprint(reports_bp, url_prefix='/api/v1/reports')
     flask_app.register_blueprint(settings_bp, url_prefix='/api/v1/settings')
+    flask_app.register_blueprint(billing_bp, url_prefix='/api/v1/billing')
 
     @flask_app.route("/api/v1/health", methods=["GET"])
     def health():

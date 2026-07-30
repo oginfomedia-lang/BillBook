@@ -1,6 +1,7 @@
 // frontend/src/hooks/useBranches.ts
 
 import { useQuery, useMutation, useQueryClient, type UseQueryOptions } from "@tanstack/react-query";  // ✅ ADD useQueryClient, useMutation
+import toast from "react-hot-toast";
 import api from "../api/client";
 import type { Branch, PaginatedResponse } from "../types";
 
@@ -49,6 +50,7 @@ export function useCreateBranch() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["branches"] });
     },
+    onError: (err: any) => toast.error(err?.response?.data?.error || "Couldn't create branch."),
   });
 }
 

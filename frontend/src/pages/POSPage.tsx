@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Plus, Search, X, UserPlus, PauseCircle, Layers, Banknote, Wallet } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { Modal } from "../components/ui/Modal";
 import { useCustomers, useCreateCustomer } from "../hooks/useCustomers";
 import { useItems } from "../hooks/useItems";
+import { fetchItems } from "../api/items";
 import { createInvoice } from "../api/invoices";
 import { formatMoney } from "../utils/format";
 import type { InvoiceItem } from "../types";
@@ -20,6 +21,8 @@ export function POSPage() {
   const { t } = useTranslation();
   const { currentBranchId } = useBranch();
   const [productSearch, setProductSearch] = useState("");
+  const [isScanning, setIsScanning] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [customerSearch, setCustomerSearch] = useState("");
   const [selectedCustomerId, setSelectedCustomerId] = useState<number | "">("");
   const [cartItems, setCartItems] = useState<InvoiceItem[]>([]);
@@ -88,6 +91,48 @@ export function POSPage() {
         },
       ];
     });
+  };
+
+  // Keeps the search box focused so a barcode scanner (which just types into
+  // whatever's focused, then sends Enter) always has somewhere to type.
+  useEffect(() => {
+    searchInputRef.current?.focus();
+  }, []);
+
+  // A scanner "types" the barcode then sends Enter -- this is what turns
+  // that into an instant, hands-free add to the cart. Does its own exact-match
+  // lookup (not the debounced fuzzy list already on screen) so a fast scan
+  // can't race ahead of the still-updating search results and miss.
+  const handleSearchKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+
+    const code = productSearch.trim();
+    if (!code || isScanning) return;
+
+    setIsScanning(true);
+    try {
+      const result = await fetchItems({ search: code, per_page: 20 });
+      const normalized = code.toLowerCase();
+      const match = result.items.find(
+        (item) =>
+          item.barcode?.toLowerCase() === normalized ||
+          item.item_code?.toLowerCase() === normalized ||
+          item.sku?.toLowerCase() === normalized
+      );
+
+      if (match) {
+        handleAddProduct(match);
+        setProductSearch("");
+      } else {
+        toast.error(t("No product found for that code"));
+      }
+    } catch {
+      toast.error(t("Couldn't look up that code. Please try again."));
+    } finally {
+      setIsScanning(false);
+      searchInputRef.current?.focus();
+    }
   };
 
   const updateCartItem = (index: number, patch: Partial<InvoiceItem>) => {
@@ -188,9 +233,11 @@ export function POSPage() {
                 <div className="relative">
                   <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   <input
+                    ref={searchInputRef}
                     value={productSearch}
                     onChange={(e) => setProductSearch(e.target.value)}
-                    placeholder={t("Search products...")}
+                    onKeyDown={handleSearchKeyDown}
+                    placeholder={t("Search or scan barcode...")}
                     className="w-full rounded-lg border border-slate-200 bg-slate-50 py-3 pl-10 pr-3 text-sm text-ink-900 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
                   />
                 </div>

@@ -25,6 +25,13 @@ PERMISSION_CATALOG = {
     "branches": ["view", "create", "edit", "delete"],
     "reports": ["view"],
     "settings": ["view", "edit"],
+ # "manage" is intentionally never checked via @require_permission -- the
+    # one cross-tenant billing action (super-admin manual plan assignment)
+    # gates on @require_platform_admin instead (see app/utils/decorators.py),
+    # since it's a platform-operator action, not a per-tenant permission.
+    # It's still listed here so it shows up in the role editor / permission
+    # catalog UI for documentation.
+    "billing": ["view", "manage"],
 }
 
 

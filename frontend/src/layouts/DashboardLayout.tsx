@@ -31,6 +31,7 @@ import {
   Store,
   BarChart3,
   Settings as SettingsIcon,
+  Crown,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useTranslation } from "../context/LanguageContext";
@@ -39,6 +40,7 @@ import * as authApi from "../api/auth";
 import { Modal } from "../components/ui/Modal";
 import { useBranch } from "../context/BranchContext";
 import { BranchSelector } from "../components/BranchSelector"; // ✅ ADD THIS
+import { useSiteSettings } from "../hooks/useSiteSettings";
 
 // ─── Navigation Items ────────────────────────────────────────────────────────
 const NAV_ITEMS = [
@@ -173,7 +175,17 @@ const NAV_ITEMS = [
       { to: "/settings?page=backup", label: "Database Backup" },
     ],
   },
+  { to: "/billing", label: "Plan & Billing", icon: Crown, permission: "billing.view" },
 ];
+
+// Shown instead of NAV_ITEMS for the true cross-tenant platform operator
+// (tenant_id === null -- see PlatformAdminRoute.tsx). Every other item
+// above points at tenant-scoped data this account can see UNSCOPED (see
+// app/tenant_scope.py backend-side), so it gets a minimal menu instead.
+const PLATFORM_ADMIN_NAV_ITEMS = [
+  { to: "/admin/billing", label: "Tenant Billing", icon: Crown },
+];
+
 
 // ─── Component ──────────────────────────────────────────────────────────────
 export function DashboardLayout() {
@@ -181,6 +193,25 @@ export function DashboardLayout() {
   const { user, logout, hasPermission, updateCurrentUser } = useAuth();
   const { language, setLanguage, t } = useTranslation();
   const navigate = useNavigate();
+  const { data: siteSettings } = useSiteSettings();
+
+  // Apply Site Settings (Settings → Site Settings) to the browser tab title
+  // and favicon so a saved change is actually visible somewhere, not just
+  // stored in the DB.
+  useEffect(() => {
+    if (siteSettings?.site_name) {
+      document.title = siteSettings.site_name;
+    }
+    if (siteSettings?.favicon_url) {
+      let link = document.querySelector<HTMLLinkElement>("link[rel~='icon']");
+      if (!link) {
+        link = document.createElement("link");
+        link.rel = "icon";
+        document.head.appendChild(link);
+      }
+      link.href = siteSettings.favicon_url;
+    }
+  }, [siteSettings?.site_name, siteSettings?.favicon_url]);
 
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({
     Sales: true,
@@ -331,15 +362,18 @@ export function DashboardLayout() {
   };
 
   // ─── Filter nav items based on permissions ──────────────────────────────
-  const visibleNavItems = NAV_ITEMS.filter((item) => {
-    if (item.permission) {
-      return hasPermission(item.permission);
-    }
-    if (item.sub) {
-      return item.sub.some((subItem: any) => !subItem.permission || hasPermission(subItem.permission));
-    }
-    return true;
-  });
+  const isPlatformAdmin = !!user && user.is_super_admin && user.tenant_id === null;
+  const visibleNavItems = isPlatformAdmin
+    ? PLATFORM_ADMIN_NAV_ITEMS
+    : NAV_ITEMS.filter((item) => {
+      if (item.permission) {
+        return hasPermission(item.permission);
+      }
+      if (item.sub) {
+        return item.sub.some((subItem: any) => !subItem.permission || hasPermission(subItem.permission));
+      }
+      return true;
+    });
 
   // ─── User initials for avatar fallback ──────────────────────────────────
   const initials = user?.name
@@ -365,10 +399,18 @@ export function DashboardLayout() {
         {/* Logo */}
         <div className="flex h-16 items-center justify-between px-5 border-b border-white/10">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand shadow-lg shadow-brand/30">
-              <Receipt size={17} className="text-white" />
-            </div>
-            <span className="text-lg font-bold tracking-tight text-white">BillBook</span>
+            {siteSettings?.logo_url ? (
+              <img
+                src={siteSettings.logo_url}
+                alt={siteSettings.site_name}
+                className="h-8 w-8 rounded-lg object-contain"
+              />
+            ) : (
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand shadow-lg shadow-brand/30">
+                <Receipt size={17} className="text-white" />
+              </div>
+            )}
+            <span className="text-lg font-bold tracking-tight text-white">{siteSettings?.site_name || "BillBook"}</span>
           </div>
           <button
             className="rounded-lg p-1 text-slate-400 hover:text-white lg:hidden"
@@ -395,9 +437,8 @@ export function DashboardLayout() {
                   <div key={item.label} className="flex flex-col">
                     <button
                       onClick={() => toggleMenu(item.label)}
-                      className={`group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all focus:outline-none ${
-                        isOpen ? "text-white" : "text-slate-400 hover:bg-white/5 hover:text-white"
-                      }`}
+                      className={`group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all focus:outline-none ${isOpen ? "text-white" : "text-slate-400 hover:bg-white/5 hover:text-white"
+                        }`}
                     >
                       <Icon size={17} className={isOpen ? "text-brand-light" : "text-slate-500 group-hover:text-slate-300"} />
                       <span className="flex-1 text-left">{t(item.label)}</span>

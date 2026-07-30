@@ -67,7 +67,7 @@ def require_permission(permission_key: str):
     def decorator(fn):
         @wraps(fn)
         def wrapper(*args, **kwargs):
-            if getattr(g, "current_user_is_super_admin", False):
+            if getattr(g, "current_user_is_super_admin", False)and TenantContext.get() is not None:
                 return fn(*args, **kwargs)
             permissions = getattr(g, "current_user_permissions", set())
             if permission_key not in permissions:
@@ -77,6 +77,34 @@ def require_permission(permission_key: str):
         return wrapper
 
     return decorator
+   
+def require_platform_admin(fn):
+    """
+    Usage: @require_platform_admin (stack UNDER @require_auth, same as
+    @require_permission).
+
+    Gates true cross-tenant, platform-operator-only endpoints (manually
+    assigning a billing plan to ANY tenant). Deliberately NOT the same
+    check as `is_super_admin` alone -- in this codebase every tenant's
+    first user is created with is_super_admin=True (see auth.py signup()),
+    which only means "full permissions WITHIN that one tenant". A genuine
+    platform operator is a User row with tenant_id=None AND
+    is_super_admin=True. No signup flow creates this; it's created once via
+    backend/seed_platform_admin.py. Because tenant_id is None, TenantContext
+    is never set for this account's requests, which also means
+    TenantScopedMixin auto-filtering is a no-op for it (see
+    app/tenant_scope.py) -- exactly what the cross-tenant billing-admin
+    endpoints need.
+    """
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        is_super_admin = getattr(g, "current_user_is_super_admin", False)
+        if not is_super_admin or TenantContext.get() is not None:
+            return jsonify({"error": "Forbidden: platform administrator access required"}), 403
+        return fn(*args, **kwargs)
+
+    return wrapper
+    
 
 
 def current_user():

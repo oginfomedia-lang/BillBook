@@ -5,6 +5,7 @@ import { useQuotation, useDeleteQuotation, useConvertQuotationToInvoice, useUpda
 import type { QuotationStatus } from "../api/quotations";
 import { formatMoney, formatDate } from "../utils/format";
 import { Modal } from "../components/ui/Modal";
+import { useStoreProfile } from "../hooks/useStoreProfile";
 
 const STATUS_OPTIONS: QuotationStatus[] = ["draft", "sent", "accepted", "declined"];
 
@@ -21,6 +22,7 @@ export function QuotationDetailPage() {
   const navigate = useNavigate();
 
   const { data: quotation, isLoading } = useQuotation(quotationId);
+  const { data: store } = useStoreProfile();
   const deleteQuotation = useDeleteQuotation();
   const convertToInvoice = useConvertQuotationToInvoice();
   const updateQuotation = useUpdateQuotation();
@@ -122,10 +124,17 @@ export function QuotationDetailPage() {
         <div className="flex flex-col justify-between gap-4 border-b border-slate-100 pb-6 sm:flex-row sm:items-start">
           <div className="space-y-1">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-7 w-7 items-center justify-center rounded bg-brand">
-                <FileText size={15} className="text-white" />
+              {store?.store_logo ? (
+                <img src={store.store_logo} alt={store.company_name} className="h-8 w-8 rounded object-contain" />
+              ) : (
+                <div className="flex h-7 w-7 items-center justify-center rounded bg-brand">
+                  <FileText size={15} className="text-white" />
+                </div>
+              )}
+              <div>
+                <span className="text-sm font-bold tracking-tight text-ink-900">{store?.company_name || "Quotation"}</span>
+                {store?.gstin && <p className="text-[11px] text-slate-400">GSTIN: {store.gstin}</p>}
               </div>
-              <span className="text-sm font-bold tracking-tight text-ink-900">Quotation</span>
             </div>
             <div className="flex items-center gap-2 pt-1">
               <h1 className="text-2xl font-extrabold text-ink-900 tracking-tight">#{quotation.quotation_number}</h1>
@@ -239,6 +248,15 @@ export function QuotationDetailPage() {
           <div className="mt-4 border-t border-slate-100 pt-4 text-sm text-slate-500">
             <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">Notes</p>
             <p className="whitespace-pre-line leading-relaxed">{quotation.notes}</p>
+          </div>
+        )}
+
+        {store?.show_signature && store?.signature && (
+          <div className="mt-8 flex justify-end">
+            <div className="text-center">
+              <img src={store.signature} alt="Signature" className="mx-auto h-16 max-w-[180px] object-contain" />
+              <p className="mt-1 border-t border-slate-300 pt-1 text-xs text-slate-500">Authorized Signatory</p>
+            </div>
           </div>
         )}
       </div>

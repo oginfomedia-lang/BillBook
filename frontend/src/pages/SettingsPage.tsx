@@ -468,7 +468,7 @@ export function SettingsPage() {
       link.href = url;
 
       const contentDisposition = response.headers["content-disposition"];
-      let filename = "billbook_backup.json";
+      let filename = "billbook_backup.zip";
       if (contentDisposition) {
         const matches = /filename="?([^"]+)"?/.exec(contentDisposition);
         if (matches && matches[1]) {
@@ -483,6 +483,30 @@ export function SettingsPage() {
       toast.success(t("Backup downloaded successfully"));
     } catch (error) {
       toast.error(t("Failed to export database backup"));
+    }
+  };
+
+  // Restore database backup
+  const [restoreFile, setRestoreFile] = useState<File | null>(null);
+  const [restoring, setRestoring] = useState(false);
+
+  const handleRestoreBackup = async () => {
+    if (!restoreFile) return;
+    if (!confirm(t("This will DELETE all current data and replace it with the backup. This cannot be undone. Continue?"))) return;
+
+    setRestoring(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", restoreFile);
+      await apiClient.post("/settings/restore", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      toast.success(t("Data restored successfully. Reloading..."));
+      setTimeout(() => window.location.reload(), 1500);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error || t("Restore failed"));
+    } finally {
+      setRestoring(false);
     }
   };
 
@@ -526,8 +550,8 @@ export function SettingsPage() {
                 key={key}
                 onClick={() => navigate(`/settings?page=${key}`)}
                 className={`flex w-full items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors ${isActive
-                    ? "bg-brand/10 text-brand font-semibold"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-800"
+                  ? "bg-brand/10 text-brand font-semibold"
+                  : "text-slate-600 hover:bg-slate-50 hover:text-slate-800"
                   }`}
               >
                 <Icon size={16} />
@@ -636,9 +660,8 @@ export function SettingsPage() {
                               setStoreForm({ ...storeForm, gstin: upper });
                               setStoreGstinError(isValidGSTIN(upper) ? "" : GSTIN_ERROR_MESSAGE);
                             }}
-                            className={`w-full rounded border px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
-                              storeGstinError ? "border-red-400 focus:ring-red-400" : "border-slate-200 focus:ring-brand"
-                            }`}
+                            className={`w-full rounded border px-3 py-2 text-sm focus:outline-none focus:ring-1 ${storeGstinError ? "border-red-400 focus:ring-red-400" : "border-slate-200 focus:ring-brand"
+                              }`}
                           />
                           {storeGstinError && <p className="mt-1 text-xs text-red-500">{storeGstinError}</p>}
                         </div>
@@ -941,25 +964,60 @@ export function SettingsPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-500 mb-1">{t("Logo Image URL")}</label>
-                      <input
-                        type="text"
-                        value={siteForm.logo_url}
-                        onChange={(e) => setSiteForm({ ...siteForm, logo_url: e.target.value })}
-                        placeholder="https://example.com/logo.png"
-                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
-                      />
+                      <label className="block text-xs font-semibold text-slate-500 mb-1">{t("Logo Image")}</label>
+                      <div className="flex items-center gap-2">
+                        <label className="cursor-pointer rounded border border-slate-300 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 transition-colors">
+                          {t("Choose File")}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const reader = new FileReader();
+                                reader.onload = (ev) => setSiteForm({ ...siteForm, logo_url: ev.target?.result as string });
+                                reader.readAsDataURL(file);
+                              }
+                            }}
+                          />
+                        </label>
+                        <span className="text-xs text-slate-400">{siteForm.logo_url ? t("File selected") : t("No file chosen")}</span>
+                      </div>
+                      {siteForm.logo_url && (
+                        <div className="mt-2 flex h-16 w-16 items-center justify-center rounded-lg border border-slate-200 bg-white">
+                          <img src={siteForm.logo_url} alt="logo preview" className="max-h-14 max-w-full object-contain" />
+                        </div>
+                      )}
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-500 mb-1">{t("Favicon URL")}</label>
-                      <input
-                        type="text"
-                        value={siteForm.favicon_url}
-                        onChange={(e) => setSiteForm({ ...siteForm, favicon_url: e.target.value })}
-                        placeholder="https://example.com/favicon.ico"
-                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
-                      />
+                      <label className="block text-xs font-semibold text-slate-500 mb-1">{t("Favicon")}</label>
+                      <div className="flex items-center gap-2">
+                        <label className="cursor-pointer rounded border border-slate-300 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 transition-colors">
+                          {t("Choose File")}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const reader = new FileReader();
+                                reader.onload = (ev) => setSiteForm({ ...siteForm, favicon_url: ev.target?.result as string });
+                                reader.readAsDataURL(file);
+                              }
+                            }}
+                          />
+                        </label>
+                        <span className="text-xs text-slate-400">{siteForm.favicon_url ? t("File selected") : t("No file chosen")}</span>
+                      </div>
+                      {siteForm.favicon_url && (
+                        <div className="mt-2 flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white">
+                          <img src={siteForm.favicon_url} alt="favicon preview" className="max-h-8 max-w-full object-contain" />
+                        </div>
+                      )}
                     </div>
+
                   </div>
                   <div className="flex justify-end pt-2">
                     <button
@@ -1571,7 +1629,7 @@ export function SettingsPage() {
               <div className="max-w-md mx-auto space-y-2">
                 <h3 className="text-lg font-bold text-slate-800">{t("Export Full Workspace Data")}</h3>
                 <p className="text-sm text-slate-500">
-                  {t("Download a secure, portable, JSON-formatted data export file containing all registers, customers, invoices, items, and workspace configs. Store this backup file safely on local disks or cold storage.")}
+                  {t("Download a secure, portable ZIP file (one CSV per table) containing all registers, customers, invoices, items, and workspace configs. Store this backup file safely on local disks or cold storage.")}
                 </p>
               </div>
               <div className="pt-2">
@@ -1581,6 +1639,26 @@ export function SettingsPage() {
                 >
                   <Download size={18} />
                   {t("Generate and Download Backup")}
+                </button>
+              </div>
+
+              <div className="max-w-md mx-auto border-t border-slate-100 pt-6 text-left">
+                <h3 className="text-sm font-bold text-red-600">{t("Restore from Backup")}</h3>
+                <p className="mt-1 text-xs text-slate-500">
+                  {t("Upload a .zip backup file exported above. This REPLACES ALL current data for this workspace and cannot be undone.")}
+                </p>
+                <input
+                  type="file"
+                  accept=".zip"
+                  onChange={(e) => setRestoreFile(e.target.files?.[0] || null)}
+                  className="mt-3 block w-full text-sm text-slate-600 file:mr-3 file:rounded file:border file:border-slate-300 file:bg-slate-50 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-slate-700 hover:file:bg-slate-100"
+                />
+                <button
+                  disabled={!restoreFile || restoring}
+                  onClick={handleRestoreBackup}
+                  className="mt-3 inline-flex items-center gap-2 rounded-lg bg-red-600 px-6 py-2.5 text-sm font-bold text-white hover:bg-red-700 transition-colors disabled:opacity-50"
+                >
+                  {restoring ? t("Restoring...") : t("Restore Now")}
                 </button>
               </div>
             </div>

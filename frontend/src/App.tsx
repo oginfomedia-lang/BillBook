@@ -64,6 +64,9 @@ import { ExpensesListPage } from "./pages/expenses/ExpensesListPage";
 import { ExpenseCategoryListPage } from "./pages/expenses/ExpenseCategoryListPage";
 import { ReportsPage } from "./pages/ReportsPage";
 import { SettingsPage } from "./pages/SettingsPage";
+import { BillingPage } from "./pages/BillingPage";
+import { AdminBillingPage } from "./pages/admin/AdminBillingPage";
+import { PlatformAdminRoute } from "./components/PlatformAdminRoute";
 
 
 const queryClient = new QueryClient({
@@ -210,6 +213,11 @@ export default function App() {
 
                   {/* Settings */}
                   <Route path="/settings" element={<SettingsPage />} />
+
+
+                  {/* Plan & Billing */}
+                  <Route path="/billing" element={<PermissionRoute permission="billing.view"><BillingPage /></PermissionRoute>} />
+                  <Route path="/admin/billing" element={<PlatformAdminRoute><AdminBillingPage /></PlatformAdminRoute>} />
 
                   {/* 404 inside dashboard layout */}
                   <Route path="*" element={<NotFoundPage />} />

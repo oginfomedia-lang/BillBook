@@ -100,7 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const hasPermission = (key: string) => {
     if (!user) return false;
-    if (user.is_super_admin) return true;
+    if (user.is_super_admin && user.tenant_id != null) return true;
     return (user.permissions ?? []).includes(key);
   };
 

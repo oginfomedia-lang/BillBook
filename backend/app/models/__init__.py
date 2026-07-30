@@ -26,6 +26,10 @@ from .stock_transfer import StockTransfer, StockTransferItem
 from .expense import Expense, ExpenseCategory
 from .tenant_setting import TenantSetting
 from .password_reset_token import PasswordResetToken
+from .plan import Plan
+from .tenant_license import TenantLicense, LicenseStatus
+from .payment_transaction import PaymentTransaction, PaymentStatus
+
 
 
 __all__ = [
@@ -78,4 +82,9 @@ __all__ = [
     "StockTransferItem",
     "Expense",
     "ExpenseCategory",
+    "Plan",
+    "TenantLicense",
+    "LicenseStatus",
+    "PaymentTransaction",
+    "PaymentStatus",
 ]

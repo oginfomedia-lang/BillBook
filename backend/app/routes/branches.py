@@ -7,6 +7,7 @@ from app.models import Branch
 from app.schemas.branch import BranchSchema
 from app.tenant_scope import TenantContext
 from app.utils.decorators import require_auth, require_permission
+from app.utils.plan_limits import check_branch_limit
 
 branches_bp = Blueprint("branches", __name__, url_prefix="/api/v1/branches")
 
@@ -51,6 +52,10 @@ def create_branch():
         data = BranchSchema().load(request.get_json(force=True) or {})
     except ValidationError as err:
         return jsonify({"error": "Validation failed", "details": err.messages}), 422
+
+    allowed, limit_error = check_branch_limit()
+    if not allowed:
+        return jsonify({"error": limit_error}), 409
 
     # Check duplicate code
     existing = Branch.query.filter_by(code=data["code"]).first()

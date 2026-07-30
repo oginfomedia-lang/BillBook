@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useItems } from '../hooks/useItems';
 import { Printer, RefreshCw } from 'lucide-react';
 import { formatMoney } from '../utils/format';
+import { Barcode } from '../components/ui/Barcode';
 
 export function PrintLabelsPage() {
     const { data: itemData } = useItems({ per_page: 100 });
@@ -142,17 +143,14 @@ export function PrintLabelsPage() {
                                         </div>
                                     )}
 
-                                    {/* Barcode Mock */}
+                                    {/* Barcode -- actually encodes this item's barcode/item_code via CODE128 */}
                                     <div className="my-2 space-y-0.5">
-                                        <div className="flex justify-center gap-0.5">
-                                            {/* Renders a cute barcode dummy */}
-                                            {[2, 4, 1, 3, 2, 4, 1, 2, 3, 1, 4, 2, 1, 3, 2].map((w, idx) => (
-                                                <div
-                                                    key={idx}
-                                                    className="bg-slate-900 print:bg-black"
-                                                    style={{ width: `${w}px`, height: '24px' }}
-                                                />
-                                            ))}
+                                        <div className="flex justify-center">
+                                            <Barcode
+                                                value={selectedItem?.barcode || selectedItem?.item_code || ''}
+                                                height={28}
+                                                width={1.3}
+                                            />
                                         </div>
                                         <div className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">
                                             {selectedItem?.barcode || selectedItem?.item_code}

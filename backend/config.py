@@ -58,6 +58,12 @@ class Config:
     PASSWORD_RESET_TOKEN_EXPIRES_MINUTES = int(
         os.environ.get("PASSWORD_RESET_TOKEN_EXPIRES_MINUTES", "30")
     )
+     # --- Razorpay (one-time license checkout) ---
+    # No hardcoded defaults for secrets: billing checkout fails loudly
+    # (RuntimeError in app/routes/billing.py) until these are set for real.
+    RAZORPAY_KEY_ID = os.environ.get("RAZORPAY_KEY_ID", "")
+    RAZORPAY_KEY_SECRET = os.environ.get("RAZORPAY_KEY_SECRET", "")
+
 
 
 class DevelopmentConfig(Config):

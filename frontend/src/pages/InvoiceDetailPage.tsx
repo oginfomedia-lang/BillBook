@@ -7,6 +7,7 @@ import { Modal } from "../components/ui/Modal";
 import { formatMoney, formatDate } from "../utils/format";
 import type { InvoiceStatus } from "../types";
 import { useTranslation } from "../context/LanguageContext";
+import { useStoreProfile } from "../hooks/useStoreProfile";
 
 export function InvoiceDetailPage() {
   const { t } = useTranslation();
@@ -15,6 +16,7 @@ export function InvoiceDetailPage() {
   const invoiceId = id ? Number(id) : undefined;
 
   const { data: invoice, isLoading } = useInvoice(invoiceId);
+  const { data: store } = useStoreProfile();
   const updateInvoice = useUpdateInvoice();
   const deleteInvoice = useDeleteInvoice();
   const recordPayment = useRecordPayment();
@@ -137,10 +139,17 @@ export function InvoiceDetailPage() {
         <div className="flex flex-col justify-between gap-4 border-b border-slate-100 pb-6 sm:flex-row sm:items-start">
           <div className="space-y-1">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-7 w-7 items-center justify-center rounded bg-brand">
-                <FileText size={15} className="text-white" />
+              {store?.store_logo ? (
+                <img src={store.store_logo} alt={store.company_name} className="h-8 w-8 rounded object-contain" />
+              ) : (
+                <div className="flex h-7 w-7 items-center justify-center rounded bg-brand">
+                  <FileText size={15} className="text-white" />
+                </div>
+              )}
+              <div>
+                <span className="text-sm font-bold tracking-tight text-ink-900">{store?.company_name || t("BillBook Invoice")}</span>
+                {store?.gstin && <p className="text-[11px] text-slate-400">{t("GSTIN")}: {store.gstin}</p>}
               </div>
-              <span className="text-sm font-bold tracking-tight text-ink-900">{t("BillBook Invoice")}</span>
             </div>
             <h1 className="text-2xl font-extrabold text-ink-900 tracking-tight pt-1">
               {t("Invoice")} #{invoice.invoice_number}
@@ -257,6 +266,15 @@ export function InvoiceDetailPage() {
           <div className="mt-8 border-t border-slate-100 pt-4 text-sm text-slate-500">
             <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">{t("Notes / Comments")}</p>
             <p className="whitespace-pre-line leading-relaxed">{invoice.notes}</p>
+          </div>
+        )}
+
+        {store?.show_signature && store?.signature && (
+          <div className="mt-8 flex justify-end">
+            <div className="text-center">
+              <img src={store.signature} alt={t("Signature")} className="mx-auto h-16 max-w-[180px] object-contain" />
+              <p className="mt-1 border-t border-slate-300 pt-1 text-xs text-slate-500">{t("Authorized Signatory")}</p>
+            </div>
           </div>
         )}
       </div>
