@@ -75,7 +75,7 @@ def create_category():
 @expenses_bp.route("/categories/<int:cat_id>", methods=["PUT"])
 @require_auth
 def update_category(cat_id):
-    cat = ExpenseCategory.query.get_or_404(cat_id)
+    cat = ExpenseCategory.query.filter_by(id=cat_id).first_or_404()
     try:
         data = ExpenseCategorySchema(partial=True).load(request.get_json(force=True) or {})
     except ValidationError as err:
@@ -94,7 +94,7 @@ def update_category(cat_id):
 @expenses_bp.route("/categories/<int:cat_id>", methods=["DELETE"])
 @require_auth
 def delete_category(cat_id):
-    cat = ExpenseCategory.query.get_or_404(cat_id)
+    cat = ExpenseCategory.query.filter_by(id=cat_id).first_or_404()
     db.session.delete(cat)
     db.session.commit()
     return jsonify({"message": "Category deleted successfully"}), 200
@@ -145,7 +145,7 @@ def list_expenses():
 @expenses_bp.route("/<int:expense_id>", methods=["GET"])
 @require_auth
 def get_expense(expense_id):
-    exp = Expense.query.get_or_404(expense_id)
+    exp = Expense.query.filter_by(id=expense_id).first_or_404()
     return jsonify(exp.to_dict())
 
 
@@ -177,7 +177,7 @@ def create_expense():
 @expenses_bp.route("/<int:expense_id>", methods=["PUT"])
 @require_auth
 def update_expense(expense_id):
-    exp = Expense.query.get_or_404(expense_id)
+    exp = Expense.query.filter_by(id=expense_id).first_or_404()
     try:
         data = ExpenseSchema(partial=True).load(request.get_json(force=True) or {})
     except ValidationError as err:
@@ -192,7 +192,7 @@ def update_expense(expense_id):
 @expenses_bp.route("/<int:expense_id>", methods=["DELETE"])
 @require_auth
 def delete_expense(expense_id):
-    exp = Expense.query.get_or_404(expense_id)
+    exp = Expense.query.filter_by(id=expense_id).first_or_404()
     db.session.delete(exp)
     db.session.commit()
     return jsonify({"message": "Expense deleted successfully"}), 200

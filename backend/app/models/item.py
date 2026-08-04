@@ -8,12 +8,19 @@ class Item(TenantScopedMixin, db.Model):
     """Item/Product Model for BillBook"""
     __tablename__ = 'items'
     __table_args__ = (
-        db.UniqueConstraint("tenant_id", "item_code", name="uq_item_tenant_item_code"),
-        db.UniqueConstraint("tenant_id", "sku", name="uq_item_tenant_sku"),
-        db.UniqueConstraint("tenant_id", "barcode", name="uq_item_tenant_barcode"),
+        # Scoped per-branch (not just per-tenant) so the same item_code/sku/
+        # barcode can exist independently in two branches -- each branch's
+        # product catalog and stock are meant to be fully separate. NULL
+        # branch_id (legacy/unassigned items) is not compared for equality
+        # by MySQL's unique constraints, so those rows aren't cross-checked
+        # against each other here.
+        db.UniqueConstraint("tenant_id", "branch_id", "item_code", name="uq_item_tenant_branch_item_code"),
+        db.UniqueConstraint("tenant_id", "branch_id", "sku", name="uq_item_tenant_branch_sku"),
+        db.UniqueConstraint("tenant_id", "branch_id", "barcode", name="uq_item_tenant_branch_barcode"),
     )
 
     id = db.Column(db.Integer, primary_key=True)
+    branch_id = db.Column(db.Integer, db.ForeignKey("branches.id", ondelete="SET NULL"), nullable=True, index=True)
     item_code = db.Column(db.String(50), nullable=False, index=True)
     item_name = db.Column(db.String(255), nullable=False, index=True)
     item_group_id = db.Column(db.Integer, db.ForeignKey('item_groups.id'), nullable=True)
@@ -130,6 +137,7 @@ class Item(TenantScopedMixin, db.Model):
         """Convert to dictionary"""
         data = {
             'id': self.id,
+            'branch_id': self.branch_id,
             'item_code': self.item_code,
             'item_name': self.item_name,
             'name': self.item_name,  # Product compatibility

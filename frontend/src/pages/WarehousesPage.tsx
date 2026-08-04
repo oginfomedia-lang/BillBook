@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Plus, Search, Edit2, Trash2 } from "lucide-react";
 import { useWarehouses } from "../hooks/useWarehouses";
+import { useBranches } from "../hooks/useBranches";
 import { TableSkeleton } from "../components/ui/Skeletons";  // ← FIXED: Capital 'S'
 import { Modal } from "../components/ui/Modal";
 import toast from "react-hot-toast";
@@ -18,9 +19,13 @@ export function WarehousesPage() {
   const { data, isLoading: isLoadingData, refetch } = useWarehouses({ page, search });  // ← FIXED: Removed duplicate
   const warehouses = data?.items ?? [];
 
+  const { data: branchData } = useBranches({ per_page: 100 });
+  const branches = branchData?.items ?? [];
+
   const [form, setForm] = useState({
     name: "",
     location: "",
+    branch_id: "" as number | "",
   });
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -33,7 +38,7 @@ export function WarehousesPage() {
     try {
       await apiClient.post("/warehouses", form);
       toast.success("Warehouse created successfully");
-      setForm({ name: "", location: "" });
+      setForm({ name: "", location: "", branch_id: "" });
       setShowForm(false);
       refetch();
     } catch (error: any) {
@@ -48,6 +53,7 @@ export function WarehousesPage() {
     setForm({
       name: warehouse.name,
       location: warehouse.location || "",
+      branch_id: warehouse.branch_id || "",
     });
   };
 
@@ -131,6 +137,22 @@ export function WarehousesPage() {
               className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Branch</label>
+            <select
+              value={form.branch_id}
+              onChange={(e) => setForm({ ...form, branch_id: e.target.value ? Number(e.target.value) : "" })}
+              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+            >
+              <option value="">— Defaults to your currently selected branch —</option>
+              {branches.map((b: any) => (
+                <option key={b.id} value={b.id}>{b.name}</option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-slate-400">
+              Products stored in this warehouse only ever show up on this branch's dashboard/items list.
+            </p>
+          </div>
           <div className="flex justify-end gap-2 pt-2">
             <button
               type="button"
@@ -156,15 +178,16 @@ export function WarehousesPage() {
             <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-medium text-slate-500">
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Location</th>
+              <th className="px-4 py-3">Branch</th>
               <th className="px-4 py-3 text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
             {isLoadingData ? (
-              <TableSkeleton rows={5} cols={3} />
+              <TableSkeleton rows={5} cols={4} />
             ) : warehouses.length === 0 ? (
               <tr>
-                <td colSpan={3} className="px-4 py-10 text-center text-sm text-slate-400">
+                <td colSpan={4} className="px-4 py-10 text-center text-sm text-slate-400">
                   No warehouses found. Create your first warehouse!
                 </td>
               </tr>
@@ -173,6 +196,15 @@ export function WarehousesPage() {
                 <tr key={warehouse.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
                   <td className="px-4 py-3 font-semibold text-ink-900">{warehouse.name}</td>
                   <td className="px-4 py-3 text-slate-500">{warehouse.location || "—"}</td>
+                  <td className="px-4 py-3">
+                    {warehouse.branch_name ? (
+                      <span className="inline-flex rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">
+                        {warehouse.branch_name}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-amber-600">— no branch assigned —</span>
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-center">
                     <div className="flex items-center justify-center gap-1">
                       <button
@@ -216,6 +248,19 @@ export function WarehousesPage() {
               onChange={(e) => setForm({ ...form, location: e.target.value })}
               className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Branch</label>
+            <select
+              value={form.branch_id}
+              onChange={(e) => setForm({ ...form, branch_id: e.target.value ? Number(e.target.value) : "" })}
+              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+            >
+              <option value="">— No branch (unassigned) —</option>
+              {branches.map((b: any) => (
+                <option key={b.id} value={b.id}>{b.name}</option>
+              ))}
+            </select>
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <button

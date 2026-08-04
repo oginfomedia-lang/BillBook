@@ -6,6 +6,8 @@ import {
     updateItem,
     deleteItem,
     bulkImportItems,
+    exportBranchMapping,
+    importBranchMapping,
     fetchCategories,
     createCategory,
     updateCategory,
@@ -144,6 +146,29 @@ export function useBulkImportItems() {
         },
         onError: (error: any) => {
             console.error('Failed to import items:', error);
+        },
+    });
+}
+
+/**
+ * Downloads a CSV of every item + its current warehouse/branch, with a
+ * blank target_warehouse_id column to fill in and re-upload via
+ * useImportBranchMapping -- for bulk-assigning items that pre-date
+ * branch/warehouse tagging.
+ */
+export function useExportBranchMapping() {
+    return useMutation({
+        mutationFn: () => exportBranchMapping(),
+    });
+}
+
+export function useImportBranchMapping() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (file: File) => importBranchMapping(file),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: itemKeys.lists() });
         },
     });
 }

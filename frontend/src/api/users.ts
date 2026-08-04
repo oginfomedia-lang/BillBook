@@ -6,12 +6,14 @@ export interface UserCreatePayload {
   email: string;
   password: string;
   role_id: number;
+  branch_id?: number | null;
 }
 
 export interface UserUpdatePayload {
   name?: string;
   role_id?: number | null;
   is_active?: boolean;
+  branch_id?: number | null;
 }
 
 export async function listUsers(params: { page?: number; search?: string } = {}) {

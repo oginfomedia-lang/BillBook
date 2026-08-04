@@ -127,7 +127,7 @@ def list_purchase_returns():
 @purchase_returns_bp.route("/<int:return_id>", methods=["GET"])
 @require_auth
 def get_purchase_return(return_id):
-    ret = PurchaseReturn.query.get_or_404(return_id)
+    ret = PurchaseReturn.query.filter_by(id=return_id).first_or_404()
     return jsonify(ret.to_dict())
 
 
@@ -147,7 +147,7 @@ def create_purchase_return():
 
     # Resolve supplier/warehouse from parent purchase if not provided
     from app.models.purchase import Purchase
-    parent_purchase = Purchase.query.get(data["purchase_id"])
+    parent_purchase = Purchase.query.filter_by(id=data["purchase_id"]).first()
     supplier_id = data.get("supplier_id") or (parent_purchase.supplier_id if parent_purchase else None)
     warehouse_id = data.get("warehouse_id") or (parent_purchase.warehouse_id if parent_purchase else None)
 
@@ -208,7 +208,7 @@ def create_purchase_return():
 @purchase_returns_bp.route("/<int:return_id>", methods=["DELETE"])
 @require_auth
 def delete_purchase_return(return_id):
-    ret = PurchaseReturn.query.get_or_404(return_id)
+    ret = PurchaseReturn.query.filter_by(id=return_id).first_or_404()
 
     # Restore stock (goods are back, return is undone)
     from app.models.item import Item

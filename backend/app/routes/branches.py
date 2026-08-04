@@ -41,7 +41,7 @@ def list_branches():
 @require_auth
 @require_permission("branches.view")
 def get_branch(branch_id):
-    branch = Branch.query.get_or_404(branch_id)
+    branch = Branch.query.filter_by(id=branch_id).first_or_404()
     return jsonify(branch.to_dict())
 
 @branches_bp.route("", methods=["POST"])
@@ -79,7 +79,7 @@ def create_branch():
 @require_auth
 @require_permission("branches.edit")
 def update_branch(branch_id):
-    branch = Branch.query.get_or_404(branch_id)
+    branch = Branch.query.filter_by(id=branch_id).first_or_404()
     try:
         data = BranchSchema(partial=True).load(request.get_json(force=True) or {})
     except ValidationError as err:
@@ -100,7 +100,7 @@ def update_branch(branch_id):
 @require_auth
 @require_permission("branches.delete")
 def delete_branch(branch_id):
-    branch = Branch.query.get_or_404(branch_id)
+    branch = Branch.query.filter_by(id=branch_id).first_or_404()
     # Soft delete: set inactive
     branch.is_active = False
     db.session.commit()

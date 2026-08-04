@@ -15,6 +15,7 @@ from app.models.purchase import (
     Purchase, PurchaseItem, PurchasePayment,
     PurchaseStatus, PurchasePaymentStatus, PurchasePaymentType,
 )
+from app.models.supplier import Supplier
 from app.schemas.purchase_schemas import PurchaseSchema, PurchasePaymentSchema
 from app.tenant_scope import TenantContext
 from app.branch_scope import BranchContext, apply_branch_scope
@@ -28,21 +29,26 @@ purchases_bp = Blueprint("purchases", __name__, url_prefix="/api/v1/purchases")
 # ---------------------------------------------------------------------------
 
 def _generate_purchase_code() -> str:
-    """Per-tenant sequential code: PU-0001, PU-0002, …"""
-    last = (
+    """
+    Per-tenant sequential code: PU-0001, PU-0002, ...
+    Uses the HIGHEST existing sequence number across all purchases, not just
+    the most-recently-inserted row's code -- after a data restore/import, row
+    insertion order (id) can stop matching numeric code order, which made the
+    old "last row by id" approach regenerate an already-used code every time
+    (always the same collision, since nothing changes between retries).
+    """
+    codes = (
         Purchase.query.filter(Purchase.tenant_id == TenantContext.get())
-        .order_by(Purchase.id.desc())
         .with_entities(Purchase.purchase_code)
-        .limit(1)
-        .scalar()
+        .all()
     )
-    if last and last.startswith("PU-"):
-        try:
-            seq = int(last.split("-", 1)[1])
-        except ValueError:
-            seq = 0
-    else:
-        seq = 0
+    seq = 0
+    for (code,) in codes:
+        if code and code.startswith("PU-"):
+            try:
+                seq = max(seq, int(code.split("-", 1)[1]))
+            except ValueError:
+                continue
     return f"PU-{seq + 1:04d}"
 
 
@@ -138,7 +144,7 @@ def list_purchases():
 @purchases_bp.route("/<int:purchase_id>", methods=["GET"])
 @require_auth
 def get_purchase(purchase_id):
-    purchase = Purchase.query.get_or_404(purchase_id)
+    purchase = Purchase.query.filter_by(id=purchase_id).first_or_404()
     return jsonify(purchase.to_dict())
 
 
@@ -166,6 +172,9 @@ def create_purchase():
         data = PurchaseSchema().load(request.get_json(force=True) or {})
     except ValidationError as err:
         return jsonify({"error": "Validation failed", "details": err.messages}), 422
+
+    if not Supplier.query.filter_by(id=data["supplier_id"]).first():
+        return jsonify({"error": "Supplier not found"}), 404
 
     items_data = data.pop("items")
     payment_data = data.pop("payment", None)
@@ -235,11 +244,14 @@ def create_purchase():
 @purchases_bp.route("/<int:purchase_id>", methods=["PUT"])
 @require_auth
 def update_purchase(purchase_id):
-    purchase = Purchase.query.get_or_404(purchase_id)
+    purchase = Purchase.query.filter_by(id=purchase_id).first_or_404()
     try:
         data = PurchaseSchema(partial=True).load(request.get_json(force=True) or {})
     except ValidationError as err:
         return jsonify({"error": "Validation failed", "details": err.messages}), 422
+
+    if "supplier_id" in data and not Supplier.query.filter_by(id=data["supplier_id"]).first():
+        return jsonify({"error": "Supplier not found"}), 404
 
     # Reverse stock before re-applying
     purchase.remove_stock()
@@ -284,7 +296,7 @@ def update_purchase(purchase_id):
 @purchases_bp.route("/<int:purchase_id>", methods=["DELETE"])
 @require_auth
 def delete_purchase(purchase_id):
-    purchase = Purchase.query.get_or_404(purchase_id)
+    purchase = Purchase.query.filter_by(id=purchase_id).first_or_404()
     purchase.remove_stock()
     db.session.delete(purchase)
     db.session.commit()
@@ -299,7 +311,7 @@ def delete_purchase(purchase_id):
 @require_auth
 def add_payment(purchase_id):
     """Add a new payment record to a purchase."""
-    purchase = Purchase.query.get_or_404(purchase_id)
+    purchase = Purchase.query.filter_by(id=purchase_id).first_or_404()
     try:
         data = PurchasePaymentSchema().load(request.get_json(force=True) or {})
     except ValidationError as err:
@@ -327,7 +339,7 @@ def add_payment(purchase_id):
 
     # Expire and reload so to_dict returns fresh data
     db.session.expire(purchase)
-    purchase = Purchase.query.get(purchase_id)
+    purchase = Purchase.query.filter_by(id=purchase_id).first()
     return jsonify(purchase.to_dict()), 201
 
 
@@ -335,7 +347,7 @@ def add_payment(purchase_id):
 @require_auth
 def delete_payment(purchase_id, payment_id):
     """Remove a payment from a purchase."""
-    purchase = Purchase.query.get_or_404(purchase_id)
+    purchase = Purchase.query.filter_by(id=purchase_id).first_or_404()
     pmt = PurchasePayment.query.filter_by(id=payment_id, purchase_id=purchase_id).first_or_404()
     db.session.delete(pmt)
     db.session.flush()  # remove from DB so the SUM query excludes it

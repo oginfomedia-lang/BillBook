@@ -46,7 +46,7 @@ def create_warehouse():
     
     warehouse = Warehouse(
         tenant_id=TenantContext.get(),
-        branch_id=BranchContext.get(),
+        branch_id=data.get("branch_id") or BranchContext.get(),
         name=data["name"],
         location=data.get("location", ""),
     )
@@ -84,7 +84,9 @@ def update_warehouse(warehouse_id):
         warehouse.name = data["name"]
     if "location" in data:
         warehouse.location = data["location"]
-    
+    if "branch_id" in data:
+        warehouse.branch_id = data["branch_id"] or None
+
     db.session.commit()
     return jsonify(warehouse.to_dict())
 

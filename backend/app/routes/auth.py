@@ -6,7 +6,7 @@ from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt
 from marshmallow import ValidationError
 
-from app.extensions import db
+from app.extensions import db, limiter
 from app.models import Tenant, User, Role, seed_default_roles, all_permission_keys, Branch, PasswordResetToken
 from app.schemas import SignupSchema, LoginSchema
 from app.tenant_scope import TenantContext
@@ -40,6 +40,7 @@ def _issue_tokens(user: User) -> dict:
 
 
 @auth_bp.route("/signup", methods=["POST"])
+@limiter.limit("10 per hour")
 def signup():
     """Tenant onboarding: creates the Tenant, seeds the two default Roles"""
     schema = SignupSchema()
@@ -101,6 +102,7 @@ def signup():
 
 
 @auth_bp.route("/login", methods=["POST"])
+@limiter.limit("10 per minute")
 def login():
     schema = LoginSchema()
     try:
@@ -156,6 +158,7 @@ def _hash_token(raw_token: str) -> str:
 
 
 @auth_bp.route("/forgot-password", methods=["POST"])
+@limiter.limit("5 per hour")
 def forgot_password():
     data = request.get_json(force=True) or {}
     email = (data.get("email") or "").strip()
@@ -245,7 +248,7 @@ def refresh():
     identity = get_jwt_identity()
 
     TenantContext.set(claims.get("tenant_id"))
-    user = User.query.get(int(identity))
+    user = User.query.filter_by(id=int(identity)).first()
     if not user:
         return jsonify({"error": "User not found"}), 404
 
@@ -271,7 +274,7 @@ def me():
     TenantContext.set(claims.get("tenant_id"))
     from flask_jwt_extended import get_jwt_identity
 
-    user = User.query.get(int(get_jwt_identity()))
+    user = User.query.filter_by(id=int(get_jwt_identity())).first()
     if not user:
         return jsonify({"error": "User not found"}), 404
     
@@ -310,7 +313,7 @@ def update_profile():
     TenantContext.set(claims.get("tenant_id"))
     from flask_jwt_extended import get_jwt_identity
 
-    user = User.query.get(int(get_jwt_identity()))
+    user = User.query.filter_by(id=int(get_jwt_identity())).first()
     if not user:
         return jsonify({"error": "User not found"}), 404
 
@@ -349,7 +352,7 @@ def change_password():
     TenantContext.set(claims.get("tenant_id"))
     from flask_jwt_extended import get_jwt_identity
 
-    user = User.query.get(int(get_jwt_identity()))
+    user = User.query.filter_by(id=int(get_jwt_identity())).first()
     if not user:
         return jsonify({"error": "User not found"}), 404
 

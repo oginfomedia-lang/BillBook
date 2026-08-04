@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, Trash2, Edit2, Download, Printer } from 'lucide-react';
-import { useItems, useDeleteItem, useCategories } from '../hooks/useItems';
+import { Plus, Search, Trash2, Edit2, Download, Printer, Upload } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { useItems, useDeleteItem, useCategories, useExportBranchMapping, useImportBranchMapping } from '../hooks/useItems';
 import { useWarehouses } from '../hooks/useWarehouses';
 import { TableSkeleton } from '../components/ui/Skeletons';
 import { ExportToolbar, type ColumnDef } from '../components/ui/ExportToolbar';
@@ -54,6 +55,28 @@ export function ItemsPage() {
     const deleteItem = useDeleteItem();
     const items = data?.items ?? [];
 
+    const exportBranchMapping = useExportBranchMapping();
+    const importBranchMapping = useImportBranchMapping();
+    const branchMappingFileRef = useRef<HTMLInputElement>(null);
+
+    const handleExportBranchMapping = () => {
+        exportBranchMapping.mutate(undefined, {
+            onError: () => toast.error("Couldn't export branch mapping."),
+        });
+    };
+
+    const handleImportBranchMappingFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        importBranchMapping.mutate(file, {
+            onSuccess: (result) => {
+                toast.success(`Updated ${result.items_updated} items (${result.rows_skipped} skipped, ${result.errors.length} errors)`);
+            },
+            onError: () => toast.error("Couldn't import branch mapping."),
+        });
+        e.target.value = '';
+    };
+
     const handleDelete = (id: number, itemName: string) => {
         if (confirm(`Are you sure you want to delete "${itemName}"?`)) {
             deleteItem.mutate(id);
@@ -90,6 +113,31 @@ export function ItemsPage() {
                     >
                         <Plus size={16} /> Create Service
                     </Link>
+                    <button
+                        type="button"
+                        onClick={handleExportBranchMapping}
+                        disabled={exportBranchMapping.isPending}
+                        title="Download a CSV of every item with its current branch/warehouse, to bulk-assign items that have none"
+                        className="flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50"
+                    >
+                        <Download size={16} /> Export Branch Mapping
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => branchMappingFileRef.current?.click()}
+                        disabled={importBranchMapping.isPending}
+                        title="Upload the filled-in branch mapping CSV to bulk-assign items to branches"
+                        className="flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50"
+                    >
+                        <Upload size={16} /> Import Branch Mapping
+                    </button>
+                    <input
+                        ref={branchMappingFileRef}
+                        type="file"
+                        accept=".csv"
+                        className="hidden"
+                        onChange={handleImportBranchMappingFile}
+                    />
                 </div>
             </div>
 

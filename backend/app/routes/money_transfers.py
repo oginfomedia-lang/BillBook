@@ -107,7 +107,7 @@ def list_transfers():
 @money_transfers_bp.route("/<int:transfer_id>", methods=["GET"])
 @require_auth
 def get_transfer(transfer_id):
-    transfer = MoneyTransfer.query.get_or_404(transfer_id)
+    transfer = MoneyTransfer.query.filter_by(id=transfer_id).first_or_404()
     return jsonify(transfer.to_dict())
 
 
@@ -126,8 +126,8 @@ def create_transfer():
     if data["debit_account_id"] == data["credit_account_id"]:
         return jsonify({"error": "Debit and credit accounts must be different"}), 422
 
-    debit_acct = Account.query.get(data["debit_account_id"])
-    credit_acct = Account.query.get(data["credit_account_id"])
+    debit_acct = Account.query.filter_by(id=data["debit_account_id"]).first()
+    credit_acct = Account.query.filter_by(id=data["credit_account_id"]).first()
     if not debit_acct or not credit_acct:
         return jsonify({"error": "One or both accounts not found"}), 404
 
@@ -169,7 +169,7 @@ def create_transfer():
 @money_transfers_bp.route("/<int:transfer_id>", methods=["DELETE"])
 @require_auth
 def delete_transfer(transfer_id):
-    transfer = MoneyTransfer.query.get_or_404(transfer_id)
+    transfer = MoneyTransfer.query.filter_by(id=transfer_id).first_or_404()
 
     # Reverse account balances
     amt = float(transfer.amount or 0)

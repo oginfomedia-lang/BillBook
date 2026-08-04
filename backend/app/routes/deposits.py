@@ -77,7 +77,7 @@ def list_deposits():
 @deposits_bp.route("/<int:deposit_id>", methods=["GET"])
 @require_auth
 def get_deposit(deposit_id):
-    deposit = Deposit.query.get_or_404(deposit_id)
+    deposit = Deposit.query.filter_by(id=deposit_id).first_or_404()
     return jsonify(deposit.to_dict())
 
 
@@ -109,11 +109,11 @@ def create_deposit():
     # Update account balances
     amt = float(data["amount"])
     if data.get("debit_account_id"):
-        debit = Account.query.get(data["debit_account_id"])
+        debit = Account.query.filter_by(id=data["debit_account_id"]).first()
         if debit:
             debit.current_balance = float(debit.current_balance or 0) - amt
     if data.get("credit_account_id"):
-        credit = Account.query.get(data["credit_account_id"])
+        credit = Account.query.filter_by(id=data["credit_account_id"]).first()
         if credit:
             credit.current_balance = float(credit.current_balance or 0) + amt
 
@@ -128,7 +128,7 @@ def create_deposit():
 @deposits_bp.route("/<int:deposit_id>", methods=["DELETE"])
 @require_auth
 def delete_deposit(deposit_id):
-    deposit = Deposit.query.get_or_404(deposit_id)
+    deposit = Deposit.query.filter_by(id=deposit_id).first_or_404()
 
     # Reverse balances
     amt = float(deposit.amount or 0)

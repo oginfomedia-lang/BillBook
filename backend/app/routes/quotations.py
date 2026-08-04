@@ -20,20 +20,23 @@ quotations_bp = Blueprint("quotations", __name__, url_prefix="/api/v1/quotations
 
 
 def _generate_quotation_number() -> str:
-    last_number = (
+    """
+    Uses the HIGHEST existing sequence number across all quotations, not just
+    the most-recently-inserted row's number -- see the identical fix/comment
+    in app/routes/purchases.py:_generate_purchase_code for why.
+    """
+    numbers = (
         Quotation.query.filter(Quotation.tenant_id == TenantContext.get())
-        .order_by(Quotation.id.desc())
         .with_entities(Quotation.quotation_number)
-        .limit(1)
-        .scalar()
+        .all()
     )
-    if last_number and last_number.startswith("QUO-"):
-        try:
-            seq = int(last_number.split("-", 1)[1])
-        except ValueError:
-            seq = 0
-    else:
-        seq = 0
+    seq = 0
+    for (number,) in numbers:
+        if number and number.startswith("QUO-"):
+            try:
+                seq = max(seq, int(number.split("-", 1)[1]))
+            except ValueError:
+                continue
     return f"QUO-{seq + 1:04d}"
 
 
@@ -75,7 +78,7 @@ def list_quotations():
 @quotations_bp.route("/<int:quotation_id>", methods=["GET"])
 @require_auth
 def get_quotation(quotation_id):
-    quotation = Quotation.query.get_or_404(quotation_id)
+    quotation = Quotation.query.filter_by(id=quotation_id).first_or_404()
     return jsonify(quotation.to_dict())
 
 
@@ -86,6 +89,9 @@ def create_quotation():
         data = QuotationSchema().load(request.get_json(force=True) or {})
     except ValidationError as err:
         return jsonify({"error": "Validation failed", "details": err.messages}), 422
+
+    if not Customer.query.filter_by(id=data["customer_id"]).first():
+        return jsonify({"error": "Customer not found"}), 404
 
     items_data = data.pop("items")
 
@@ -133,7 +139,7 @@ def create_quotation():
 @quotations_bp.route("/<int:quotation_id>", methods=["PUT"])
 @require_auth
 def update_quotation(quotation_id):
-    quotation = Quotation.query.get_or_404(quotation_id)
+    quotation = Quotation.query.filter_by(id=quotation_id).first_or_404()
 
     if quotation.converted_invoice_id:
         return (
@@ -149,9 +155,12 @@ def update_quotation(quotation_id):
     except ValidationError as err:
         return jsonify({"error": "Validation failed", "details": err.messages}), 422
 
+    if "customer_id" in data and not Customer.query.filter_by(id=data["customer_id"]).first():
+        return jsonify({"error": "Customer not found"}), 404
+
     items_data = data.pop("items", None)
 
-    for key in ("customer_id", "warehouse_id", "issue_date", "expiry_date", 
+    for key in ("customer_id", "warehouse_id", "issue_date", "expiry_date",
                 "discount_type", "discount_value", "notes", "terms_conditions"):
         if key in data:
             setattr(quotation, key, data[key])
@@ -179,7 +188,7 @@ def update_quotation(quotation_id):
 @quotations_bp.route("/<int:quotation_id>", methods=["DELETE"])
 @require_auth
 def delete_quotation(quotation_id):
-    quotation = Quotation.query.get_or_404(quotation_id)
+    quotation = Quotation.query.filter_by(id=quotation_id).first_or_404()
 
     if quotation.converted_invoice_id:
         return (

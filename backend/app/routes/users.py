@@ -42,7 +42,7 @@ def list_users():
 @require_auth
 @require_permission("users.view")
 def get_user(user_id):
-    user = User.query.get_or_404(user_id)
+    user = User.query.filter_by(id=user_id).first_or_404()
     return jsonify(user.to_dict())
 
 
@@ -55,7 +55,7 @@ def create_user():
     except ValidationError as err:
         return jsonify({"error": "Validation failed", "details": err.messages}), 422
 
-        allowed, limit_error = check_user_limit()
+    allowed, limit_error = check_user_limit()
     if not allowed:
         return jsonify({"error": limit_error}), 409
 
@@ -64,7 +64,7 @@ def create_user():
     if User.query.filter_by(tenant_id=tenant_id, email=data["email"]).first():
         return jsonify({"error": "A user with this email already exists in your workspace"}), 409
 
-    role = Role.query.get(data["role_id"])
+    role = Role.query.filter_by(id=data["role_id"]).first()
     if not role:
         return jsonify({"error": "That role doesn't exist"}), 422
 
@@ -86,7 +86,7 @@ def create_user():
 @require_auth
 @require_permission("users.edit")
 def update_user(user_id):
-    user = User.query.get_or_404(user_id)
+    user = User.query.filter_by(id=user_id).first_or_404()
     payload = request.get_json(force=True) or {}
 
     # A user can't lock themselves out by deactivating their own account
@@ -99,7 +99,7 @@ def update_user(user_id):
         return jsonify({"error": "Validation failed", "details": err.messages}), 422
 
     if "role_id" in data and data["role_id"] is not None:
-        if not Role.query.get(data["role_id"]):
+        if not Role.query.filter_by(id=data["role_id"]).first():
             return jsonify({"error": "That role doesn't exist"}), 422
 
     for key, value in data.items():
@@ -115,7 +115,7 @@ def delete_user(user_id):
     if user_id == g.current_user_id:
         return jsonify({"error": "You can't delete your own account"}), 422
 
-    user = User.query.get_or_404(user_id)
+    user = User.query.filter_by(id=user_id).first_or_404()
     db.session.delete(user)
     db.session.commit()
     return "", 204

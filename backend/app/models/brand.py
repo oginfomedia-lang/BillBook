@@ -6,10 +6,11 @@ from app.tenant_scope import TenantScopedMixin
 class Brand(TenantScopedMixin, db.Model):
     __tablename__ = "brands"
     __table_args__ = (
-        db.UniqueConstraint("tenant_id", "name", name="uq_brand_tenant_name"),
+        db.UniqueConstraint("tenant_id", "branch_id", "name", name="uq_brand_tenant_branch_name"),
     )
 
     id = db.Column(db.Integer, primary_key=True)
+    branch_id = db.Column(db.Integer, db.ForeignKey("branches.id", ondelete="SET NULL"), nullable=True, index=True)
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text, nullable=True)
     status = db.Column(db.String(20), default="active")  # 'active', 'inactive'
@@ -18,6 +19,7 @@ class Brand(TenantScopedMixin, db.Model):
     def to_dict(self):
         return {
             "id": self.id,
+            "branch_id": self.branch_id,
             "name": self.name,
             "description": self.description,
             "status": self.status,

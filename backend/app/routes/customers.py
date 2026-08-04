@@ -54,7 +54,7 @@ def list_customers():
 @customers_bp.route("/<int:customer_id>", methods=["GET"])
 @require_auth
 def get_customer(customer_id):
-    customer = Customer.query.get_or_404(customer_id)
+    customer = Customer.query.filter_by(id=customer_id).first_or_404()
     return jsonify(customer.to_dict())
 
 
@@ -66,21 +66,21 @@ def create_customer():
     except ValidationError as err:
         return jsonify({"error": "Validation failed", "details": err.messages}), 422
 
-    if data.get("phone") and Customer.query.filter(
-        Customer.phone == data.get("phone"), Customer.is_active.isnot(False)
-    ).first():
-        return jsonify({"error": "Validation failed", "details": {"phone": "A customer is already registered with this phone number"}}), 422
-
     # ✅ Get branch_id properly
     branch_id = data.get('branch_id')
     if not branch_id:
         branch_id = BranchContext.get()
-    
+
     # ✅ Get user from g (if available)
     user = getattr(g, 'user', None)
     if not branch_id and user and user.branch_id:
         branch_id = user.branch_id
-    
+
+    if data.get("phone") and Customer.query.filter(
+        Customer.phone == data.get("phone"), Customer.branch_id == branch_id, Customer.is_active.isnot(False)
+    ).first():
+        return jsonify({"error": "Validation failed", "details": {"phone": "A customer is already registered with this phone number in this branch"}}), 422
+
     # ✅ Remove branch_id from data to avoid duplication
     if 'branch_id' in data:
         del data['branch_id']
@@ -139,8 +139,8 @@ def import_customers():
                     "errors": {"phone": f"Duplicate phone number within this file (already used on row {seen_phones[phone]})"},
                 })
                 continue
-            if Customer.query.filter(Customer.phone == phone, Customer.is_active.isnot(False)).first():
-                errors.append({"row": row_number, "errors": {"phone": "A customer is already registered with this phone number"}})
+            if Customer.query.filter(Customer.phone == phone, Customer.branch_id == branch_id, Customer.is_active.isnot(False)).first():
+                errors.append({"row": row_number, "errors": {"phone": "A customer is already registered with this phone number in this branch"}})
                 continue
             seen_phones[phone] = row_number
 
@@ -165,7 +165,7 @@ def import_customers():
 @customers_bp.route("/<int:customer_id>", methods=["PUT"])
 @require_auth
 def update_customer(customer_id):
-    customer = Customer.query.get_or_404(customer_id)
+    customer = Customer.query.filter_by(id=customer_id).first_or_404()
     try:
         data = CustomerSchema(partial=True).load(request.get_json(force=True) or {})
     except ValidationError as err:
@@ -173,9 +173,9 @@ def update_customer(customer_id):
 
     if data.get("phone") and data.get("phone") != customer.phone:
         if Customer.query.filter(
-            Customer.phone == data.get("phone"), Customer.is_active.isnot(False)
+            Customer.phone == data.get("phone"), Customer.branch_id == customer.branch_id, Customer.is_active.isnot(False)
         ).first():
-            return jsonify({"error": "Validation failed", "details": {"phone": "A customer is already registered with this phone number"}}), 422
+            return jsonify({"error": "Validation failed", "details": {"phone": "A customer is already registered with this phone number in this branch"}}), 422
 
     for key, value in data.items():
         setattr(customer, key, value)
@@ -187,7 +187,7 @@ def update_customer(customer_id):
 @require_auth
 def delete_customer(customer_id):
     """Soft delete customer."""
-    customer = Customer.query.get_or_404(customer_id)
+    customer = Customer.query.filter_by(id=customer_id).first_or_404()
     customer.is_active = False
     db.session.commit()
     return "", 204

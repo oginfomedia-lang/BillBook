@@ -151,7 +151,7 @@ def list_adjustments():
 @stock_bp.route("/adjustments/<int:adj_id>", methods=["GET"])
 @require_auth
 def get_adjustment(adj_id):
-    adj = StockAdjustment.query.get_or_404(adj_id)
+    adj = StockAdjustment.query.filter_by(id=adj_id).first_or_404()
     return jsonify(adj.to_dict(include_items=True))
 
 
@@ -194,7 +194,7 @@ def create_adjustment():
 @stock_bp.route("/adjustments/<int:adj_id>", methods=["PUT"])
 @require_auth
 def update_adjustment(adj_id):
-    adj = StockAdjustment.query.get_or_404(adj_id)
+    adj = StockAdjustment.query.filter_by(id=adj_id).first_or_404()
     try:
         data = StockAdjustmentSchema(partial=True).load(request.get_json(force=True) or {})
     except ValidationError as err:
@@ -231,7 +231,7 @@ def update_adjustment(adj_id):
 @stock_bp.route("/adjustments/<int:adj_id>", methods=["DELETE"])
 @require_auth
 def delete_adjustment(adj_id):
-    adj = StockAdjustment.query.get_or_404(adj_id)
+    adj = StockAdjustment.query.filter_by(id=adj_id).first_or_404()
     # Reverse stock before deleting
     _reverse_adjustment_stock(adj)
     db.session.delete(adj)
@@ -271,7 +271,7 @@ def list_transfers():
 @stock_bp.route("/transfers/<int:tr_id>", methods=["GET"])
 @require_auth
 def get_transfer(tr_id):
-    tr = StockTransfer.query.get_or_404(tr_id)
+    tr = StockTransfer.query.filter_by(id=tr_id).first_or_404()
     return jsonify(tr.to_dict(include_items=True))
 
 
@@ -315,7 +315,7 @@ def create_transfer():
 @stock_bp.route("/transfers/<int:tr_id>", methods=["PUT"])
 @require_auth
 def update_transfer(tr_id):
-    tr = StockTransfer.query.get_or_404(tr_id)
+    tr = StockTransfer.query.filter_by(id=tr_id).first_or_404()
     try:
         data = StockTransferSchema(partial=True).load(request.get_json(force=True) or {})
     except ValidationError as err:
@@ -356,7 +356,7 @@ def update_transfer(tr_id):
 @stock_bp.route("/transfers/<int:tr_id>", methods=["DELETE"])
 @require_auth
 def delete_transfer(tr_id):
-    tr = StockTransfer.query.get_or_404(tr_id)
+    tr = StockTransfer.query.filter_by(id=tr_id).first_or_404()
     # Restore the stock that was moved in this transfer
     _reverse_transfer_stock(tr)
     db.session.delete(tr)

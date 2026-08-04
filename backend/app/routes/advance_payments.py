@@ -66,7 +66,7 @@ def list_advance_payments():
 @require_auth
 @require_permission("advance_payments.view")
 def get_advance_payment(advance_id):
-    payment = AdvancePayment.query.get_or_404(advance_id)
+    payment = AdvancePayment.query.filter_by(id=advance_id).first_or_404()
     return jsonify(payment.to_dict())
 
 
@@ -79,7 +79,7 @@ def create_advance_payment():
     except ValidationError as err:
         return jsonify({"error": "Validation failed", "details": err.messages}), 422
 
-    customer = Customer.query.get(data["customer_id"])
+    customer = Customer.query.filter_by(id=data["customer_id"]).first()
     if not customer:
         return jsonify({"error": "Customer not found"}), 404
 
@@ -115,7 +115,7 @@ def create_advance_payment():
 @require_auth
 @require_permission("advance_payments.edit")
 def update_advance_payment(advance_id):
-    payment = AdvancePayment.query.get_or_404(advance_id)
+    payment = AdvancePayment.query.filter_by(id=advance_id).first_or_404()
     try:
         data = AdvancePaymentSchema(partial=True).load(request.get_json(force=True) or {})
     except ValidationError as err:
@@ -139,7 +139,7 @@ def update_advance_payment(advance_id):
 @require_auth
 @require_permission("advance_payments.delete")
 def delete_advance_payment(advance_id):
-    payment = AdvancePayment.query.get_or_404(advance_id)
+    payment = AdvancePayment.query.filter_by(id=advance_id).first_or_404()
     if payment.status == "applied":
         return jsonify({"error": "Cannot delete an applied payment"}), 422
     db.session.delete(payment)

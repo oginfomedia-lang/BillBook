@@ -107,13 +107,13 @@ def link_account(invoice_id):
     if not account_id:
         return jsonify({"error": "account_id is required"}), 422
 
-    invoice = Invoice.query.get_or_404(invoice_id)
-    account = Account.query.get_or_404(account_id)
+    invoice = Invoice.query.filter_by(id=invoice_id).first_or_404()
+    account = Account.query.filter_by(id=account_id).first_or_404()
 
     # Check if already linked to an account — if so, reverse old link
     old_account_id = getattr(invoice, "linked_account_id", None)
     if old_account_id and old_account_id != account_id:
-        old_account = Account.query.get(old_account_id)
+        old_account = Account.query.filter_by(id=old_account_id).first()
         if old_account:
             old_account.current_balance = float(old_account.current_balance or 0) - float(invoice.amount_paid or 0)
 

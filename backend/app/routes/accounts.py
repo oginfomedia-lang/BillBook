@@ -115,7 +115,7 @@ def next_account_code():
 @accounts_bp.route("/<int:account_id>", methods=["GET"])
 @require_auth
 def get_account(account_id):
-    account = Account.query.get_or_404(account_id)
+    account = Account.query.filter_by(id=account_id).first_or_404()
     return jsonify(account.to_dict(include_children=True))
 
 
@@ -162,7 +162,7 @@ def create_account():
 @accounts_bp.route("/<int:account_id>", methods=["PUT"])
 @require_auth
 def update_account(account_id):
-    account = Account.query.get_or_404(account_id)
+    account = Account.query.filter_by(id=account_id).first_or_404()
     try:
         data = AccountSchema(partial=True).load(request.get_json(force=True) or {})
     except ValidationError as err:
@@ -192,7 +192,7 @@ def update_account(account_id):
 @accounts_bp.route("/<int:account_id>", methods=["DELETE"])
 @require_auth
 def delete_account(account_id):
-    account = Account.query.get_or_404(account_id)
+    account = Account.query.filter_by(id=account_id).first_or_404()
     # Re-parent children to this account's parent
     for child in account.children:
         child.parent_id = account.parent_id

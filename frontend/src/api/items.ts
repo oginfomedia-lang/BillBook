@@ -1,5 +1,5 @@
 import api from './client';
-import type { PaginatedResponse } from '../types';
+import type { PaginatedResponse, Branch } from '../types';
 
 export type ItemStatus = 'active' | 'inactive' | 'discontinued';
 export type DiscountType = 'percentage' | 'fixed';
@@ -74,6 +74,8 @@ export interface Item {
     alert_quantity: number;
     warehouse_id?: number;
     warehouse?: Warehouse;
+    branch_id?: number | null;
+    branch?: Branch | null;
     profit_margin?: number;
     seller_points: number;
     status: ItemStatus;
@@ -184,6 +186,35 @@ export const bulkImportItems = async (file: File): Promise<BulkImportResult> => 
 // Get item barcode
 export const getItemBarcode = async (id: number): Promise<{ barcode: string; item_code: string; item_name: string }> => {
     const { data } = await api.get(`/items/${id}/barcode`);
+    return data;
+};
+
+// Branch-mapping bulk reassignment (fixes items that pre-date branch/warehouse tagging)
+export const exportBranchMapping = async (): Promise<void> => {
+    const res = await api.get('/items/export-branch-mapping', { responseType: 'blob' });
+    const url = window.URL.createObjectURL(new Blob([res.data]));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'items_branch_mapping.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
+};
+
+export interface ImportBranchMappingResult {
+    message: string;
+    items_updated: number;
+    rows_skipped: number;
+    errors: { row: number; error: string }[];
+}
+
+export const importBranchMapping = async (file: File): Promise<ImportBranchMappingResult> => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const { data } = await api.post('/items/import-branch-mapping', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+    });
+
     return data;
 };
 

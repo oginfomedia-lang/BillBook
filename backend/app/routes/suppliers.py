@@ -28,9 +28,8 @@ def list_suppliers():
     # Apply branch filter
     if branch_id:
         query = query.filter(Supplier.branch_id == branch_id)
-    elif g.user and g.user.branch_id and not g.user.is_super_admin:
-        query = query.filter(Supplier.branch_id == g.user.branch_id)
-    
+    else:
+        query = apply_branch_scope(query, Supplier)
     if search:
         query = query.filter(
             db.or_(
@@ -55,7 +54,7 @@ def list_suppliers():
 @require_auth
 @require_permission("suppliers.view")
 def get_supplier(supplier_id):
-    supplier = Supplier.query.get_or_404(supplier_id)
+    supplier = Supplier.query.filter_by(id=supplier_id).first_or_404()
     return jsonify(supplier.to_dict())
 
 
@@ -68,20 +67,20 @@ def create_supplier():
     except ValidationError as err:
         return jsonify({"error": "Validation failed", "details": err.messages}), 422
 
-    if data.get("mobile") and Supplier.query.filter(
-        Supplier.mobile == data.get("mobile"), Supplier.is_active.isnot(False)
-    ).first():
-        return jsonify({"error": "Validation failed", "details": {"mobile": "A supplier is already registered with this mobile number"}}), 422
-    if data.get("phone") and Supplier.query.filter(
-        Supplier.phone == data.get("phone"), Supplier.is_active.isnot(False)
-    ).first():
-        return jsonify({"error": "Validation failed", "details": {"phone": "A supplier is already registered with this phone number"}}), 422
-
     # ✅ Get branch_id properly
     branch_id = data.get('branch_id')
     if not branch_id:
         branch_id = BranchContext.get() or g.user.branch_id
-    
+
+    if data.get("mobile") and Supplier.query.filter(
+        Supplier.mobile == data.get("mobile"), Supplier.branch_id == branch_id, Supplier.is_active.isnot(False)
+    ).first():
+        return jsonify({"error": "Validation failed", "details": {"mobile": "A supplier is already registered with this mobile number in this branch"}}), 422
+    if data.get("phone") and Supplier.query.filter(
+        Supplier.phone == data.get("phone"), Supplier.branch_id == branch_id, Supplier.is_active.isnot(False)
+    ).first():
+        return jsonify({"error": "Validation failed", "details": {"phone": "A supplier is already registered with this phone number in this branch"}}), 422
+
     # ✅ Remove branch_id from data to avoid duplication
     if 'branch_id' in data:
         del data['branch_id']
@@ -101,7 +100,7 @@ def create_supplier():
 @require_auth
 @require_permission("suppliers.edit")
 def update_supplier(supplier_id):
-    supplier = Supplier.query.get_or_404(supplier_id)
+    supplier = Supplier.query.filter_by(id=supplier_id).first_or_404()
     try:
         data = SupplierSchema(partial=True).load(request.get_json(force=True) or {})
     except ValidationError as err:
@@ -109,14 +108,14 @@ def update_supplier(supplier_id):
 
     if data.get("mobile") and data.get("mobile") != supplier.mobile:
         if Supplier.query.filter(
-            Supplier.mobile == data.get("mobile"), Supplier.is_active.isnot(False)
+            Supplier.mobile == data.get("mobile"), Supplier.branch_id == supplier.branch_id, Supplier.is_active.isnot(False)
         ).first():
-            return jsonify({"error": "Validation failed", "details": {"mobile": "A supplier is already registered with this mobile number"}}), 422
+            return jsonify({"error": "Validation failed", "details": {"mobile": "A supplier is already registered with this mobile number in this branch"}}), 422
     if data.get("phone") and data.get("phone") != supplier.phone:
         if Supplier.query.filter(
-            Supplier.phone == data.get("phone"), Supplier.is_active.isnot(False)
+            Supplier.phone == data.get("phone"), Supplier.branch_id == supplier.branch_id, Supplier.is_active.isnot(False)
         ).first():
-            return jsonify({"error": "Validation failed", "details": {"phone": "A supplier is already registered with this phone number"}}), 422
+            return jsonify({"error": "Validation failed", "details": {"phone": "A supplier is already registered with this phone number in this branch"}}), 422
 
     for key, value in data.items():
         setattr(supplier, key, value)
@@ -129,7 +128,7 @@ def update_supplier(supplier_id):
 @require_permission("suppliers.delete")
 def delete_supplier(supplier_id):
     """Soft delete supplier."""
-    supplier = Supplier.query.get_or_404(supplier_id)
+    supplier = Supplier.query.filter_by(id=supplier_id).first_or_404()
     supplier.is_active = False
     db.session.commit()
     return "", 204
@@ -176,8 +175,8 @@ def import_suppliers():
                     "errors": {"mobile": f"Duplicate mobile number within this file (already used on row {seen_mobiles[mobile]})"},
                 })
                 continue
-            if Supplier.query.filter(Supplier.mobile == mobile, Supplier.is_active.isnot(False)).first():
-                errors.append({"row": row_number, "errors": {"mobile": "A supplier is already registered with this mobile number"}})
+            if Supplier.query.filter(Supplier.mobile == mobile, Supplier.branch_id == branch_id, Supplier.is_active.isnot(False)).first():
+                errors.append({"row": row_number, "errors": {"mobile": "A supplier is already registered with this mobile number in this branch"}})
                 continue
             seen_mobiles[mobile] = row_number
 
@@ -189,8 +188,8 @@ def import_suppliers():
                     "errors": {"phone": f"Duplicate phone number within this file (already used on row {seen_phones[phone]})"},
                 })
                 continue
-            if Supplier.query.filter(Supplier.phone == phone, Supplier.is_active.isnot(False)).first():
-                errors.append({"row": row_number, "errors": {"phone": "A supplier is already registered with this phone number"}})
+            if Supplier.query.filter(Supplier.phone == phone, Supplier.branch_id == branch_id, Supplier.is_active.isnot(False)).first():
+                errors.append({"row": row_number, "errors": {"phone": "A supplier is already registered with this phone number in this branch"}})
                 continue
             seen_phones[phone] = row_number
 

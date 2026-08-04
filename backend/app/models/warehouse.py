@@ -14,10 +14,13 @@ class Warehouse(TenantScopedMixin, db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     quotations = db.relationship("Quotation", back_populates="warehouse", lazy="dynamic")
+    branch = db.relationship("Branch")
 
     def to_dict(self):
         return {
             "id": self.id,
             "name": self.name,
             "location": self.location,
+            "branch_id": self.branch_id,
+            "branch_name": self.branch.name if self.branch else None,
         }

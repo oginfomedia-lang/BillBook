@@ -260,6 +260,46 @@ export interface Coupon {
   branch?: Branch | null;
 }
 
+// ─── Billing / License Types ─────────────────────────────────────────────────
+
+export interface Plan {
+  id: number;
+  name: string;
+  price: number;
+  amc_price: number;
+  max_branches: number | null;
+  max_users: number | null;
+  is_active: boolean;
+}
+
+export interface TenantLicense {
+  id: number;
+  tenant_id: number;
+  plan: Plan | null;
+  purchased_at: string | null;
+  amc_valid_until: string | null;
+  amc_expired: boolean;
+  status: "active" | "suspended";
+}
+
+export interface BillingUsage {
+  branch_count: number;
+  user_count: number;
+}
+
+export interface BillingLicenseResponse {
+  license: TenantLicense | null;
+  usage: BillingUsage;
+}
+
+export interface CheckoutOrderResponse {
+  order_id: string;
+  amount: number;
+  currency: string;
+  key_id: string;
+  plan: Plan;
+}
+
 export interface Branch {
   id: number;
   name: string;

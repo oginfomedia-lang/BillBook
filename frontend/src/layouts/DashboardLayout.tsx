@@ -183,7 +183,12 @@ const NAV_ITEMS = [
 // above points at tenant-scoped data this account can see UNSCOPED (see
 // app/tenant_scope.py backend-side), so it gets a minimal menu instead.
 const PLATFORM_ADMIN_NAV_ITEMS = [
-  { to: "/admin/billing", label: "Tenant Billing", icon: Crown },
+  {
+    to: "/admin/billing",
+    label: "Tenant Billing",
+    icon: Crown,
+    sub: undefined as { to: string; label: string; end?: boolean }[] | undefined,
+  },
 ];
 
 

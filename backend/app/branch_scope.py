@@ -29,14 +29,15 @@ class BranchContext:
 
 def apply_branch_scope(query, model):
     """
-    Applies branch filtering to a SQLAlchemy query.
-    If a BranchContext is set, it filters the query to only return records
-    where `branch_id` matches the context, OR `branch_id` is None (shared).
+    Applies strict branch filtering to a SQLAlchemy query: if a BranchContext
+    is set, only records whose branch_id matches it are returned. Records
+    with branch_id IS NULL are NOT treated as shared -- every branch-aware
+    row must belong to exactly one branch (see cleanup_orphan_branch_data.py
+    for migrating pre-multi-branch legacy rows that predate this rule).
     """
     branch_id = BranchContext.get()
-    
+
     if branch_id and hasattr(model, 'branch_id'):
-        # Allow records explicitly assigned to this branch, OR records shared across branches (NULL)
-        return query.filter((model.branch_id == branch_id) | (model.branch_id.is_(None)))
-        
+        return query.filter(model.branch_id == branch_id)
+
     return query

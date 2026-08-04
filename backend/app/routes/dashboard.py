@@ -134,12 +134,10 @@ def summary():
         Item.status == "active"
     )
     if branch_id:
-        product_q = product_q.outerjoin(
+        product_q = product_q.join(
             Warehouse,
             (Item.warehouse_id == Warehouse.id) & (Warehouse.tenant_id == TenantContext.get())
-        ).filter(
-            (Warehouse.branch_id == branch_id) | (Warehouse.branch_id.is_(None)) | (Item.warehouse_id.is_(None))
-        )
+        ).filter(Warehouse.branch_id == branch_id)
     product_count = product_q.execution_options(skip_tenant_scope=True).scalar()
 
     invoice_count_q = Invoice.query
@@ -272,12 +270,10 @@ def summary():
         Item.status == "active"
     )
     if branch_id:
-        recent_q = recent_q.outerjoin(
+        recent_q = recent_q.join(
             Warehouse,
             (Item.warehouse_id == Warehouse.id) & (Warehouse.tenant_id == TenantContext.get())
-        ).filter(
-            (Warehouse.branch_id == branch_id) | (Warehouse.branch_id.is_(None)) | (Item.warehouse_id.is_(None))
-        )
+        ).filter(Warehouse.branch_id == branch_id)
     recent_q = recent_q.order_by(Item.created_at.desc()).limit(5)
     recent_products = recent_q.execution_options(skip_tenant_scope=True).all()
     
@@ -298,12 +294,10 @@ def summary():
         Item.opening_stock <= Item.alert_quantity,
     )
     if branch_id:
-        stock_q = stock_q.outerjoin(
+        stock_q = stock_q.join(
             Warehouse,
             (Item.warehouse_id == Warehouse.id) & (Warehouse.tenant_id == TenantContext.get())
-        ).filter(
-            (Warehouse.branch_id == branch_id) | (Warehouse.branch_id.is_(None)) | (Item.warehouse_id.is_(None))
-        )
+        ).filter(Warehouse.branch_id == branch_id)
     stock_q = stock_q.order_by(Item.opening_stock.asc())
     low_stock = stock_q.execution_options(skip_tenant_scope=True).all()
     

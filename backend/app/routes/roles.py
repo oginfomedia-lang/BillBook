@@ -32,7 +32,7 @@ def list_roles():
 @require_auth
 @require_permission("roles.view")
 def get_role(role_id):
-    role = Role.query.get_or_404(role_id)
+    role = Role.query.filter_by(id=role_id).first_or_404()
     return jsonify(role.to_dict())
 
 
@@ -63,7 +63,7 @@ def create_role():
 @require_auth
 @require_permission("roles.edit")
 def update_role(role_id):
-    role = Role.query.get_or_404(role_id)
+    role = Role.query.filter_by(id=role_id).first_or_404()
     if role.is_system:
         return jsonify({"error": "Built-in roles can't be edited"}), 403
 
@@ -88,7 +88,7 @@ def update_role(role_id):
 @require_auth
 @require_permission("roles.delete")
 def delete_role(role_id):
-    role = Role.query.get_or_404(role_id)
+    role = Role.query.filter_by(id=role_id).first_or_404()
     if role.is_system:
         return jsonify({"error": "Built-in roles can't be deleted"}), 403
     if role.users.count() > 0:

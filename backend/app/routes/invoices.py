@@ -5,7 +5,7 @@ from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
 
 from app.extensions import db
-from app.models import Invoice, InvoiceItem, InvoiceStatus, Item
+from app.models import Invoice, InvoiceItem, InvoiceStatus, Item, Customer
 from app.schemas import InvoiceSchema
 from app.tenant_scope import TenantContext
 from app.branch_scope import BranchContext, apply_branch_scope
@@ -41,23 +41,26 @@ def deduct_invoice_stock(invoice: Invoice) -> None:
 def _generate_invoice_number() -> str:
     """
     Per-tenant sequential numbering: INV-0001, INV-0002, ...
-    This uses the latest inserted invoice number and retries on duplicate
-    collisions to reduce race condition failures in concurrent workloads.
+    Uses the HIGHEST existing sequence number across all invoices, not just
+    the most-recently-inserted row's number -- after a data restore/import,
+    row insertion order (id) can stop matching numeric-number order, which
+    made the old "last row by id" approach regenerate an already-used number
+    every time (always the same collision, since nothing changes between
+    retries). This still retries on duplicate collisions for concurrent
+    workloads, but the collision itself is far less likely now.
     """
-    last_number = (
+    numbers = (
         Invoice.query.filter(Invoice.tenant_id == TenantContext.get())
-        .order_by(Invoice.id.desc())
         .with_entities(Invoice.invoice_number)
-        .limit(1)
-        .scalar()
+        .all()
     )
-    if last_number and last_number.startswith("INV-"):
-        try:
-            seq = int(last_number.split("-", 1)[1])
-        except ValueError:
-            seq = 0
-    else:
-        seq = 0
+    seq = 0
+    for (number,) in numbers:
+        if number and number.startswith("INV-"):
+            try:
+                seq = max(seq, int(number.split("-", 1)[1]))
+            except ValueError:
+                continue
     return f"INV-{seq + 1:04d}"
 
 
@@ -96,7 +99,7 @@ def list_invoices():
 @invoices_bp.route("/<int:invoice_id>", methods=["GET"])
 @require_auth
 def get_invoice(invoice_id):
-    invoice = Invoice.query.get_or_404(invoice_id)
+    invoice = Invoice.query.filter_by(id=invoice_id).first_or_404()
     return jsonify(invoice.to_dict())
 
 
@@ -107,6 +110,12 @@ def create_invoice():
         data = InvoiceSchema().load(request.get_json(force=True) or {})
     except ValidationError as err:
         return jsonify({"error": "Validation failed", "details": err.messages}), 422
+
+    # filter_by() is auto-scoped to the current tenant (see app/tenant_scope.py),
+    # so this 404s for a customer_id that exists but belongs to another tenant --
+    # closes a cross-tenant IDOR where any customer_id would otherwise be accepted.
+    if not Customer.query.filter_by(id=data["customer_id"]).first():
+        return jsonify({"error": "Customer not found"}), 404
 
     items_data = data.pop("items")
 
@@ -163,11 +172,14 @@ def create_invoice():
 @invoices_bp.route("/<int:invoice_id>", methods=["PUT"])
 @require_auth
 def update_invoice(invoice_id):
-    invoice = Invoice.query.get_or_404(invoice_id)
+    invoice = Invoice.query.filter_by(id=invoice_id).first_or_404()
     try:
         data = InvoiceSchema(partial=True).load(request.get_json(force=True) or {})
     except ValidationError as err:
         return jsonify({"error": "Validation failed", "details": err.messages}), 422
+
+    if "customer_id" in data and not Customer.query.filter_by(id=data["customer_id"]).first():
+        return jsonify({"error": "Customer not found"}), 404
 
     restore_invoice_stock(invoice)
 
@@ -224,7 +236,7 @@ def update_invoice(invoice_id):
 @invoices_bp.route("/<int:invoice_id>", methods=["DELETE"])
 @require_auth
 def delete_invoice(invoice_id):
-    invoice = Invoice.query.get_or_404(invoice_id)
+    invoice = Invoice.query.filter_by(id=invoice_id).first_or_404()
     restore_invoice_stock(invoice)
     db.session.delete(invoice)
     db.session.commit()
@@ -235,7 +247,7 @@ def delete_invoice(invoice_id):
 @require_auth
 def record_payment(invoice_id):
     """Records a (partial or full) payment against an invoice and updates status."""
-    invoice = Invoice.query.get_or_404(invoice_id)
+    invoice = Invoice.query.filter_by(id=invoice_id).first_or_404()
 
     # NOTE: We intentionally do NOT touch stock here.
     # Stock is deducted when an invoice transitions from DRAFT to a stock-affecting
