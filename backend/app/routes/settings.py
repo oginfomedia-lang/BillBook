@@ -21,6 +21,7 @@ from app.models import (
     Invoice, InvoiceItem, Quotation, QuotationItem, Role
 )
 from app.tenant_scope import TenantContext
+from app.branch_scope import BranchContext
 from app.utils.decorators import require_auth
 from app.utils.validators import validate_gstin
 from marshmallow import ValidationError
@@ -102,66 +103,82 @@ def update_settings():
     db.session.commit()
     return get_settings()
 
+# Keys stored per-branch on the Store screen -- includes the 5 that used to
+# live directly on the Tenant row (company_name, billing_email, phone,
+# address, gstin). See migration 46836cef4d03.
+STORE_SETTINGS_KEYS = [
+    "company_name", "billing_email", "phone", "address", "gstin",
+    "mobile", "tax_number", "pan_number", "store_website",
+    "show_signature", "signature", "bank_details", "country",
+    "state", "city", "postcode", "store_logo",
+]
+
+
 @settings_bp.route("/store", methods=["GET"])
 @require_auth
 def get_store_settings():
-    """Get the current store tenant profile, merging core Tenant columns with TenantSettings details."""
+    """Get the active branch's store profile (branch-scoped TenantSettings)."""
     tenant_id = TenantContext.get()
+    branch_id = BranchContext.get()
+    if not branch_id:
+        return jsonify({"error": "Select a branch to view store settings"}), 400
+
     tenant = Tenant.query.get_or_404(tenant_id)
-    
-    # Query setting values
-    settings_keys = [
-        "mobile", "tax_number", "pan_number", "store_website",
-        "show_signature", "signature", "bank_details", "country",
-        "state", "city", "postcode", "store_logo"
-    ]
+
     rows = TenantSetting.query.filter(
         TenantSetting.tenant_id == tenant_id,
-        TenantSetting.key.in_(settings_keys)
+        TenantSetting.branch_id == branch_id,
+        TenantSetting.key.in_(STORE_SETTINGS_KEYS),
     ).all()
-    
+
     settings_dict = {row.key: row.value for row in rows}
-    
-    res = tenant.to_dict()
-    res["store_code"] = f"ST{tenant_id:05d}"
-    res["mobile"] = settings_dict.get("mobile", "")
-    res["tax_number"] = settings_dict.get("tax_number", "")
-    res["pan_number"] = settings_dict.get("pan_number", "")
-    res["store_website"] = settings_dict.get("store_website", "")
-    res["show_signature"] = settings_dict.get("show_signature", "false") == "true"
-    res["signature"] = settings_dict.get("signature", "")
-    res["bank_details"] = settings_dict.get("bank_details", "")
-    res["country"] = settings_dict.get("country", "India")
-    res["state"] = settings_dict.get("state", "Maharashtra")
-    res["city"] = settings_dict.get("city", "Pune")
-    res["postcode"] = settings_dict.get("postcode", "")
-    res["store_logo"] = settings_dict.get("store_logo", "")
-    
+
+    res = {
+        "store_code": f"ST{tenant_id:05d}",
+        "company_name": settings_dict.get("company_name", ""),
+        "billing_email": settings_dict.get("billing_email", ""),
+        "phone": settings_dict.get("phone", ""),
+        "address": settings_dict.get("address", ""),
+        "gstin": settings_dict.get("gstin", ""),
+        "mobile": settings_dict.get("mobile", ""),
+        "tax_number": settings_dict.get("tax_number", ""),
+        "pan_number": settings_dict.get("pan_number", ""),
+        "store_website": settings_dict.get("store_website", ""),
+        "show_signature": settings_dict.get("show_signature", "false") == "true",
+        "signature": settings_dict.get("signature", ""),
+        "bank_details": settings_dict.get("bank_details", ""),
+        "country": settings_dict.get("country", "India"),
+        "state": settings_dict.get("state", "Maharashtra"),
+        "city": settings_dict.get("city", "Pune"),
+        "postcode": settings_dict.get("postcode", ""),
+        "store_logo": settings_dict.get("store_logo", ""),
+    }
+
     return jsonify(res)
 
 @settings_bp.route("/store", methods=["PUT"])
 @require_auth
 def update_store_settings():
-    """Update core Tenant profile and settings key-values."""
+    """Update the active branch's store profile (branch-scoped TenantSettings)."""
     tenant_id = TenantContext.get()
-    tenant = Tenant.query.get_or_404(tenant_id)
+    branch_id = BranchContext.get()
+    if not branch_id:
+        return jsonify({"error": "Select a branch to update store settings"}), 400
+
     payload = request.get_json(force=True) or {}
 
-    new_gstin = payload.get("gstin", tenant.gstin)
+    new_gstin = payload.get("gstin", "")
     try:
         validate_gstin(new_gstin)
     except ValidationError as err:
         return jsonify({"error": "Validation failed", "details": {"gstin": err.messages}}), 422
 
-    # Update Core columns
-    tenant.company_name = payload.get("company_name", tenant.company_name)
-    tenant.billing_email = payload.get("billing_email", tenant.billing_email)
-    tenant.phone = payload.get("phone", tenant.phone)
-    tenant.address = payload.get("address", tenant.address)
-    tenant.gstin = new_gstin
-    
-    # Update key-values
     settings_keys = {
+        "company_name": payload.get("company_name", ""),
+        "billing_email": payload.get("billing_email", ""),
+        "phone": payload.get("phone", ""),
+        "address": payload.get("address", ""),
+        "gstin": new_gstin,
         "mobile": payload.get("mobile", ""),
         "tax_number": payload.get("tax_number", ""),
         "pan_number": payload.get("pan_number", ""),
@@ -175,15 +192,15 @@ def update_store_settings():
         "postcode": payload.get("postcode", ""),
         "store_logo": payload.get("store_logo", "")
     }
-    
+
     for key, val in settings_keys.items():
-        row = TenantSetting.query.filter_by(tenant_id=tenant_id, key=key).first()
+        row = TenantSetting.query.filter_by(tenant_id=tenant_id, branch_id=branch_id, key=key).first()
         if row:
             row.value = val
         else:
-            row = TenantSetting(tenant_id=tenant_id, key=key, value=val)
+            row = TenantSetting(tenant_id=tenant_id, branch_id=branch_id, key=key, value=val)
             db.session.add(row)
-            
+
     db.session.commit()
     return get_store_settings()
 
@@ -263,18 +280,39 @@ FK_MAP = {
     "quotation_items": {"quotation_id": "quotations", "item_id": "items"},
 }
 
+# Tables with no branch_id of their own -- tenant-wide shared/identity data
+# (login accounts, role definitions, the branch list itself, unit/variant
+# catalogs). A branch-scoped backup never exports, deletes, or restores
+# these; they're left exactly as they are.
+BRANCH_UNSCOPED_TABLES = {"roles", "users", "branches", "units", "variants"}
+
 
 @settings_bp.route("/backup", methods=["GET"])
 @require_auth
 def download_backup():
-    """Export a secure, tenant-isolated CSV backup (one CSV per table, zipped)."""
+    """
+    Export a secure CSV backup (one CSV per table, zipped).
+
+    If a branch is active (X-Branch-Id header set), the export is scoped to
+    that branch only: branch-owned tables are filtered to branch_id, and
+    tenant-wide shared tables (users, roles, branches, units, variants) are
+    left out entirely -- they're not this branch's data. With no branch
+    active, behavior is unchanged: a full tenant-wide export.
+    """
     tenant_id = TenantContext.get()
+    branch_id = BranchContext.get()
     tenant = Tenant.query.get_or_404(tenant_id)
+    branch = Branch.query.get(branch_id) if branch_id else None
 
     def cell_value(v):
         if isinstance(v, (datetime, date)):
             return v.isoformat()
         return v
+
+    export_specs = [
+        spec for spec in TABLE_SPECS
+        if not (branch_id and spec[0] in BRANCH_UNSCOPED_TABLES)
+    ]
 
     zip_buffer = BytesIO()
     with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
@@ -285,21 +323,28 @@ def download_backup():
                 "tenant_id": tenant_id,
                 "company_name": tenant.company_name,
                 "slug": tenant.slug,
-                "tables": [key for key, *_ in TABLE_SPECS],
+                "scope": "branch" if branch_id else "tenant",
+                "branch_id": branch_id,
+                "branch_name": branch.name if branch else None,
+                "tables": [key for key, *_ in export_specs],
             }, indent=2),
         )
 
-        for key, model, tenant_scoped, parent_link in TABLE_SPECS:
+        for key, model, tenant_scoped, parent_link in export_specs:
             if tenant_scoped:
-                rows = model.query.filter_by(tenant_id=tenant_id).all()
+                q = model.query.filter_by(tenant_id=tenant_id)
+                if branch_id and hasattr(model, "branch_id"):
+                    q = q.filter(model.branch_id == branch_id)
+                rows = q.all()
             else:
                 parent_key, fk_col = parent_link
                 parent_model = _MODEL_BY_KEY[parent_key]
-                rows = (
-                    model.query.join(parent_model, getattr(model, fk_col) == parent_model.id)
-                    .filter(parent_model.tenant_id == tenant_id)
-                    .all()
+                q = model.query.join(parent_model, getattr(model, fk_col) == parent_model.id).filter(
+                    parent_model.tenant_id == tenant_id
                 )
+                if branch_id and hasattr(parent_model, "branch_id"):
+                    q = q.filter(parent_model.branch_id == branch_id)
+                rows = q.all()
 
             columns = [c.name for c in model.__table__.columns]
             csv_buf = StringIO()
@@ -311,7 +356,10 @@ def download_backup():
             zf.writestr(f"{key}.csv", csv_buf.getvalue())
 
     zip_buffer.seek(0)
-    filename = f"billbook_backup_{tenant.slug}_{date.today().isoformat()}.zip"
+    if branch:
+        filename = f"billbook_backup_{tenant.slug}_{branch.code}_{date.today().isoformat()}.zip"
+    else:
+        filename = f"billbook_backup_{tenant.slug}_{date.today().isoformat()}.zip"
 
     return send_file(
         zip_buffer,
@@ -325,18 +373,26 @@ def download_backup():
 @require_auth
 def restore_backup():
     """
-    Restores tenant data from a backup ZIP (see download_backup()). DESTRUCTIVE:
-    wipes all of the current tenant's rows, then re-inserts from the CSVs.
-    Runs in one transaction -- any failure rolls back everything.
+    Restores data from a backup ZIP (see download_backup()). DESTRUCTIVE:
+    wipes the affected rows, then re-inserts from the CSVs. Runs in one
+    transaction -- any failure rolls back everything.
+
+    Scope must match: a tenant-wide backup can only be restored with no
+    branch selected, and a branch backup can only be restored back onto the
+    SAME branch it came from -- other branches (and tenant-wide shared
+    tables: users, roles, branches, units, variants) are never touched by a
+    branch-scoped restore.
 
     Row IDs are NOT preserved (this database's auto-increment counters are
     shared across every tenant, so the old IDs in the CSV are almost never
     free) -- every row gets a fresh ID, and every foreign key column listed
-    in FK_MAP is rewritten to point at the corresponding new ID via id_map.
-    Columns referencing a table we don't touch (e.g. items.tax_id) are left
-    as-is since those rows never moved.
+    in FK_MAP is rewritten to point at the corresponding new ID via id_map --
+    EXCEPT columns pointing into a table this restore didn't touch (e.g.
+    items.unit_id -> units, or any branch_id during a branch-scoped restore),
+    which are left as their original value since that row never moved.
     """
     tenant_id = TenantContext.get()
+    branch_id = BranchContext.get()
     file = request.files.get("file")
     if not file:
         return jsonify({"error": "No backup file uploaded"}), 422
@@ -345,6 +401,31 @@ def restore_backup():
         zf = zipfile.ZipFile(file)
     except zipfile.BadZipFile:
         return jsonify({"error": "Invalid backup file"}), 422
+
+    try:
+        manifest = json.loads(zf.read("_manifest.json"))
+    except Exception:
+        manifest = {}
+    backup_scope = manifest.get("scope", "tenant")
+    backup_branch_id = manifest.get("branch_id")
+    current_scope = "branch" if branch_id else "tenant"
+
+    if backup_scope != current_scope:
+        return jsonify({
+            "error": (
+                f"This is a {backup_scope}-wide backup, but you currently "
+                f"have {'a branch' if branch_id else 'no branch'} selected. "
+                "Match the scope before restoring."
+            )
+        }), 422
+    if backup_scope == "branch" and backup_branch_id != branch_id:
+        return jsonify({"error": "This backup belongs to a different branch. Switch to that branch before restoring."}), 422
+
+    restore_specs = [
+        spec for spec in TABLE_SPECS
+        if not (branch_id and spec[0] in BRANCH_UNSCOPED_TABLES)
+    ]
+    restore_keys = {spec[0] for spec in restore_specs}
 
     def coerce(column, raw):
         """CSV values are always strings -- cast back to the column's real
@@ -368,14 +449,19 @@ def restore_backup():
         # Only tenant-scoped (parent) tables need an explicit delete --
         # every child table's FK has ondelete="CASCADE", so deleting e.g.
         # a tenant's invoices automatically clears its invoice_items too.
-        for key, model, tenant_scoped, _ in reversed(TABLE_SPECS):
+        # Tables outside restore_specs (unscoped tables during a
+        # branch-scoped restore) are never deleted.
+        for key, model, tenant_scoped, _ in reversed(restore_specs):
             if tenant_scoped:
-                model.query.filter_by(tenant_id=tenant_id).delete(synchronize_session=False)
+                q = model.query.filter_by(tenant_id=tenant_id)
+                if branch_id and hasattr(model, "branch_id"):
+                    q = q.filter(model.branch_id == branch_id)
+                q.delete(synchronize_session=False)
 
         id_map: dict[str, dict[int, int]] = {}
         restored_tables = []
 
-        for key, model, tenant_scoped, _ in TABLE_SPECS:
+        for key, model, tenant_scoped, _ in restore_specs:
             if f"{key}.csv" not in zf.namelist():
                 continue
 
@@ -395,11 +481,19 @@ def restore_backup():
                             continue  # CSV is from an older schema version
                         val = raw if raw != "" else None
                         if col_name in fk_cols and val is not None:
-                            # Remap to the NEW id of the already-restored
-                            # parent row; None if it can't be resolved
-                            # (e.g. a forward self-reference) rather than
-                            # risk pointing at the wrong row.
-                            val = id_map.get(fk_cols[col_name], {}).get(int(val))
+                            target_key = fk_cols[col_name]
+                            if target_key not in restore_keys:
+                                # Target table wasn't touched by this restore
+                                # (e.g. units/roles/branches during a
+                                # branch-scoped restore) -- that row never
+                                # moved, so the original id is still valid.
+                                val = coerce(columns_by_name[col_name], val)
+                            else:
+                                # Remap to the NEW id of the already-restored
+                                # parent row; None if it can't be resolved
+                                # (e.g. a forward self-reference) rather than
+                                # risk pointing at the wrong row.
+                                val = id_map.get(target_key, {}).get(int(val))
                         else:
                             val = coerce(columns_by_name[col_name], val)
                         clean_row[col_name] = val
@@ -417,7 +511,7 @@ def restore_backup():
             restored_tables.append(key)
 
         db.session.commit()
-        return jsonify({"status": "restored", "tables": restored_tables})
+        return jsonify({"status": "restored", "scope": current_scope, "tables": restored_tables})
     except Exception as e:
         db.session.rollback()
         current_app.logger.exception("Restore failed")

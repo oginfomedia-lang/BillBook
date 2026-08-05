@@ -22,6 +22,7 @@ import {
 import toast from "react-hot-toast";
 import { apiClient } from "../api/client";
 import { useTranslation } from "../context/LanguageContext";
+import { useBranch } from "../context/BranchContext";
 import { formatMoney } from "../utils/format";
 import { isValidGSTIN, GSTIN_ERROR_MESSAGE } from "../utils/validators";
 
@@ -39,6 +40,8 @@ type SettingPageType =
 
 export function SettingsPage() {
   const { t } = useTranslation();
+  const { getCurrentBranch } = useBranch();
+  const activeBranch = getCurrentBranch();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
@@ -521,7 +524,7 @@ export function SettingsPage() {
     payment_types: { label: "Payment Types", desc: "View and configure acceptable payment modes.", icon: CreditCard },
     currencies: { label: "Currency List", desc: "Configure multiple currencies and set exchange rates.", icon: Coins },
     change_password: { label: "Change Password", desc: "Update your login security credentials.", icon: Lock },
-    backup: { label: "Database Backup", desc: "Securely export your company's full dataset.", icon: Download },
+    backup: { label: "Database Backup", desc: "Securely export the active branch's dataset.", icon: Download },
   };
 
   const PageIcon = PAGES[activePage].icon;
@@ -1627,9 +1630,14 @@ export function SettingsPage() {
                 <Download size={40} />
               </div>
               <div className="max-w-md mx-auto space-y-2">
-                <h3 className="text-lg font-bold text-slate-800">{t("Export Full Workspace Data")}</h3>
+                <h3 className="text-lg font-bold text-slate-800">{t("Export Branch Data")}</h3>
+                {activeBranch && (
+                  <p className="inline-flex items-center gap-1.5 rounded-full bg-brand/10 px-3 py-1 text-xs font-semibold text-brand">
+                    {t("Backing up")}: {activeBranch.name}
+                  </p>
+                )}
                 <p className="text-sm text-slate-500">
-                  {t("Download a secure, portable ZIP file (one CSV per table) containing all registers, customers, invoices, items, and workspace configs. Store this backup file safely on local disks or cold storage.")}
+                  {t("Download a secure, portable ZIP file (one CSV per table) containing this branch's registers, customers, invoices, items, and store profile. Other branches are not included. Store this backup file safely on local disks or cold storage.")}
                 </p>
               </div>
               <div className="pt-2">
@@ -1645,7 +1653,7 @@ export function SettingsPage() {
               <div className="max-w-md mx-auto border-t border-slate-100 pt-6 text-left">
                 <h3 className="text-sm font-bold text-red-600">{t("Restore from Backup")}</h3>
                 <p className="mt-1 text-xs text-slate-500">
-                  {t("Upload a .zip backup file exported above. This REPLACES ALL current data for this workspace and cannot be undone.")}
+                  {t("Upload a .zip backup file exported above. This REPLACES ALL current data for")} {activeBranch ? activeBranch.name : t("this branch")} {t("only — other branches are untouched. This cannot be undone.")}
                 </p>
                 <input
                   type="file"
