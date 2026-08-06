@@ -3,7 +3,9 @@ import secrets
 from datetime import datetime, timedelta
 
 from flask import Blueprint, request, jsonify, current_app
-from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt
+from flask_jwt_extended import (
+    create_access_token, create_refresh_token, decode_token, jwt_required, get_jwt,
+)
 from marshmallow import ValidationError
 
 from app.extensions import db, limiter
@@ -22,6 +24,22 @@ def _slugify(name: str) -> str:
     return base or "tenant"
 
 
+def _demo_claims(user: User) -> dict:
+    """
+    Only the raw expiry timestamp travels in the token -- never a cached
+    "is expired" boolean -- so app/demo/guard.py can recompute freshness
+    live against datetime.utcnow() on every request. See that module's
+    docstring for why this matters.
+    """
+    tenant = user.tenant
+    if not tenant or not tenant.is_demo:
+        return {"is_demo": False, "demo_expires_at": None}
+    return {
+        "is_demo": True,
+        "demo_expires_at": tenant.demo_expires_at.isoformat() if tenant.demo_expires_at else None,
+    }
+
+
 def _issue_tokens(user: User) -> dict:
     permissions = list(user.role_ref.permissions) if user.role_ref else []
     if user.role_ref and user.role_ref.is_system:
@@ -33,6 +51,7 @@ def _issue_tokens(user: User) -> dict:
         "role_id": user.role_id,
         "branch_id": user.branch_id,
         "permissions": permissions,
+        **_demo_claims(user),
     }
     access_token = create_access_token(identity=str(user.id), additional_claims=claims)
     refresh_token = create_refresh_token(identity=str(user.id), additional_claims=claims)
@@ -78,14 +97,17 @@ def signup():
     db.session.commit()
 
     tokens = _issue_tokens(admin)
-    
+
     # ✅ Get all branches for Super Admin
     all_branches = Branch.query.filter_by(tenant_id=tenant.id, is_active=True).all()
-    
+
+    user_data = admin.to_dict()
+    user_data.update(_demo_claims(admin))
+
     return (
         jsonify({
             "tenant": tenant.to_dict(),
-            "user": admin.to_dict(),
+            "user": user_data,
             "branches": [
                 {
                     "id": b.id,
@@ -137,6 +159,7 @@ def login():
 
     user_data = user.to_dict()
     user_data["permissions"] = permissions
+    user_data.update(_demo_claims(user))
 
     return jsonify({
         "user": user_data,
@@ -150,6 +173,68 @@ def login():
             for b in accessible_branches
         ],
         **tokens
+    }), 200
+
+
+@auth_bp.route("/demo-login", methods=["POST"])
+@limiter.limit("20 per hour")
+def demo_login():
+    """
+    Exchanges a short-lived demo-bootstrap token (issued by
+    POST /api/v1/demo/signup, see app/demo/routes.py) for a real
+    access+refresh token pair -- the "auto-login, no password" step. Kept
+    as a separate exchange rather than embedding a long-lived access token
+    directly in the signup response's redirect_url, so the bearer-equivalent
+    credential that ends up in server logs / browser history / Referer
+    headers is only ever valid for ~60 seconds.
+    """
+    data = request.get_json(force=True) or {}
+    token = data.get("token", "")
+    if not token:
+        return jsonify({"error": "Token is required"}), 422
+
+    try:
+        decoded = decode_token(token)
+    except Exception:
+        return jsonify({"error": "This demo link is invalid or has expired"}), 401
+
+    if decoded.get("purpose") != "demo-bootstrap":
+        return jsonify({"error": "This demo link is invalid or has expired"}), 401
+
+    user = User.query.filter_by(id=int(decoded["sub"])).first()
+    if not user or not user.is_active:
+        return jsonify({"error": "This demo link is invalid or has expired"}), 401
+
+    tokens = _issue_tokens(user)
+
+    if user.is_super_admin:
+        accessible_branches = Branch.query.filter_by(tenant_id=user.tenant_id, is_active=True).all()
+    else:
+        accessible_branches = user.get_accessible_branches()
+
+    if user.is_super_admin:
+        permissions = ["*"]
+    elif user.role_ref and user.role_ref.is_system:
+        permissions = all_permission_keys()
+    else:
+        permissions = list(user.role_ref.permissions) if user.role_ref else []
+
+    user_data = user.to_dict()
+    user_data["permissions"] = permissions
+    user_data.update(_demo_claims(user))
+
+    return jsonify({
+        "user": user_data,
+        "branches": [
+            {
+                "id": b.id,
+                "name": b.name,
+                "code": b.code,
+                "is_default": b.id == user.branch_id,
+            }
+            for b in accessible_branches
+        ],
+        **tokens,
     }), 200
 
 
@@ -262,6 +347,7 @@ def refresh():
         "role_id": user.role_id,
         "branch_id": user.branch_id,
         "permissions": permissions,
+        **_demo_claims(user),
     }
     access_token = create_access_token(identity=identity, additional_claims=new_claims)
     return jsonify({"access_token": access_token}), 200
@@ -279,6 +365,7 @@ def me():
         return jsonify({"error": "User not found"}), 404
     
     data = user.to_dict()
+    data.update(_demo_claims(user))
 
     if user.is_super_admin:
         data["permissions"] = ["*"]

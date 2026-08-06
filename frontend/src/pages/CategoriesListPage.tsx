@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Plus, Search, Trash2, Edit2, X } from 'lucide-react';
 import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from '../hooks/useItems';
 import { TableSkeleton } from '../components/ui/Skeletons';
+import { DemoGuard } from '../components/DemoGuard';
 import toast from 'react-hot-toast';
 
 export function CategoriesListPage() {
@@ -143,13 +144,15 @@ export function CategoriesListPage() {
                                             >
                                                 <Edit2 size={14} />
                                             </button>
-                                            <button
-                                                onClick={() => handleDelete(cat.id, cat.name)}
-                                                className="rounded p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors"
-                                                title="Delete"
-                                            >
-                                                <Trash2 size={14} />
-                                            </button>
+                                            <DemoGuard>
+                                                <button
+                                                    onClick={() => handleDelete(cat.id, cat.name)}
+                                                    className="rounded p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+                                                    title="Delete"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </DemoGuard>
                                         </div>
                                     </td>
                                 </tr>

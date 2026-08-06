@@ -15,6 +15,7 @@ import { useWarehouses } from "../../hooks/useWarehouses";
 import { useItems } from "../../hooks/useItems";
 import { TableSkeleton } from "../../components/ui/Skeletons";
 import { formatDate } from "../../utils/format";
+import { DemoGuard } from "../../components/DemoGuard";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -275,13 +276,15 @@ export function StockTransferListPage() {
                       >
                         <Edit size={14} />
                       </button>
-                      <button
-                        onClick={() => handleDelete(tr.id)}
-                        className="rounded p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors"
-                        title="Delete"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      <DemoGuard>
+                        <button
+                          onClick={() => handleDelete(tr.id)}
+                          className="rounded p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+                          title="Delete"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </DemoGuard>
                     </div>
                   </td>
                 </tr>

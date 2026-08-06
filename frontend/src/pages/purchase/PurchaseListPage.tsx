@@ -16,6 +16,7 @@ import {
   Printer,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { DemoGuard } from "../../components/DemoGuard";
 import {
   listPurchases,
   getPurchaseStats,
@@ -370,14 +371,16 @@ export function PurchaseListPage() {
                       >
                         <Printer size={13} />
                       </button>
-                      <button
-                        onClick={() => handleDelete(p.id)}
-                        disabled={deletingId === p.id}
-                        className="flex items-center gap-1 rounded-lg bg-red-500 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-red-600 transition-colors disabled:opacity-50"
-                        title="Delete"
-                      >
-                        <Trash2 size={13} />
-                      </button>
+                      <DemoGuard>
+                        <button
+                          onClick={() => handleDelete(p.id)}
+                          disabled={deletingId === p.id}
+                          className="flex items-center gap-1 rounded-lg bg-red-500 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-red-600 transition-colors disabled:opacity-50"
+                          title="Delete"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </DemoGuard>
                     </div>
                   </td>
                 </tr>

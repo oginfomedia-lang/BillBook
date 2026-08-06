@@ -12,6 +12,7 @@ import { TableSkeleton } from "../../components/ui/Skeletons";
 import { formatDate } from "../../utils/format";
 import toast from "react-hot-toast";
 import { handleExport, type ExportFormat } from "../../utils/exportUtils";
+import { DemoGuard } from "../../components/DemoGuard";
 
 interface ModalState {
   open: boolean;
@@ -291,13 +292,15 @@ export function ExpensesListPage() {
                         >
                           <Edit2 size={14} />
                         </button>
-                        <button
-                          onClick={() => handleDelete(exp.id)}
-                          className="rounded p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors"
-                          title="Delete"
-                        >
-                          <Trash2 size={14} />
-                        </button>
+                        <DemoGuard>
+                          <button
+                            onClick={() => handleDelete(exp.id)}
+                            className="rounded p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+                            title="Delete"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </DemoGuard>
                       </div>
                     </td>
                   </tr>

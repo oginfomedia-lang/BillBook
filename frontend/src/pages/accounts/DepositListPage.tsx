@@ -13,6 +13,7 @@ import {
 } from "../../api/accounts";
 import { formatMoney, formatDate } from "../../utils/format";
 import { handleExport, type ExportFormat } from "../../utils/exportUtils";
+import { DemoGuard } from "../../components/DemoGuard";
 
 function ExportBtn({ label, color, onClick }: { label: string; color: string; onClick?: () => void }) {
   return (
@@ -389,16 +390,18 @@ export function DepositListPage() {
                     <td className="px-4 py-3 text-xs text-slate-500">{d.creator_name || "—"}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-center">
-                        <button
-                          onClick={() => {
-                            if (confirm("Delete this deposit? Account balances will be reversed."))
-                              deleteMutation.mutate(d.id);
-                          }}
-                          className="rounded p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-500"
-                          title="Delete"
-                        >
-                          <Trash2 size={13} />
-                        </button>
+                        <DemoGuard>
+                          <button
+                            onClick={() => {
+                              if (confirm("Delete this deposit? Account balances will be reversed."))
+                                deleteMutation.mutate(d.id);
+                            }}
+                            className="rounded p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-500"
+                            title="Delete"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </DemoGuard>
                       </div>
                     </td>
                   </tr>

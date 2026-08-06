@@ -7,6 +7,7 @@ import { Modal } from "../../components/ui/Modal";
 import { formatDate } from "../../utils/format";
 import { useTranslation } from "../../context/LanguageContext";
 import { useBranch } from "../../context/BranchContext";
+import { DemoGuard } from "../../components/DemoGuard";
 import toast from "react-hot-toast";
 
 const STATUS_FILTERS = [
@@ -157,12 +158,14 @@ export function CouponsListPage() {
                       >
                         <Edit2 size={14} />
                       </Link>
-                      <button
-                        onClick={() => handleDelete(coupon.id, coupon.code)}
-                        className="rounded-md p-1.5 text-slate-400 hover:bg-danger-light hover:text-danger transition-colors"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      <DemoGuard>
+                        <button
+                          onClick={() => handleDelete(coupon.id, coupon.code)}
+                          className="rounded-md p-1.5 text-slate-400 hover:bg-danger-light hover:text-danger transition-colors"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </DemoGuard>
                     </div>
                   </td>
                 </tr>

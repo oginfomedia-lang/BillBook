@@ -26,8 +26,14 @@ def create_app(config_name: str | None = None) -> Flask:
         "http://127.0.0.1:5173",
         "http://localhost:3000",
         "http://127.0.0.1:3000",
+        "http://localhost:5183",
+        "http://127.0.0.1:5183",
     ]
-    
+    frontend_origin = flask_app.config.get("FRONTEND_ORIGIN")
+    if frontend_origin and frontend_origin not in allowed_origins:
+        allowed_origins.append(frontend_origin)
+
+
     CORS(
         flask_app,
         resources={r"/api/*": {"origins": allowed_origins}},
@@ -69,6 +75,7 @@ def create_app(config_name: str | None = None) -> Flask:
     from app.routes.reports import reports_bp
     from app.routes.settings import settings_bp
     from app.routes.billing import billing_bp
+    from app.demo.routes import demo_bp
 
 
     # Register with url_prefix to ensure consistency
@@ -96,6 +103,16 @@ def create_app(config_name: str | None = None) -> Flask:
     flask_app.register_blueprint(reports_bp, url_prefix='/api/v1/reports')
     flask_app.register_blueprint(settings_bp, url_prefix='/api/v1/settings')
     flask_app.register_blueprint(billing_bp, url_prefix='/api/v1/billing')
+    flask_app.register_blueprint(demo_bp, url_prefix='/api/v1/demo')
+
+    # --- Self-service demo tenant guard (before_request -- see its module
+    # docstring for why it can't just reuse @require_auth's g/TenantContext
+    # setup) + `flask sweep-demo` CLI command, cron-driven, no in-process
+    # scheduler (see app/demo/sweep.py). ---
+    from app.demo.guard import demo_guard
+    from app.demo.sweep import register_cli as register_demo_cli
+    flask_app.before_request(demo_guard)
+    register_demo_cli(flask_app)
 
     @flask_app.route("/api/v1/health", methods=["GET"])
     def health():
@@ -104,6 +121,18 @@ def create_app(config_name: str | None = None) -> Flask:
     @flask_app.errorhandler(404)
     def not_found(e):
         return jsonify({"error": "Resource not found"}), 404
+
+    # Werkzeug's abort(403/429, description=...) (used by app/demo/guard.py)
+    # otherwise renders an HTML error page -- the frontend everywhere reads
+    # err.response.data.error (a JSON body), so these need the same
+    # jsonify-the-description treatment as not_found()/server_error() below.
+    @flask_app.errorhandler(403)
+    def forbidden(e):
+        return jsonify({"error": getattr(e, "description", "Forbidden")}), 403
+
+    @flask_app.errorhandler(429)
+    def rate_limited(e):
+        return jsonify({"error": getattr(e, "description", "Too many requests")}), 429
 
     @flask_app.errorhandler(500)
     def server_error(e):

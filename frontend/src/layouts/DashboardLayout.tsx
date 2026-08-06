@@ -41,6 +41,13 @@ import { Modal } from "../components/ui/Modal";
 import { useBranch } from "../context/BranchContext";
 import { BranchSelector } from "../components/BranchSelector"; // ✅ ADD THIS
 import { useSiteSettings } from "../hooks/useSiteSettings";
+import { useDemoMode } from "../hooks/useDemoMode";
+import { DemoBanner } from "../components/DemoBanner";
+
+// Nav entries hidden entirely for demo tenants -- matches the blueprints
+// app/demo/guard.py blocks server-side (settings, users, roles, billing),
+// keyed by the item's `label` since Settings/Billing have no single `to`.
+const DEMO_HIDDEN_NAV_LABELS = new Set(["Users", "Roles", "Settings", "Plan & Billing"]);
 
 // ─── Navigation Items ────────────────────────────────────────────────────────
 const NAV_ITEMS = [
@@ -196,6 +203,7 @@ const PLATFORM_ADMIN_NAV_ITEMS = [
 export function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user, logout, hasPermission, updateCurrentUser } = useAuth();
+  const { isDemo } = useDemoMode();
   const { language, setLanguage, t } = useTranslation();
   const navigate = useNavigate();
   const { data: siteSettings } = useSiteSettings();
@@ -371,6 +379,9 @@ export function DashboardLayout() {
   const visibleNavItems = isPlatformAdmin
     ? PLATFORM_ADMIN_NAV_ITEMS
     : NAV_ITEMS.filter((item) => {
+      if (isDemo && DEMO_HIDDEN_NAV_LABELS.has(item.label)) {
+        return false;
+      }
       if (item.permission) {
         return hasPermission(item.permission);
       }
@@ -729,6 +740,7 @@ export function DashboardLayout() {
 
         {/* Page body */}
         <main className="flex-1 overflow-auto p-4 lg:p-6 print:p-0 print:overflow-visible">
+          <DemoBanner />
           <Outlet />
         </main>
       </div>

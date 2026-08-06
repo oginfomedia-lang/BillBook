@@ -13,6 +13,7 @@ import {
   Trash2,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { DemoGuard } from "../../components/DemoGuard";
 import {
   listPurchaseReturns,
   getPurchaseReturnStats,
@@ -276,13 +277,15 @@ export function PurchaseReturnsListPage() {
                   <td className="px-4 py-3"><PaymentBadge status={r.payment_status} /></td>
                   <td className="px-4 py-3 text-slate-600">{r.creator_name || "—"}</td>
                   <td className="px-4 py-3">
-                    <button
-                      onClick={() => handleDelete(r.id)}
-                      disabled={deletingId === r.id}
-                      className="flex items-center gap-1 rounded-lg bg-red-500 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-red-600 transition-colors disabled:opacity-50"
-                    >
-                      <Trash2 size={13} />
-                    </button>
+                    <DemoGuard>
+                      <button
+                        onClick={() => handleDelete(r.id)}
+                        disabled={deletingId === r.id}
+                        className="flex items-center gap-1 rounded-lg bg-red-500 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-red-600 transition-colors disabled:opacity-50"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </DemoGuard>
                   </td>
                 </tr>
               ))

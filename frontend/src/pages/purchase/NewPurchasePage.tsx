@@ -11,6 +11,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { DemoGuard } from "../../components/DemoGuard";
 import {
   createPurchase,
   getPurchase,
@@ -844,13 +845,15 @@ export function NewPurchasePage({ editMode = false }: { editMode?: boolean }) {
                       {formatMoney(p.amount)}
                     </td>
                     <td className="px-4 py-2.5">
-                      <button
-                        onClick={() => handleDeletePayment(p.id)}
-                        disabled={deletingPaymentId === p.id}
-                        className="text-red-400 hover:text-red-600 disabled:opacity-40"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      <DemoGuard>
+                        <button
+                          onClick={() => handleDeletePayment(p.id)}
+                          disabled={deletingPaymentId === p.id}
+                          className="text-red-400 hover:text-red-600 disabled:opacity-40"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </DemoGuard>
                     </td>
                   </tr>
                 ))

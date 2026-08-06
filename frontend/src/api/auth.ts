@@ -50,6 +50,17 @@ export async function signup(payload: SignupPayload): Promise<LoginResponse> {
   return data;
 }
 
+// Exchanges the short-lived bootstrap token from a demo signup's
+// redirect_url (POST /api/v1/demo/signup) for a real access/refresh pair --
+// the "auto-login, no password" step. See app/routes/auth.py::demo_login().
+export async function loginWithDemoToken(token: string): Promise<LoginResponse> {
+  const { data } = await apiClient.post<LoginResponse>("/auth/demo-login", { token });
+  if (data.access_token) {
+    tokenStorage.setTokens(data.access_token, data.refresh_token);
+  }
+  return data;
+}
+
 export async function fetchCurrentUser(): Promise<User & { branches?: Branch[] }> {
   const { data } = await apiClient.get("/auth/me");
   return data;

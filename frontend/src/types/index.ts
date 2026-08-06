@@ -31,6 +31,11 @@ export interface User {
   permissions?: string[];
   // ✅ ADD THIS - Branches from login response
   branches?: Branch[];
+  // Self-service demo tenant flags -- present on /auth/login, /auth/signup,
+  // /auth/demo-login and /auth/me responses (see app/routes/auth.py
+  // _demo_claims()). false/null for every normal (non-demo) account.
+  is_demo?: boolean;
+  demo_expires_at?: string | null;
 }
 
 export interface Role {

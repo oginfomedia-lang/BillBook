@@ -5,6 +5,7 @@ import { useQuotation, useDeleteQuotation, useConvertQuotationToInvoice, useUpda
 import type { QuotationStatus } from "../api/quotations";
 import { formatMoney, formatDate } from "../utils/format";
 import { Modal } from "../components/ui/Modal";
+import { DemoGuard } from "../components/DemoGuard";
 import { useStoreProfile } from "../hooks/useStoreProfile";
 
 const STATUS_OPTIONS: QuotationStatus[] = ["draft", "sent", "accepted", "declined"];
@@ -110,12 +111,14 @@ export function QuotationDetailPage() {
             <Printer size={15} /> Print
           </button>
           {!isConverted && (
-            <button
-              onClick={() => setShowDeleteConfirm(true)}
-              className="flex items-center gap-1.5 rounded-lg border border-danger-light bg-danger-light/50 px-3 py-2 text-sm font-semibold text-danger hover:bg-danger-light transition-colors shadow-sm"
-            >
-              <Trash2 size={15} /> Delete
-            </button>
+            <DemoGuard>
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="flex items-center gap-1.5 rounded-lg border border-danger-light bg-danger-light/50 px-3 py-2 text-sm font-semibold text-danger hover:bg-danger-light transition-colors shadow-sm"
+              >
+                <Trash2 size={15} /> Delete
+              </button>
+            </DemoGuard>
           )}
         </div>
       </div>

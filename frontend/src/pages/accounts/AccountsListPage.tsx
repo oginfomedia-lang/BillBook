@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { listAccounts, deleteAccount } from "../../api/accounts";
 import { formatMoney } from "../../utils/format";
 import { ExportToolbar, type ColumnDef } from "../../components/ui/ExportToolbar";
+import { DemoGuard } from "../../components/DemoGuard";
 
 const ACCOUNT_COLUMNS: ColumnDef[] = [
   { key: "account_code", label: "Account Number", visible: true },
@@ -178,13 +179,15 @@ export function AccountsListPage() {
                         >
                           <Edit2 size={13} />
                         </button>
-                        <button
-                          onClick={() => handleDelete(acct.id, acct.account_name)}
-                          className="rounded p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors"
-                          title="Delete"
-                        >
-                          <Trash2 size={13} />
-                        </button>
+                        <DemoGuard>
+                          <button
+                            onClick={() => handleDelete(acct.id, acct.account_name)}
+                            className="rounded p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                            title="Delete"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </DemoGuard>
                       </div>
                     </td>
                   </tr>

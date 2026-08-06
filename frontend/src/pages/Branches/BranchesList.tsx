@@ -7,6 +7,7 @@ import { useBranches, useDeleteBranch } from "../../hooks/useBranches";
 import { TableSkeleton } from "../../components/ui/Skeletons";
 import { ExportToolbar, type ColumnDef } from "../../components/ui/ExportToolbar";
 import { useTranslation } from "../../context/LanguageContext";
+import { DemoGuard } from "../../components/DemoGuard";
 import toast from "react-hot-toast";
 
 const BRANCH_COLUMNS: ColumnDef[] = [
@@ -130,13 +131,15 @@ export function BranchesListPage() {
                       >
                         <Edit2 size={14} />
                       </Link>
-                      <button
-                        onClick={() => handleDelete(branch.id)}
-                        className="rounded-md p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors"
-                        aria-label={t("Delete branch")}
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      <DemoGuard>
+                        <button
+                          onClick={() => handleDelete(branch.id)}
+                          className="rounded-md p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+                          aria-label={t("Delete branch")}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </DemoGuard>
                     </div>
                   </td>
                 </tr>

@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Plus, Search, Trash2, Edit2 } from "lucide-react";
 import { useCustomers, useCreateCustomer, useDeleteCustomer, useUpdateCustomer } from "../hooks/useCustomers";
 import { TableSkeleton } from "../components/ui/Skeletons";
+import { DemoGuard } from "../components/DemoGuard";
 import { Modal } from "../components/ui/Modal";
 import { ExportToolbar, type ColumnDef } from "../components/ui/ExportToolbar";
 import { formatMoney } from "../utils/format";
@@ -305,13 +306,15 @@ export function CustomersPage() {
                       >
                         <Edit2 size={14} />
                       </button>
-                      <button
-                        onClick={() => handleDelete(c.id)}
-                        className="rounded-md p-1.5 text-slate-400 hover:bg-danger-light hover:text-danger transition-colors"
-                        aria-label={t("Delete customer")}
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      <DemoGuard>
+                        <button
+                          onClick={() => handleDelete(c.id)}
+                          className="rounded-md p-1.5 text-slate-400 hover:bg-danger-light hover:text-danger transition-colors"
+                          aria-label={t("Delete customer")}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </DemoGuard>
                     </div>
                   </td>
                 </tr>

@@ -28,6 +28,14 @@ class Tenant(db.Model):
     plan = db.Column(db.String(30), default="trial")  # trial / starter / pro
     is_active = db.Column(db.Boolean, default=True)
 
+    # Self-service "Live Demo" tenants: is_demo=True + demo_expires_at is the
+    # ONLY signal that matters (see app/demo/guard.py) -- expiry is checked
+    # live against datetime.utcnow() on every request via JWT claims, never
+    # via a cached/precomputed flag. app/demo/sweep.py purges these once
+    # demo_expires_at is in the past (run via `flask sweep-demo`, cron-driven).
+    is_demo = db.Column(db.Boolean, default=False, nullable=False)
+    demo_expires_at = db.Column(db.DateTime, nullable=True)
+
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     users = db.relationship("User", back_populates="tenant", lazy="dynamic")
@@ -44,4 +52,6 @@ class Tenant(db.Model):
             "default_currency": self.default_currency,
             "plan": self.plan,
             "is_active": self.is_active,
+            "is_demo": self.is_demo,
+            "demo_expires_at": self.demo_expires_at.isoformat() if self.demo_expires_at else None,
         }

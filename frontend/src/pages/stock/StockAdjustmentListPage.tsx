@@ -16,6 +16,7 @@ import { useAdjustments, useCreateAdjustment, useUpdateAdjustment, useDeleteAdju
 import { useWarehouses } from "../../hooks/useWarehouses";
 import { useItems } from "../../hooks/useItems";
 import { TableSkeleton } from "../../components/ui/Skeletons";
+import { DemoGuard } from "../../components/DemoGuard";
 import { formatDate } from "../../utils/format";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
@@ -302,13 +303,15 @@ export function StockAdjustmentListPage() {
                       >
                         <Edit size={14} />
                       </button>
-                      <button
-                        onClick={() => handleDelete(adj.id)}
-                        className="rounded p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors"
-                        title="Delete"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      <DemoGuard>
+                        <button
+                          onClick={() => handleDelete(adj.id)}
+                          className="rounded p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+                          title="Delete"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </DemoGuard>
                     </div>
                   </td>
                 </tr>

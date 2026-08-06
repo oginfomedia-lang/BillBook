@@ -13,6 +13,7 @@ import { DashboardLayout } from "./layouts/DashboardLayout";
 import { LoginPage } from "./pages/LoginPage";
 import { SignupPage } from "./pages/SignupPage";
 import { ResetPasswordPage } from "./pages/ResetPasswordPage";
+import { AutoLoginPage } from "./pages/AutoLoginPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { POSPage } from "./pages/POSPage";
 import { SalesLayout } from "./pages/sales/SalesLayout";
@@ -67,6 +68,7 @@ import { SettingsPage } from "./pages/SettingsPage";
 import { BillingPage } from "./pages/BillingPage";
 import { AdminBillingPage } from "./pages/admin/AdminBillingPage";
 import { PlatformAdminRoute } from "./components/PlatformAdminRoute";
+import { DemoGuard } from "./components/DemoGuard";
 
 
 const queryClient = new QueryClient({
@@ -98,6 +100,7 @@ export default function App() {
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/signup" element={<SignupPage />} />
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
+                <Route path="/auto-login" element={<AutoLoginPage />} />
 
                 {/* Protected routes WITH sidebar */}
                 <Route
@@ -203,20 +206,20 @@ export default function App() {
                   </Route>
 
                   {/* Users */}
-                  <Route path="/users" element={<PermissionRoute permission="users.view"><UsersPage /></PermissionRoute>} />
+                  <Route path="/users" element={<DemoGuard mode="page"><PermissionRoute permission="users.view"><UsersPage /></PermissionRoute></DemoGuard>} />
 
                   {/* Roles */}
-                  <Route path="/roles" element={<PermissionRoute permission="roles.view"><RolesPage /></PermissionRoute>} />
+                  <Route path="/roles" element={<DemoGuard mode="page"><PermissionRoute permission="roles.view"><RolesPage /></PermissionRoute></DemoGuard>} />
 
                   {/* Reports */}
                   <Route path="/reports" element={<PermissionRoute permission="reports.view"><ReportsPage /></PermissionRoute>} />
 
                   {/* Settings */}
-                  <Route path="/settings" element={<SettingsPage />} />
+                  <Route path="/settings" element={<DemoGuard mode="page"><SettingsPage /></DemoGuard>} />
 
 
                   {/* Plan & Billing */}
-                  <Route path="/billing" element={<PermissionRoute permission="billing.view"><BillingPage /></PermissionRoute>} />
+                  <Route path="/billing" element={<DemoGuard mode="page"><PermissionRoute permission="billing.view"><BillingPage /></PermissionRoute></DemoGuard>} />
                   <Route path="/admin/billing" element={<PlatformAdminRoute><AdminBillingPage /></PlatformAdminRoute>} />
 
                   {/* 404 inside dashboard layout */}

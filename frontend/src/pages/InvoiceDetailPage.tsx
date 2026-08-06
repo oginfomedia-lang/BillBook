@@ -4,6 +4,7 @@ import { Printer, ArrowLeft, CreditCard, ChevronDown, Trash2, Calendar, FileText
 import { useInvoice, useUpdateInvoice, useDeleteInvoice, useRecordPayment } from "../hooks/useInvoices";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { Modal } from "../components/ui/Modal";
+import { DemoGuard } from "../components/DemoGuard";
 import { formatMoney, formatDate } from "../utils/format";
 import type { InvoiceStatus } from "../types";
 import { useTranslation } from "../context/LanguageContext";
@@ -124,13 +125,15 @@ export function InvoiceDetailPage() {
           </button>
 
           {/* Delete Button */}
-          <button
-            onClick={handleDeleteInvoice}
-            className="flex items-center gap-1.5 rounded-lg border border-danger-light bg-danger-light/50 px-3 py-2 text-sm font-semibold text-danger hover:bg-danger-light transition-colors shadow-sm"
-          >
-            <Trash2 size={15} />
-            {t("Delete")}
-          </button>
+          <DemoGuard>
+            <button
+              onClick={handleDeleteInvoice}
+              className="flex items-center gap-1.5 rounded-lg border border-danger-light bg-danger-light/50 px-3 py-2 text-sm font-semibold text-danger hover:bg-danger-light transition-colors shadow-sm"
+            >
+              <Trash2 size={15} />
+              {t("Delete")}
+            </button>
+          </DemoGuard>
         </div>
       </div>
 

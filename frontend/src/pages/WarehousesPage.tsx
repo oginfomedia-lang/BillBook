@@ -6,6 +6,7 @@ import { useWarehouses } from "../hooks/useWarehouses";
 import { useBranches } from "../hooks/useBranches";
 import { TableSkeleton } from "../components/ui/Skeletons";  // ← FIXED: Capital 'S'
 import { Modal } from "../components/ui/Modal";
+import { DemoGuard } from "../components/DemoGuard";
 import toast from "react-hot-toast";
 import apiClient from "../api/client";  // ← FIXED: camelCase 'apiClient'
 
@@ -213,12 +214,14 @@ export function WarehousesPage() {
                       >
                         <Edit2 size={14} />
                       </button>
-                      <button
-                        onClick={() => handleDelete(warehouse.id)}
-                        className="rounded-md p-1.5 text-slate-400 hover:bg-red-100 hover:text-red-600"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      <DemoGuard>
+                        <button
+                          onClick={() => handleDelete(warehouse.id)}
+                          className="rounded-md p-1.5 text-slate-400 hover:bg-red-100 hover:text-red-600"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </DemoGuard>
                     </div>
                   </td>
                 </tr>

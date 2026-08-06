@@ -11,6 +11,7 @@ interface AuthContextValue {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   signup: (payload: authApi.SignupPayload) => Promise<void>;
+  loginWithDemoToken: (token: string) => Promise<void>;
   logout: () => void;
   hasPermission: (key: string) => boolean;
   updateCurrentUser: (user: User) => void;
@@ -87,6 +88,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setBranches(data.branches || []);
   };
 
+  const loginWithDemoToken = async (token: string) => {
+    const data = await authApi.loginWithDemoToken(token);
+    setUser(data.user);
+    setBranches(data.branches || []);
+
+    if (data.branches && data.branches.length > 0) {
+      localStorage.setItem("billbook_branch_id", String(data.branches[0].id));
+    }
+  };
+
   const logout = () => {
     authApi.logout();
     setUser(null);
@@ -111,6 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isLoading,
       login,
       signup,
+      loginWithDemoToken,
       logout,
       hasPermission,
       updateCurrentUser,

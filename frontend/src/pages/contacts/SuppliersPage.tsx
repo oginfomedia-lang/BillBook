@@ -4,6 +4,7 @@ import { useState, useMemo, FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { Plus, Search, Edit2, Trash2 } from "lucide-react";
 import { TableSkeleton } from "../../components/ui/Skeletons";
+import { DemoGuard } from "../../components/DemoGuard";
 import { Modal } from "../../components/ui/Modal";
 import { ExportToolbar, type ColumnDef } from "../../components/ui/ExportToolbar";
 import { formatMoney } from "../../utils/format";
@@ -541,13 +542,15 @@ export function SuppliersPage() {
                         </button>
                       )}
                       {canDeleteSupplier && (
-                        <button
-                          onClick={() => handleDelete(supplier.id)}
-                          className="rounded-md p-1.5 text-slate-400 hover:bg-red-100 hover:text-red-600 transition-colors"
-                          aria-label={t("Delete supplier")}
-                        >
-                          <Trash2 size={14} />
-                        </button>
+                        <DemoGuard>
+                          <button
+                            onClick={() => handleDelete(supplier.id)}
+                            className="rounded-md p-1.5 text-slate-400 hover:bg-red-100 hover:text-red-600 transition-colors"
+                            aria-label={t("Delete supplier")}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </DemoGuard>
                       )}
                     </div>
                   </td>

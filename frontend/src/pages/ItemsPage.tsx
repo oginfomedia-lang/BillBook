@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { useItems, useDeleteItem, useCategories, useExportBranchMapping, useImportBranchMapping } from '../hooks/useItems';
 import { useWarehouses } from '../hooks/useWarehouses';
 import { TableSkeleton } from '../components/ui/Skeletons';
+import { DemoGuard } from '../components/DemoGuard';
 import { ExportToolbar, type ColumnDef } from '../components/ui/ExportToolbar';
 import { formatMoney } from '../utils/format';
 import type { ItemStatus, ItemType } from '../api/items';
@@ -377,13 +378,15 @@ export function ItemsPage() {
                                             >
                                                 <Edit2 size={14} />
                                             </Link>
-                                            <button
-                                                onClick={() => handleDelete(item.id, item.item_name)}
-                                                className="rounded-md p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors"
-                                                title="Delete"
-                                            >
-                                                <Trash2 size={14} />
-                                            </button>
+                                            <DemoGuard>
+                                                <button
+                                                    onClick={() => handleDelete(item.id, item.item_name)}
+                                                    className="rounded-md p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+                                                    title="Delete"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </DemoGuard>
                                         </div>
                                     </td>
                                 </tr>
