@@ -22,13 +22,15 @@ def create_app(config_name: str | None = None) -> Flask:
 
     # ✅ CORS Configuration
     allowed_origins = [
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
         "http://localhost:3000",
         "http://127.0.0.1:3000",
-        "http://localhost:5183",
-        "http://127.0.0.1:5183",
     ]
+    # Vite falls back to the next free port (5173, 5174, 5175, ...) whenever
+    # something else is already bound to the one before it -- whitelist the
+    # whole common fallback range instead of one hardcoded port at a time.
+    for vite_port in range(5173, 5190):
+        allowed_origins.append(f"http://localhost:{vite_port}")
+        allowed_origins.append(f"http://127.0.0.1:{vite_port}")
     frontend_origin = flask_app.config.get("FRONTEND_ORIGIN")
     if frontend_origin and frontend_origin not in allowed_origins:
         allowed_origins.append(frontend_origin)
